@@ -14,6 +14,17 @@ export interface ArBreakdown {
 }
 
 /**
+ * A gem the player owns, ready to feed the optimizer. `shape` is the
+ * inventory-sourced shape (authoritative for slotting) and is kept separate
+ * from the gem's calc fields, which never include shape.
+ */
+export interface Candidate {
+  gem: Gem
+  shape: GemShape
+  gemRef: GemRef
+}
+
+/**
  * Computes the Attack Rating for the weapon with `weapon_id`, fitted with up
  * to three `gems` at the given hunter `stats`. Gem slot order does not matter.
  */
@@ -25,6 +36,21 @@ export declare const enum ConvertedElement {
   Bolt = 'Bolt',
   Fire = 'Fire',
   Arc = 'Arc',
+}
+
+/**
+ * Which figure {@link optimizeForSlots} maximizes. `Total` is the full Attack
+ * Rating; the rest target a single damage line (mirrors `bb_calc::DamageTarget`).
+ */
+export declare const enum DamageTarget {
+  Total = 'Total',
+  Phys = 'Phys',
+  Blunt = 'Blunt',
+  Thrust = 'Thrust',
+  Arcane = 'Arcane',
+  Fire = 'Fire',
+  Bolt = 'Bolt',
+  Blood = 'Blood',
 }
 
 /**
@@ -57,16 +83,58 @@ export interface Gem {
   beasthunter: number
 }
 
+/** A minimal identity for reporting which owned gem the optimizer chose. */
+export interface GemRef {
+  id: string
+  name: string
+  effects: Array<string>
+}
+
 /** The physical shape of a blood gem (mirrors `bb_calc::GemShape`). */
 export declare const enum GemShape {
   Radial = 'Radial',
   Triangle = 'Triangle',
   Waning = 'Waning',
   Circle = 'Circle',
+  /** Universal wildcard: a Droplet gem fits any slot. */
+  Droplet = 'Droplet',
 }
 
 /** Returns every weapon in the game. */
 export declare function getWeapons(): Array<Weapon>
+
+/**
+ * Finds the socketing of `candidates` into `slot_shapes` that maximizes
+ * `target` for the weapon with `weapon_id` at the given hunter `stats`,
+ * respecting shape fit and per-gem counts. Supports up to 3 slots.
+ */
+export declare function optimizeForSlots(
+  weaponId: string,
+  slotShapes: Array<GemShape>,
+  candidates: Array<Candidate>,
+  stats: Stats,
+  target: DamageTarget,
+): OptimizeResult
+
+/** The winning socketing found by {@link optimizeForSlots}. */
+export interface OptimizeResult {
+  /** The value of the optimized metric (see {@link DamageTarget}). */
+  score: number
+  /** The full Attack Rating of the winning socketing, regardless of target. */
+  total: number
+  breakdown: ArBreakdown
+  slots: Array<SlotChoice>
+}
+
+/**
+ * One imprint slot in the result: its shape and the owned gem placed in it
+ * (`gem` is absent when the optimizer left the slot empty).
+ */
+export interface SlotChoice {
+  slot: number
+  slotShape: GemShape
+  gem?: GemRef
+}
 
 /** The four hunter stats that drive weapon scaling. */
 export interface Stats {

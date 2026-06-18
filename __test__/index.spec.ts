@@ -1,6 +1,15 @@
 import test from 'ava'
 
-import { computeAr, getWeapons, GemShape, type Gem, type Stats } from '../index'
+import {
+  computeAr,
+  DamageTarget,
+  getWeapons,
+  GemShape,
+  optimizeForSlots,
+  type Candidate,
+  type Gem,
+  type Stats,
+} from '../index'
 
 const ZERO_STATS: Stats = { str: 0, skl: 0, blt: 0, arc: 0 }
 
@@ -76,4 +85,44 @@ test('computeAr rejects more than three gems', (t) => {
   const gems = [identityGem(), identityGem(), identityGem(), identityGem()]
   const err = t.throws(() => computeAr('amygdalan_arm', gems, ZERO_STATS))
   t.regex(err!.message, /at most 3 gems/)
+})
+
+/** Wraps a {@link Gem} as an owned optimizer candidate of the given shape. */
+function candidate(id: string, gem: Gem, shape: GemShape): Candidate {
+  return { gem, shape, gemRef: { id, name: gem.name, effects: [] } }
+}
+
+test('optimizeForSlots places a damage gem into a matching slot', (t) => {
+  const gem = identityGem()
+  gem.dmgGeneral = 2
+  const candidates = [candidate('big-phys', gem, GemShape.Radial)]
+
+  const result = optimizeForSlots('amygdalan_arm', [GemShape.Radial], candidates, ZERO_STATS, DamageTarget.Total)
+
+  t.is(result.slots.length, 1)
+  t.is(result.slots[0]?.gem?.id, 'big-phys')
+  // dmgGeneral doubles every line: physical 160→320, arcane 80→160.
+  t.is(result.breakdown.physical, 320)
+  t.is(result.breakdown.arcane, 160)
+  t.is(result.total, 480)
+  t.is(result.score, 480)
+})
+
+test('optimizeForSlots leaves a slot empty when no gem fits its shape', (t) => {
+  const gem = identityGem()
+  gem.dmgGeneral = 2
+  // A Radial gem cannot fit a Triangle slot.
+  const candidates = [candidate('big-phys', gem, GemShape.Radial)]
+
+  const result = optimizeForSlots('amygdalan_arm', [GemShape.Triangle], candidates, ZERO_STATS, DamageTarget.Total)
+
+  t.is(result.slots[0]?.slotShape, GemShape.Triangle)
+  t.is(result.slots[0]?.gem, undefined)
+  t.is(result.total, 240)
+})
+
+test('optimizeForSlots rejects more than three slots', (t) => {
+  const shapes = [GemShape.Radial, GemShape.Radial, GemShape.Radial, GemShape.Radial]
+  const err = t.throws(() => optimizeForSlots('amygdalan_arm', shapes, [], ZERO_STATS, DamageTarget.Total))
+  t.regex(err!.message, /at most 3 slots/)
 })

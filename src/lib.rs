@@ -1,9 +1,10 @@
 #![deny(clippy::all)]
 
 use bb_calc::{
-  compute_ar as bb_compute_ar, ArBreakdown as BbArBreakdown, ConvertedElement as BbConvertedElement,
-  Gem as BbGem, GemShape as BbGemShape, Stats as BbStats, Weapon as BbWeapon,
-  WeaponType as BbWeaponType,
+  compute_ar as bb_compute_ar, optimize_for_slots as bb_optimize_for_slots, ArBreakdown as BbArBreakdown,
+  Candidate as BbCandidate, ConvertedElement as BbConvertedElement, DamageTarget as BbDamageTarget,
+  Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape, OptimizeResult as BbOptimizeResult,
+  SlotChoice as BbSlotChoice, Stats as BbStats, Weapon as BbWeapon, WeaponType as BbWeaponType,
 };
 use napi::bindgen_prelude::{Error, Result, Status};
 use napi_derive::napi;
@@ -68,6 +69,8 @@ pub enum GemShape {
   Triangle,
   Waning,
   Circle,
+  /// Universal wildcard: a Droplet gem fits any slot.
+  Droplet,
 }
 
 impl From<GemShape> for BbGemShape {
@@ -77,6 +80,19 @@ impl From<GemShape> for BbGemShape {
       GemShape::Triangle => BbGemShape::Triangle,
       GemShape::Waning => BbGemShape::Waning,
       GemShape::Circle => BbGemShape::Circle,
+      GemShape::Droplet => BbGemShape::Droplet,
+    }
+  }
+}
+
+impl From<BbGemShape> for GemShape {
+  fn from(value: BbGemShape) -> Self {
+    match value {
+      BbGemShape::Radial => GemShape::Radial,
+      BbGemShape::Triangle => GemShape::Triangle,
+      BbGemShape::Waning => GemShape::Waning,
+      BbGemShape::Circle => GemShape::Circle,
+      BbGemShape::Droplet => GemShape::Droplet,
     }
   }
 }
@@ -233,4 +249,158 @@ pub fn compute_ar(weapon_id: String, gems: Vec<Gem>, stats: Stats) -> Result<ArB
 
   let breakdown = bb_compute_ar(weapon, slots, &BbStats::from(&stats));
   Ok(breakdown.into())
+}
+
+/// Which figure {@link optimizeForSlots} maximizes. `Total` is the full Attack
+/// Rating; the rest target a single damage line (mirrors `bb_calc::DamageTarget`).
+#[derive(Clone, Copy)]
+#[napi(string_enum)]
+pub enum DamageTarget {
+  Total,
+  Phys,
+  Blunt,
+  Thrust,
+  Arcane,
+  Fire,
+  Bolt,
+  Blood,
+}
+
+impl From<DamageTarget> for BbDamageTarget {
+  fn from(value: DamageTarget) -> Self {
+    match value {
+      DamageTarget::Total => BbDamageTarget::Total,
+      DamageTarget::Phys => BbDamageTarget::Phys,
+      DamageTarget::Blunt => BbDamageTarget::Blunt,
+      DamageTarget::Thrust => BbDamageTarget::Thrust,
+      DamageTarget::Arcane => BbDamageTarget::Arcane,
+      DamageTarget::Fire => BbDamageTarget::Fire,
+      DamageTarget::Bolt => BbDamageTarget::Bolt,
+      DamageTarget::Blood => BbDamageTarget::Blood,
+    }
+  }
+}
+
+/// A minimal identity for reporting which owned gem the optimizer chose.
+#[napi(object)]
+pub struct GemRef {
+  pub id: String,
+  pub name: String,
+  pub effects: Vec<String>,
+}
+
+impl From<&GemRef> for BbGemRef {
+  fn from(value: &GemRef) -> Self {
+    BbGemRef {
+      id: value.id.clone(),
+      name: value.name.clone(),
+      effects: value.effects.clone(),
+    }
+  }
+}
+
+impl From<BbGemRef> for GemRef {
+  fn from(value: BbGemRef) -> Self {
+    GemRef {
+      id: value.id,
+      name: value.name,
+      effects: value.effects,
+    }
+  }
+}
+
+/// A gem the player owns, ready to feed the optimizer. `shape` is the
+/// inventory-sourced shape (authoritative for slotting) and is kept separate
+/// from the gem's calc fields, which never include shape.
+#[napi(object)]
+pub struct Candidate {
+  pub gem: Gem,
+  pub shape: GemShape,
+  pub gem_ref: GemRef,
+}
+
+impl From<&Candidate> for BbCandidate {
+  fn from(value: &Candidate) -> Self {
+    BbCandidate {
+      gem: BbGem::from(&value.gem),
+      shape: value.shape.into(),
+      gem_ref: BbGemRef::from(&value.gem_ref),
+    }
+  }
+}
+
+/// One imprint slot in the result: its shape and the owned gem placed in it
+/// (`gem` is absent when the optimizer left the slot empty).
+#[napi(object)]
+pub struct SlotChoice {
+  pub slot: u32,
+  pub slot_shape: GemShape,
+  pub gem: Option<GemRef>,
+}
+
+impl From<BbSlotChoice> for SlotChoice {
+  fn from(value: BbSlotChoice) -> Self {
+    SlotChoice {
+      slot: value.slot as u32,
+      slot_shape: value.slot_shape.into(),
+      gem: value.gem.map(GemRef::from),
+    }
+  }
+}
+
+/// The winning socketing found by {@link optimizeForSlots}.
+#[napi(object)]
+pub struct OptimizeResult {
+  /// The value of the optimized metric (see {@link DamageTarget}).
+  pub score: f64,
+  /// The full Attack Rating of the winning socketing, regardless of target.
+  pub total: f64,
+  pub breakdown: ArBreakdown,
+  pub slots: Vec<SlotChoice>,
+}
+
+impl From<BbOptimizeResult> for OptimizeResult {
+  fn from(value: BbOptimizeResult) -> Self {
+    OptimizeResult {
+      score: value.score as f64,
+      total: value.total as f64,
+      breakdown: value.breakdown.into(),
+      slots: value.slots.into_iter().map(SlotChoice::from).collect(),
+    }
+  }
+}
+
+/// Finds the socketing of `candidates` into `slot_shapes` that maximizes
+/// `target` for the weapon with `weapon_id` at the given hunter `stats`,
+/// respecting shape fit and per-gem counts. Supports up to 3 slots.
+#[napi]
+pub fn optimize_for_slots(
+  weapon_id: String,
+  slot_shapes: Vec<GemShape>,
+  candidates: Vec<Candidate>,
+  stats: Stats,
+  target: DamageTarget,
+) -> Result<OptimizeResult> {
+  let weapon = BbWeapon::by_id(&weapon_id).ok_or_else(|| {
+    Error::new(Status::InvalidArg, format!("unknown weapon id: {weapon_id}"))
+  })?;
+
+  if slot_shapes.len() > 3 {
+    return Err(Error::new(
+      Status::InvalidArg,
+      format!("a weapon takes at most 3 slots, got {}", slot_shapes.len()),
+    ));
+  }
+
+  let bb_shapes: Vec<BbGemShape> = slot_shapes.iter().map(|s| (*s).into()).collect();
+  let bb_candidates: Vec<BbCandidate> = candidates.iter().map(BbCandidate::from).collect();
+
+  let result = bb_optimize_for_slots(
+    weapon,
+    &bb_shapes,
+    &bb_candidates,
+    &BbStats::from(&stats),
+    target.into(),
+  );
+  Ok(result.into())
 }

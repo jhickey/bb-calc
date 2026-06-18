@@ -589,6 +589,8 @@ if (!nativeBinding) {
 module.exports = nativeBinding
 module.exports.computeAr = nativeBinding.computeAr
 module.exports.ConvertedElement = nativeBinding.ConvertedElement
+module.exports.DamageTarget = nativeBinding.DamageTarget
 module.exports.GemShape = nativeBinding.GemShape
 module.exports.getWeapons = nativeBinding.getWeapons
+module.exports.optimizeForSlots = nativeBinding.optimizeForSlots
 module.exports.WeaponType = nativeBinding.WeaponType
