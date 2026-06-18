@@ -1,0 +1,548 @@
+[
+  {
+    "weapon": "Saw Cleaver",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Saw Cleaver",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Saw Cleaver",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Saw Spear",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Saw Spear",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Saw Spear",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Hunter Axe",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Hunter Axe",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Hunter Axe",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Threaded Cane",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Threaded Cane",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Threaded Cane",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Waning",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Blade of Mercy",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Blade of Mercy",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Waning",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Blade of Mercy",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Kirkhammer",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Kirkhammer",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Waning",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Kirkhammer",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Ludwig's Holy Blade",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Ludwig's Holy Blade",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Ludwig's Holy Blade",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Stake Driver",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Stake Driver",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Waning",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Stake Driver",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Reiterpallasch",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Reiterpallasch",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Waning",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Reiterpallasch",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Chikage",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Chikage",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Chikage",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Circle"
+  },
+  {
+    "weapon": "Church Pick",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Church Pick",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Church Pick",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Logarius' Wheel",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Logarius' Wheel",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Logarius' Wheel",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Burial Blade",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Waning",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Burial Blade",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Burial Blade",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Beast Claw",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Beast Claw",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Waning",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Beast Claw",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Rifle Spear",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Rifle Spear",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Waning",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Rifle Spear",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Tonitrus",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Tonitrus",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Tonitrus",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Simon's Bowblade",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Simon's Bowblade",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Waning",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Simon's Bowblade",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Circle"
+  },
+  {
+    "weapon": "Bloodletter",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Bloodletter",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Bloodletter",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Kos Parasite",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Waning",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Kos Parasite",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Kos Parasite",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Amygdalan Arm",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Amygdalan Arm",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Amygdalan Arm",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Boom Hammer",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Waning",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Boom Hammer",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Boom Hammer",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Beasthunter Saif",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Beasthunter Saif",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Beasthunter Saif",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Beast Cutter",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Beast Cutter",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Beast Cutter",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Whirligig Saw",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Whirligig Saw",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Whirligig Saw",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Holy Moonlight Sword",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Holy Moonlight Sword",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Waning",
+    "slot3": "Radial"
+  },
+  {
+    "weapon": "Holy Moonlight Sword",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Rakuyo",
+    "imprint": "Normal",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Triangle"
+  },
+  {
+    "weapon": "Rakuyo",
+    "imprint": "Uncanny",
+    "slot1": "Radial",
+    "slot2": "Radial",
+    "slot3": "Waning"
+  },
+  {
+    "weapon": "Rakuyo",
+    "imprint": "Lost",
+    "slot1": "Radial",
+    "slot2": "Triangle",
+    "slot3": "Waning"
+  }
+]
