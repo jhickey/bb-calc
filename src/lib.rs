@@ -28,7 +28,8 @@ pub enum GemShape {
 
 #[derive(Debug, Clone)]
 pub struct Weapon {
-    pub name: String,
+    pub id: &'static str,
+    pub name: &'static str,
     pub weapon_type: WeaponType,
     pub phys: u16,
     pub blood: u16,
@@ -43,6 +44,22 @@ pub struct Weapon {
     righteous: f32,
     serrated_tricked: f32,
     righteous_tricked: f32,
+}
+
+// `WEAPONS: &[Weapon]` is code-generated from `data/weapons.json` by `build.rs` at
+// compile time and baked into the binary; no JSON is read at runtime.
+include!(concat!(env!("OUT_DIR"), "/weapons_generated.rs"));
+
+impl Weapon {
+    /// All weapons, generated from `data/weapons.json` at compile time.
+    pub fn all() -> &'static [Weapon] {
+        WEAPONS
+    }
+
+    /// Look up a weapon by its normalized `id` (see `data/weapons.json`).
+    pub fn by_id(id: &str) -> Option<&'static Weapon> {
+        WEAPONS.iter().find(|w| w.id == id)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -250,9 +267,10 @@ mod tests {
     use super::*;
 
     /// A weapon with no scaling and no base damage; tests override what they need.
-    fn weapon(name: &str, weapon_type: WeaponType) -> Weapon {
+    fn weapon(name: &'static str, weapon_type: WeaponType) -> Weapon {
         Weapon {
-            name: name.to_string(),
+            id: "",
+            name,
             weapon_type,
             phys: 0,
             blood: 0,
@@ -464,5 +482,21 @@ mod tests {
         // bolt = floor(elemBase(100) * 2.0) = 200, which dominates the max.
         assert_eq!(ar.bolt, 200.0);
         assert_eq!(ar.total, 200.0);
+    }
+
+    #[test]
+    fn weapons_are_generated_from_json() {
+        assert_eq!(WEAPONS.len(), 31);
+    }
+
+    #[test]
+    fn by_id_finds_generated_weapon() {
+        let w = Weapon::by_id("amygdalan_arm").expect("amygdalan_arm exists");
+        assert_eq!(w.name, "Amygdalan Arm");
+        assert_eq!(w.phys, 160);
+        assert_eq!(w.arcane, 80);
+        assert_eq!(w.weapon_type, WeaponType::Dual);
+
+        assert!(Weapon::by_id("nope").is_none());
     }
 }
