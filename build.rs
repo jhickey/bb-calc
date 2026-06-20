@@ -1,9 +1,12 @@
-//! Build script: parses `data/weapons.json` at compile time and code-generates a
-//! `static WEAPONS: &[Weapon]` array into `$OUT_DIR/weapons_generated.rs`, which
-//! `src/lib.rs` pulls in with `include!`. The JSON is read only during the build,
-//! so the compiled artifact carries the data with no runtime parsing or file access.
+//! Build script: parses the JSON tables under `data/` at compile time and
+//! code-generates Rust source into `$OUT_DIR`, which the matching modules pull in
+//! with `include!`:
+//!   - `data/weapons.json`     → `weapons_generated.rs`  (`static WEAPONS`)
+//!   - `data/gem-effects.json` → `effects_generated.rs`  (`static EFFECTS`)
+//! The JSON is read only during the build, so the compiled artifact carries the
+//! data with no runtime parsing or file access.
 
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::env;
 use std::fmt::Write as _;
 use std::fs;
@@ -42,8 +45,48 @@ fn weapon_type_variant(kind: &str) -> &'static str {
     }
 }
 
+/// One gem-effect row keyed by its numeric save id (the JSON object's keys).
+#[derive(Deserialize)]
+struct RawEffect {
+    name: String,
+    effect: String,
+    rating: u8,
+    level: u8,
+}
+
+/// Code-generate `static EFFECTS: &[(u32, EffectInfo)]`, sorted ascending by id so
+/// `lookup_effect` can binary-search it. `EffectInfo` is defined in the module that
+/// `include!`s this output (`src/save/effect_map.rs`).
+fn generate_effects(out_dir: &str) {
+    let json = fs::read_to_string("data/gem-effects.json").expect("read data/gem-effects.json");
+    let effects: BTreeMap<u32, RawEffect> =
+        serde_json::from_str(&json).expect("parse data/gem-effects.json");
+
+    // BTreeMap iterates keys in ascending order, which is exactly the order the
+    // generated table needs for the binary search in `lookup_effect`.
+    let mut out = String::new();
+    out.push_str("static EFFECTS: &[(u32, EffectInfo)] = &[\n");
+    for (id, e) in &effects {
+        write!(
+            out,
+            "    ({id}, EffectInfo {{ name: {name:?}, effect: {effect:?}, rating: {rating}, level: {level} }}),\n",
+            id = id,
+            name = e.name,
+            effect = e.effect,
+            rating = e.rating,
+            level = e.level,
+        )
+        .unwrap();
+    }
+    out.push_str("];\n");
+
+    let dest = Path::new(out_dir).join("effects_generated.rs");
+    fs::write(&dest, out).expect("write effects_generated.rs");
+}
+
 fn main() {
     println!("cargo:rerun-if-changed=data/weapons.json");
+    println!("cargo:rerun-if-changed=data/gem-effects.json");
     println!("cargo:rerun-if-changed=build.rs");
 
     let json = fs::read_to_string("data/weapons.json").expect("read data/weapons.json");
@@ -103,4 +146,6 @@ fn main() {
     let out_dir = env::var("OUT_DIR").expect("OUT_DIR");
     let dest = Path::new(&out_dir).join("weapons_generated.rs");
     fs::write(&dest, out).expect("write weapons_generated.rs");
+
+    generate_effects(&out_dir);
 }
