@@ -1,4 +1,4 @@
 /target
 .idea
-data/saves
 .claude
+packages/bb-calc/data/saves
