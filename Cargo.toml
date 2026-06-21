@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["packages/bb-calc"]
+members = ["packages/bb-calc", "packages/bb-calc-js"]
 
 [profile.release]
 lto = true

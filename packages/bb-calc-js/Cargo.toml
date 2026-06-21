@@ -9,13 +9,12 @@ version = "0.2.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-bb-calc     = "0.2.0"
+bb-calc     = { path = "../bb-calc" }
 napi        = "3.0.0"
 napi-derive = "3.0.0"
 
 [build-dependencies]
 napi-build = "2"
 
-[profile.release]
-lto   = true
-strip = "symbols"
+# Release profile lives in the workspace root Cargo.toml; Cargo ignores
+# profiles declared in non-root workspace members.

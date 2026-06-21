@@ -152,7 +152,7 @@ impl From<&Gem> for BbGem {
       name: value.name.clone(),
       source: value.source.clone(),
       tier: value.tier as u8,
-      shape: value.shape.into(),
+      shape: Some(value.shape.into()),
       arc_scale: value.arc_scale as f32,
       str_scale: value.str_scale as f32,
       dmg_general: value.dmg_general as f32,
