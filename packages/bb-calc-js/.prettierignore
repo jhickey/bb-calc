@@ -1,7 +1,0 @@
-target
-index.js
-package-template.wasi-browser.js
-package-template.wasi.cjs
-wasi-worker-browser.mjs
-wasi-worker.mjs
-pnpm-lock.yaml

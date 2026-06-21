@@ -35,7 +35,7 @@ export declare const enum ConvertedElement {
   Phys = 'Phys',
   Bolt = 'Bolt',
   Fire = 'Fire',
-  Arc = 'Arc',
+  Arc = 'Arc'
 }
 
 /**
@@ -50,7 +50,7 @@ export declare const enum DamageTarget {
   Arcane = 'Arcane',
   Fire = 'Fire',
   Bolt = 'Bolt',
-  Blood = 'Blood',
+  Blood = 'Blood'
 }
 
 /**
@@ -97,7 +97,7 @@ export declare const enum GemShape {
   Waning = 'Waning',
   Circle = 'Circle',
   /** Universal wildcard: a Droplet gem fits any slot. */
-  Droplet = 'Droplet',
+  Droplet = 'Droplet'
 }
 
 /** Returns every weapon in the game. */
@@ -108,13 +108,7 @@ export declare function getWeapons(): Array<Weapon>
  * `target` for the weapon with `weapon_id` at the given hunter `stats`,
  * respecting shape fit and per-gem counts. Supports up to 3 slots.
  */
-export declare function optimizeForSlots(
-  weaponId: string,
-  slotShapes: Array<GemShape>,
-  candidates: Array<Candidate>,
-  stats: Stats,
-  target: DamageTarget,
-): OptimizeResult
+export declare function optimizeForSlots(weaponId: string, slotShapes: Array<GemShape>, candidates: Array<Candidate>, stats: Stats, target: DamageTarget): OptimizeResult
 
 /** The winning socketing found by {@link optimizeForSlots}. */
 export interface OptimizeResult {
@@ -160,5 +154,5 @@ export interface Weapon {
 export declare const enum WeaponType {
   Dual = 'Dual',
   Conv = 'Conv',
-  Blood = 'Blood',
+  Blood = 'Blood'
 }

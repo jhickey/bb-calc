@@ -4,10 +4,10 @@ Monorepo for the Bloodborne Attack Rating calculator and its related packages.
 
 ## Packages
 
-| Path | Package | Description |
-| --- | --- | --- |
-| [`packages/bb-calc`](packages/bb-calc) | `bb-calc` (Rust crate) | Core AR calculator: given a weapon, gems, and stats, computes total AR and a per-damage-type breakdown. |
-| [`packages/bb-calc-js`](packages/bb-calc-js) | `bb-calc-js` (npm) | [napi-rs](https://napi.rs) Node native addon exposing the `bb-calc` crate to JavaScript/TypeScript. |
+| Path                                         | Package                | Description                                                                                             |
+| -------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| [`packages/bb-calc`](packages/bb-calc)       | `bb-calc` (Rust crate) | Core AR calculator: given a weapon, gems, and stats, computes total AR and a per-damage-type breakdown. |
+| [`packages/bb-calc-js`](packages/bb-calc-js) | `bb-calc-js` (npm)     | [napi-rs](https://napi.rs) Node native addon exposing the `bb-calc` crate to JavaScript/TypeScript.     |
 
 ## Workspace layout
 

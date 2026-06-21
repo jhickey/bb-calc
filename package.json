@@ -1,0 +1,46 @@
+{
+  "name": "bb-calc-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Monorepo for the Bloodborne Attack Rating calculator and related packages.",
+  "license": "MIT",
+  "scripts": {
+    "build": "pnpm --filter bb-calc-js build",
+    "build:debug": "pnpm --filter bb-calc-js build:debug",
+    "test": "pnpm --filter bb-calc-js test",
+    "bench": "pnpm --filter bb-calc-js bench",
+    "lint": "oxlint .",
+    "format": "run-p format:prettier format:toml format:rs",
+    "format:prettier": "prettier . -w",
+    "format:toml": "taplo format",
+    "format:rs": "cargo fmt --all",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@taplo/cli": "^0.7.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.0",
+    "npm-run-all2": "^9.0.0",
+    "oxlint": "^1.14.0",
+    "prettier": "^3.6.2"
+  },
+  "lint-staged": {
+    "*.@(js|ts|tsx)": [
+      "oxlint --fix"
+    ],
+    "*.@(js|ts|tsx|yml|yaml|md|json)": [
+      "prettier --write"
+    ],
+    "*.toml": [
+      "taplo format"
+    ]
+  },
+  "prettier": {
+    "printWidth": 120,
+    "semi": false,
+    "trailingComma": "all",
+    "singleQuote": true,
+    "arrowParens": "always"
+  },
+  "packageManager": "pnpm@10.17.1"
+}

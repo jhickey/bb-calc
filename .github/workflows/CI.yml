@@ -2,6 +2,7 @@ name: CI
 env:
   DEBUG: napi:*
   APP_NAME: bb-calc-js
+  APP_DIR: packages/bb-calc-js
   MACOSX_DEPLOYMENT_TARGET: '10.13'
   CARGO_INCREMENTAL: '1'
 'on':
@@ -12,7 +13,7 @@ env:
       - '**'
     paths-ignore:
       - '**/*.md'
-      - LICENSE
+      - '**/LICENSE*'
       - '**/*.gitignore'
       - .editorconfig
       - docs/**
@@ -41,10 +42,14 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Oxlint
         run: pnpm lint
+      # The bb-calc crate is intentionally hand-formatted (e.g. lookup tables) and
+      # is not rustfmt-managed, so only the napi crate is fmt/clippy gated here.
       - name: Cargo fmt
-        run: cargo fmt -- --check
+        run: cargo fmt -p bb_calc_js -- --check
       - name: Clippy
-        run: cargo clippy
+        run: cargo clippy -p bb_calc_js
+      - name: Cargo test
+        run: cargo test --workspace
   build:
     strategy:
       fail-fast: false
@@ -108,14 +113,15 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build
         run: ${{ matrix.settings.build }}
+        working-directory: packages/bb-calc-js
         shell: bash
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
           name: bindings-${{ matrix.settings.target }}
           path: |
-            ${{ env.APP_NAME }}.*.node
-            ${{ env.APP_NAME }}.*.wasm
+            ${{ env.APP_DIR }}/${{ env.APP_NAME }}.*.node
+            ${{ env.APP_DIR }}/${{ env.APP_NAME }}.*.wasm
           if-no-files-found: error
   test-macOS-windows-binding:
     name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
@@ -154,12 +160,14 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: bindings-${{ matrix.settings.target }}
-          path: .
+          path: ${{ env.APP_DIR }}
       - name: List packages
         run: ls -R .
+        working-directory: packages/bb-calc-js
         shell: bash
       - name: Test bindings
         run: pnpm test
+        working-directory: packages/bb-calc-js
   test-linux-binding:
     name: Test ${{ matrix.target }} - node@${{ matrix.node }}
     needs:
@@ -227,9 +235,10 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: bindings-${{ matrix.target }}
-          path: .
+          path: ${{ env.APP_DIR }}
       - name: List packages
         run: ls -R .
+        working-directory: packages/bb-calc-js
         shell: bash
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -243,7 +252,7 @@ jobs:
         with:
           image: ${{ steps.docker.outputs.IMAGE }}
           name: test-bindings-${{ matrix.target }}
-          options: '-v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}'
+          options: '-v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }}/${{ env.APP_DIR }} --platform ${{ steps.docker.outputs.PLATFORM }}'
           args: pnpm test
   publish:
     name: Publish
@@ -255,6 +264,9 @@ jobs:
       - lint
       - test-macOS-windows-binding
       - test-linux-binding
+    defaults:
+      run:
+        working-directory: packages/bb-calc-js
     steps:
       - uses: actions/checkout@v6
       - name: Setup pnpm
@@ -266,12 +278,13 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        working-directory: ${{ github.workspace }}
       - name: create npm dirs
         run: pnpm napi create-npm-dirs
       - name: Download all artifacts
         uses: actions/download-artifact@v8
         with:
-          path: artifacts
+          path: ${{ env.APP_DIR }}/artifacts
       - name: Move artifacts
         run: pnpm artifacts
       - name: List packages

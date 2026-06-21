@@ -1,10 +1,11 @@
 #![deny(clippy::all)]
 
 use bb_calc::{
-  compute_ar as bb_compute_ar, optimize_for_slots as bb_optimize_for_slots, ArBreakdown as BbArBreakdown,
-  Candidate as BbCandidate, ConvertedElement as BbConvertedElement, DamageTarget as BbDamageTarget,
-  Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape, OptimizeResult as BbOptimizeResult,
-  SlotChoice as BbSlotChoice, Stats as BbStats, Weapon as BbWeapon, WeaponType as BbWeaponType,
+  compute_ar as bb_compute_ar, optimize_for_slots as bb_optimize_for_slots,
+  ArBreakdown as BbArBreakdown, Candidate as BbCandidate, ConvertedElement as BbConvertedElement,
+  DamageTarget as BbDamageTarget, Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape,
+  OptimizeResult as BbOptimizeResult, SlotChoice as BbSlotChoice, Stats as BbStats,
+  Weapon as BbWeapon, WeaponType as BbWeaponType,
 };
 use napi::bindgen_prelude::{Error, Result, Status};
 use napi_derive::napi;
@@ -231,7 +232,10 @@ impl From<BbArBreakdown> for ArBreakdown {
 #[napi]
 pub fn compute_ar(weapon_id: String, gems: Vec<Gem>, stats: Stats) -> Result<ArBreakdown> {
   let weapon = BbWeapon::by_id(&weapon_id).ok_or_else(|| {
-    Error::new(Status::InvalidArg, format!("unknown weapon id: {weapon_id}"))
+    Error::new(
+      Status::InvalidArg,
+      format!("unknown weapon id: {weapon_id}"),
+    )
   })?;
 
   if gems.len() > 3 {
@@ -382,7 +386,10 @@ pub fn optimize_for_slots(
   target: DamageTarget,
 ) -> Result<OptimizeResult> {
   let weapon = BbWeapon::by_id(&weapon_id).ok_or_else(|| {
-    Error::new(Status::InvalidArg, format!("unknown weapon id: {weapon_id}"))
+    Error::new(
+      Status::InvalidArg,
+      format!("unknown weapon id: {weapon_id}"),
+    )
   })?;
 
   if slot_shapes.len() > 3 {

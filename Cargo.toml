@@ -1,7 +1,7 @@
 [workspace]
+members  = ["packages/bb-calc", "packages/bb-calc-js"]
 resolver = "3"
-members = ["packages/bb-calc", "packages/bb-calc-js"]
 
 [profile.release]
-lto = true
+lto   = true
 strip = "symbols"
