@@ -1,0 +1,406 @@
+#![deny(clippy::all)]
+
+use bb_calc::{
+  compute_ar as bb_compute_ar, optimize_for_slots as bb_optimize_for_slots, ArBreakdown as BbArBreakdown,
+  Candidate as BbCandidate, ConvertedElement as BbConvertedElement, DamageTarget as BbDamageTarget,
+  Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape, OptimizeResult as BbOptimizeResult,
+  SlotChoice as BbSlotChoice, Stats as BbStats, Weapon as BbWeapon, WeaponType as BbWeaponType,
+};
+use napi::bindgen_prelude::{Error, Result, Status};
+use napi_derive::napi;
+
+/// How a weapon's damage is derived (mirrors `bb_calc::WeaponType`).
+#[napi(string_enum)]
+pub enum WeaponType {
+  Dual,
+  Conv,
+  Blood,
+}
+
+impl From<BbWeaponType> for WeaponType {
+  fn from(value: BbWeaponType) -> Self {
+    match value {
+      BbWeaponType::Dual => WeaponType::Dual,
+      BbWeaponType::Conv => WeaponType::Conv,
+      BbWeaponType::Blood => WeaponType::Blood,
+    }
+  }
+}
+
+/// A weapon and its base damage values, exposed to JavaScript.
+#[napi(object)]
+pub struct Weapon {
+  pub id: String,
+  pub name: String,
+  pub weapon_type: WeaponType,
+  pub phys: u32,
+  pub blood: u32,
+  pub arcane: u32,
+  pub fire: u32,
+  pub bolt: u32,
+}
+
+impl From<&BbWeapon> for Weapon {
+  fn from(value: &BbWeapon) -> Self {
+    Weapon {
+      id: value.id.to_string(),
+      name: value.name.to_string(),
+      weapon_type: value.weapon_type.into(),
+      phys: value.phys as u32,
+      blood: value.blood as u32,
+      arcane: value.arcane as u32,
+      fire: value.fire as u32,
+      bolt: value.bolt as u32,
+    }
+  }
+}
+
+/// Returns every weapon in the game.
+#[napi]
+pub fn get_weapons() -> Vec<Weapon> {
+  BbWeapon::all().iter().map(Weapon::from).collect()
+}
+
+/// The physical shape of a blood gem (mirrors `bb_calc::GemShape`).
+#[derive(Clone, Copy)]
+#[napi(string_enum)]
+pub enum GemShape {
+  Radial,
+  Triangle,
+  Waning,
+  Circle,
+  /// Universal wildcard: a Droplet gem fits any slot.
+  Droplet,
+}
+
+impl From<GemShape> for BbGemShape {
+  fn from(value: GemShape) -> Self {
+    match value {
+      GemShape::Radial => BbGemShape::Radial,
+      GemShape::Triangle => BbGemShape::Triangle,
+      GemShape::Waning => BbGemShape::Waning,
+      GemShape::Circle => BbGemShape::Circle,
+      GemShape::Droplet => BbGemShape::Droplet,
+    }
+  }
+}
+
+impl From<BbGemShape> for GemShape {
+  fn from(value: BbGemShape) -> Self {
+    match value {
+      BbGemShape::Radial => GemShape::Radial,
+      BbGemShape::Triangle => GemShape::Triangle,
+      BbGemShape::Waning => GemShape::Waning,
+      BbGemShape::Circle => GemShape::Circle,
+      BbGemShape::Droplet => GemShape::Droplet,
+    }
+  }
+}
+
+/// The element a "Conv" weapon's physical damage is converted to.
+#[napi(string_enum)]
+pub enum ConvertedElement {
+  Phys,
+  Bolt,
+  Fire,
+  Arc,
+}
+
+impl From<BbConvertedElement> for ConvertedElement {
+  fn from(value: BbConvertedElement) -> Self {
+    match value {
+      BbConvertedElement::Phys => ConvertedElement::Phys,
+      BbConvertedElement::Bolt => ConvertedElement::Bolt,
+      BbConvertedElement::Fire => ConvertedElement::Fire,
+      BbConvertedElement::Arc => ConvertedElement::Arc,
+    }
+  }
+}
+
+/// A blood gem. Multiplier fields (`dmg*`) default to `1.0` for no effect;
+/// scaling and flat (`*scale`, `flat*`) fields default to `0.0`.
+#[napi(object)]
+pub struct Gem {
+  pub name: String,
+  pub source: String,
+  pub tier: u32,
+  pub shape: GemShape,
+  pub arc_scale: f64,
+  pub str_scale: f64,
+  pub dmg_general: f64,
+  pub dmg_arcane: f64,
+  pub dmg_fire: f64,
+  pub dmg_bolt: f64,
+  pub dmg_phys: f64,
+  pub dmg_blood: f64,
+  pub dmg_blunt: f64,
+  pub dmg_thrust: f64,
+  pub flat_phys: f64,
+  pub flat_arcane: f64,
+  pub flat_fire: f64,
+  pub flat_bolt: f64,
+  pub flat_blood: f64,
+  pub open_foes: f64,
+  pub striking: f64,
+  pub kinhunter: f64,
+  pub beasthunter: f64,
+}
+
+impl From<&Gem> for BbGem {
+  fn from(value: &Gem) -> Self {
+    BbGem {
+      name: value.name.clone(),
+      source: value.source.clone(),
+      tier: value.tier as u8,
+      shape: value.shape.into(),
+      arc_scale: value.arc_scale as f32,
+      str_scale: value.str_scale as f32,
+      dmg_general: value.dmg_general as f32,
+      dmg_arcane: value.dmg_arcane as f32,
+      dmg_fire: value.dmg_fire as f32,
+      dmg_bolt: value.dmg_bolt as f32,
+      dmg_phys: value.dmg_phys as f32,
+      dmg_blood: value.dmg_blood as f32,
+      dmg_blunt: value.dmg_blunt as f32,
+      dmg_thrust: value.dmg_thrust as f32,
+      flat_phys: value.flat_phys as f32,
+      flat_arcane: value.flat_arcane as f32,
+      flat_fire: value.flat_fire as f32,
+      flat_bolt: value.flat_bolt as f32,
+      flat_blood: value.flat_blood as f32,
+      open_foes: value.open_foes as f32,
+      striking: value.striking as f32,
+      kinhunter: value.kinhunter as f32,
+      beasthunter: value.beasthunter as f32,
+    }
+  }
+}
+
+/// The four hunter stats that drive weapon scaling.
+#[napi(object)]
+pub struct Stats {
+  pub str: u32,
+  pub skl: u32,
+  pub blt: u32,
+  pub arc: u32,
+}
+
+impl From<&Stats> for BbStats {
+  fn from(value: &Stats) -> Self {
+    BbStats {
+      str: value.str as u16,
+      skl: value.skl as u16,
+      blt: value.blt as u16,
+      arc: value.arc as u16,
+    }
+  }
+}
+
+/// The per-element breakdown of a weapon's Attack Rating.
+#[napi(object)]
+pub struct ArBreakdown {
+  pub total: f64,
+  pub physical: f64,
+  pub blunt: f64,
+  pub thrust: f64,
+  pub arcane: f64,
+  pub fire: f64,
+  pub bolt: f64,
+  pub blood: f64,
+  pub converted_element: ConvertedElement,
+}
+
+impl From<BbArBreakdown> for ArBreakdown {
+  fn from(value: BbArBreakdown) -> Self {
+    ArBreakdown {
+      total: value.total as f64,
+      physical: value.physical as f64,
+      blunt: value.blunt as f64,
+      thrust: value.thrust as f64,
+      arcane: value.arcane as f64,
+      fire: value.fire as f64,
+      bolt: value.bolt as f64,
+      blood: value.blood as f64,
+      converted_element: value.converted_element.into(),
+    }
+  }
+}
+
+/// Computes the Attack Rating for the weapon with `weapon_id`, fitted with up
+/// to three `gems` at the given hunter `stats`. Gem slot order does not matter.
+#[napi]
+pub fn compute_ar(weapon_id: String, gems: Vec<Gem>, stats: Stats) -> Result<ArBreakdown> {
+  let weapon = BbWeapon::by_id(&weapon_id).ok_or_else(|| {
+    Error::new(Status::InvalidArg, format!("unknown weapon id: {weapon_id}"))
+  })?;
+
+  if gems.len() > 3 {
+    return Err(Error::new(
+      Status::InvalidArg,
+      format!("a weapon takes at most 3 gems, got {}", gems.len()),
+    ));
+  }
+
+  let bb_gems: Vec<BbGem> = gems.iter().map(BbGem::from).collect();
+  let mut slots: [Option<&BbGem>; 3] = [None, None, None];
+  for (slot, gem) in slots.iter_mut().zip(bb_gems.iter()) {
+    *slot = Some(gem);
+  }
+
+  let breakdown = bb_compute_ar(weapon, slots, &BbStats::from(&stats));
+  Ok(breakdown.into())
+}
+
+/// Which figure {@link optimizeForSlots} maximizes. `Total` is the full Attack
+/// Rating; the rest target a single damage line (mirrors `bb_calc::DamageTarget`).
+#[derive(Clone, Copy)]
+#[napi(string_enum)]
+pub enum DamageTarget {
+  Total,
+  Phys,
+  Blunt,
+  Thrust,
+  Arcane,
+  Fire,
+  Bolt,
+  Blood,
+}
+
+impl From<DamageTarget> for BbDamageTarget {
+  fn from(value: DamageTarget) -> Self {
+    match value {
+      DamageTarget::Total => BbDamageTarget::Total,
+      DamageTarget::Phys => BbDamageTarget::Phys,
+      DamageTarget::Blunt => BbDamageTarget::Blunt,
+      DamageTarget::Thrust => BbDamageTarget::Thrust,
+      DamageTarget::Arcane => BbDamageTarget::Arcane,
+      DamageTarget::Fire => BbDamageTarget::Fire,
+      DamageTarget::Bolt => BbDamageTarget::Bolt,
+      DamageTarget::Blood => BbDamageTarget::Blood,
+    }
+  }
+}
+
+/// A minimal identity for reporting which owned gem the optimizer chose.
+#[napi(object)]
+pub struct GemRef {
+  pub id: String,
+  pub name: String,
+  pub effects: Vec<String>,
+}
+
+impl From<&GemRef> for BbGemRef {
+  fn from(value: &GemRef) -> Self {
+    BbGemRef {
+      id: value.id.clone(),
+      name: value.name.clone(),
+      effects: value.effects.clone(),
+    }
+  }
+}
+
+impl From<BbGemRef> for GemRef {
+  fn from(value: BbGemRef) -> Self {
+    GemRef {
+      id: value.id,
+      name: value.name,
+      effects: value.effects,
+    }
+  }
+}
+
+/// A gem the player owns, ready to feed the optimizer. `shape` is the
+/// inventory-sourced shape (authoritative for slotting) and is kept separate
+/// from the gem's calc fields, which never include shape.
+#[napi(object)]
+pub struct Candidate {
+  pub gem: Gem,
+  pub shape: GemShape,
+  pub gem_ref: GemRef,
+}
+
+impl From<&Candidate> for BbCandidate {
+  fn from(value: &Candidate) -> Self {
+    BbCandidate {
+      gem: BbGem::from(&value.gem),
+      shape: value.shape.into(),
+      gem_ref: BbGemRef::from(&value.gem_ref),
+    }
+  }
+}
+
+/// One imprint slot in the result: its shape and the owned gem placed in it
+/// (`gem` is absent when the optimizer left the slot empty).
+#[napi(object)]
+pub struct SlotChoice {
+  pub slot: u32,
+  pub slot_shape: GemShape,
+  pub gem: Option<GemRef>,
+}
+
+impl From<BbSlotChoice> for SlotChoice {
+  fn from(value: BbSlotChoice) -> Self {
+    SlotChoice {
+      slot: value.slot as u32,
+      slot_shape: value.slot_shape.into(),
+      gem: value.gem.map(GemRef::from),
+    }
+  }
+}
+
+/// The winning socketing found by {@link optimizeForSlots}.
+#[napi(object)]
+pub struct OptimizeResult {
+  /// The value of the optimized metric (see {@link DamageTarget}).
+  pub score: f64,
+  /// The full Attack Rating of the winning socketing, regardless of target.
+  pub total: f64,
+  pub breakdown: ArBreakdown,
+  pub slots: Vec<SlotChoice>,
+}
+
+impl From<BbOptimizeResult> for OptimizeResult {
+  fn from(value: BbOptimizeResult) -> Self {
+    OptimizeResult {
+      score: value.score as f64,
+      total: value.total as f64,
+      breakdown: value.breakdown.into(),
+      slots: value.slots.into_iter().map(SlotChoice::from).collect(),
+    }
+  }
+}
+
+/// Finds the socketing of `candidates` into `slot_shapes` that maximizes
+/// `target` for the weapon with `weapon_id` at the given hunter `stats`,
+/// respecting shape fit and per-gem counts. Supports up to 3 slots.
+#[napi]
+pub fn optimize_for_slots(
+  weapon_id: String,
+  slot_shapes: Vec<GemShape>,
+  candidates: Vec<Candidate>,
+  stats: Stats,
+  target: DamageTarget,
+) -> Result<OptimizeResult> {
+  let weapon = BbWeapon::by_id(&weapon_id).ok_or_else(|| {
+    Error::new(Status::InvalidArg, format!("unknown weapon id: {weapon_id}"))
+  })?;
+
+  if slot_shapes.len() > 3 {
+    return Err(Error::new(
+      Status::InvalidArg,
+      format!("a weapon takes at most 3 slots, got {}", slot_shapes.len()),
+    ));
+  }
+
+  let bb_shapes: Vec<BbGemShape> = slot_shapes.iter().map(|s| (*s).into()).collect();
+  let bb_candidates: Vec<BbCandidate> = candidates.iter().map(BbCandidate::from).collect();
+
+  let result = bb_optimize_for_slots(
+    weapon,
+    &bb_shapes,
+    &bb_candidates,
+    &BbStats::from(&stats),
+    target.into(),
+  );
+  Ok(result.into())
+}
