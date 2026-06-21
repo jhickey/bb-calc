@@ -42,6 +42,9 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Oxlint
         run: pnpm lint
+      - name: Build TS
+        run: pnpm build:ts
+        working-directory: packages/bb-calc-js
       # The bb-calc crate is intentionally hand-formatted (e.g. lookup tables) and
       # is not rustfmt-managed, so only the napi crate is fmt/clippy gated here.
       - name: Cargo fmt
@@ -57,16 +60,16 @@ jobs:
         settings:
           - host: macos-latest
             target: x86_64-apple-darwin
-            build: pnpm build --target x86_64-apple-darwin
+            build: pnpm napi build --platform --release --target x86_64-apple-darwin
           - host: windows-latest
-            build: pnpm build --target x86_64-pc-windows-msvc
+            build: pnpm napi build --platform --release --target x86_64-pc-windows-msvc
             target: x86_64-pc-windows-msvc
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            build: pnpm build --target x86_64-unknown-linux-gnu --use-napi-cross
+            build: pnpm napi build --platform --release --target x86_64-unknown-linux-gnu --use-napi-cross
           - host: macos-latest
             target: aarch64-apple-darwin
-            build: pnpm build --target aarch64-apple-darwin
+            build: pnpm napi build --platform --release --target aarch64-apple-darwin
     name: stable - ${{ matrix.settings.target }} - node@22
     runs-on: ${{ matrix.settings.host }}
     steps:
@@ -279,6 +282,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         working-directory: ${{ github.workspace }}
+      - name: Build TS
+        run: pnpm build:ts
       - name: create npm dirs
         run: pnpm napi create-npm-dirs
       - name: Download all artifacts
