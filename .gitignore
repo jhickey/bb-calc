@@ -3,3 +3,4 @@ node_modules
 .idea
 .claude
 packages/bb-calc/data/saves
+data/saves

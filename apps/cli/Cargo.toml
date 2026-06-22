@@ -1,0 +1,14 @@
+[package]
+description = "Bloodborne Attack Rating CLI"
+edition     = "2024"
+license     = "MIT OR Apache-2.0"
+name        = "bb-calc-cli"
+repository  = "https://github.com/jhickey/bb-calc"
+version     = "0.2.0"
+
+[dependencies]
+bb-calc    = { path = "../../packages/bb-calc" }
+clap       = { version = "4.6.1", features = ["derive"] }
+serde      = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0"
+uuid       = { version = "1.23.3", features = ["v4"] }
