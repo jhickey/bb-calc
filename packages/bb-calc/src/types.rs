@@ -1,5 +1,7 @@
 //! Core data types shared across the calc, optimizer, and save/inventory layers.
 
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WeaponType {
     Dual,
@@ -7,7 +9,7 @@ pub enum WeaponType {
     Blood,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum GemShape {
     Radial,
     Triangle,
@@ -27,6 +29,12 @@ pub struct Weapon {
     pub arcane: u16,
     pub fire: u16,
     pub bolt: u16,
+    // Imprint gem slots, baked in per weapon variant (Normal/Uncanny/Lost are
+    // distinct weapons in this table). The optimizer reads these shapes to decide
+    // which owned gems can be socketed where.
+    pub gem_slot_1: GemShape,
+    pub gem_slot_2: GemShape,
+    pub gem_slot_3: GemShape,
     // Scaling/enemy coefficients: read by the calc engine but not part of the
     // public surface, so they stay crate-visible (the generated `WEAPONS` table
     // and `compute_ar` both live in this crate).
@@ -66,6 +74,8 @@ pub struct Gem {
     pub shape: Option<GemShape>,
     pub arc_scale: f32,
     pub str_scale: f32,
+    pub skl_scale: f32,
+    pub blt_scale: f32,
     pub dmg_general: f32,
     pub dmg_arcane: f32,
     pub dmg_fire: f32,
@@ -93,7 +103,7 @@ pub enum ConvertedElement {
     Arc,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Stats {
     pub str: u16,
     pub skl: u16,
@@ -120,7 +130,7 @@ mod tests {
 
     #[test]
     fn weapons_are_generated_from_json() {
-        assert_eq!(WEAPONS.len(), 31);
+        assert_eq!(WEAPONS.len(), 83);
     }
 
     #[test]
@@ -130,7 +140,25 @@ mod tests {
         assert_eq!(w.phys, 160);
         assert_eq!(w.arcane, 80);
         assert_eq!(w.weapon_type, WeaponType::Dual);
+        // Normal Amygdalan Arm imprint: Radial / Radial / Triangle.
+        assert_eq!(w.gem_slot_1, GemShape::Radial);
+        assert_eq!(w.gem_slot_2, GemShape::Radial);
+        assert_eq!(w.gem_slot_3, GemShape::Triangle);
 
         assert!(Weapon::by_id("nope").is_none());
+    }
+
+    #[test]
+    fn imprint_variants_are_distinct_weapons_with_their_own_slots() {
+        let lost = Weapon::by_id("amygdalan_arm_lost").expect("amygdalan_arm_lost exists");
+        assert_eq!(lost.name, "Lost Amygdalan Arm");
+        // Lost Amygdalan Arm imprint: Radial / Triangle / Waning.
+        assert_eq!(lost.gem_slot_1, GemShape::Radial);
+        assert_eq!(lost.gem_slot_2, GemShape::Triangle);
+        assert_eq!(lost.gem_slot_3, GemShape::Waning);
+
+        // Trick forms share their base weapon's (Normal) slots and stay Normal-only.
+        assert!(Weapon::by_id("logarius_wheel_tricked").is_some());
+        assert!(Weapon::by_id("logarius_wheel_tricked_uncanny").is_none());
     }
 }

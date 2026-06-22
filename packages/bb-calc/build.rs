@@ -34,6 +34,9 @@ struct RawWeapon {
     righteous: f32,
     serrated_tricked: f32,
     righteous_tricked: f32,
+    gem_slot1: String,
+    gem_slot2: String,
+    gem_slot3: String,
 }
 
 fn weapon_type_variant(kind: &str) -> &'static str {
@@ -42,6 +45,17 @@ fn weapon_type_variant(kind: &str) -> &'static str {
         "Conv" => "WeaponType::Conv",
         "Blood" => "WeaponType::Blood",
         other => panic!("unknown weapon type {other:?} in data/weapons.json"),
+    }
+}
+
+fn gem_shape_variant(shape: &str) -> &'static str {
+    match shape {
+        "Radial" => "GemShape::Radial",
+        "Triangle" => "GemShape::Triangle",
+        "Waning" => "GemShape::Waning",
+        "Circle" => "GemShape::Circle",
+        "Droplet" => "GemShape::Droplet",
+        other => panic!("unknown gem slot shape {other:?} in data/weapons.json"),
     }
 }
 
@@ -113,6 +127,9 @@ fn main() {
              \x20       arcane: {arcane},\n\
              \x20       fire: {fire},\n\
              \x20       bolt: {bolt},\n\
+             \x20       gem_slot_1: {gem_slot_1},\n\
+             \x20       gem_slot_2: {gem_slot_2},\n\
+             \x20       gem_slot_3: {gem_slot_3},\n\
              \x20       str_scale: {str_scale}f32,\n\
              \x20       skl_scale: {skl_scale}f32,\n\
              \x20       blt_scale: {blt_scale}f32,\n\
@@ -130,6 +147,9 @@ fn main() {
             arcane = w.arcane,
             fire = w.fire,
             bolt = w.bolt,
+            gem_slot_1 = gem_shape_variant(&w.gem_slot1),
+            gem_slot_2 = gem_shape_variant(&w.gem_slot2),
+            gem_slot_3 = gem_shape_variant(&w.gem_slot3),
             str_scale = w.str_scale,
             skl_scale = w.skl_scale,
             blt_scale = w.blt_scale,
