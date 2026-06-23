@@ -9,6 +9,9 @@ packages/bb-calc-js/*.wasi.cjs
 packages/bb-calc-js/wasi-worker-browser.mjs
 packages/bb-calc-js/wasi-worker.mjs
 
+# Generated route tree (owned by TanStack Router's generator)
+apps/web/src/routeTree.gen.ts
+
 # Lockfiles and generated data
 pnpm-lock.yaml
 **/Cargo.lock
