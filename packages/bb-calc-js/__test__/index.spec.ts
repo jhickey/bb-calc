@@ -98,8 +98,8 @@ function inventoryGem(id: string, shape: GemShape, effects: Array<string>): Inve
   return { id, name: id, shape, rating: 19, effects }
 }
 
-test('optimize echoes the weapon id and exposes its baked-in slot shapes', (t) => {
-  const [result] = optimize(['amygdalan_arm'], [], ZERO_STATS, DamageTarget.Total, Mode.Compare)
+test('optimize echoes the weapon id and exposes its baked-in slot shapes', async (t) => {
+  const [result] = await optimize(['amygdalan_arm'], [], ZERO_STATS, DamageTarget.Total, Mode.Compare)
   t.is(result?.weaponId, 'amygdalan_arm')
   t.deepEqual(
     result?.slots.map((s) => s.slotShape),
@@ -107,9 +107,9 @@ test('optimize echoes the weapon id and exposes its baked-in slot shapes', (t) =
   )
 })
 
-test('optimize places a fitting damage gem and raises Attack Rating', (t) => {
+test('optimize places a fitting damage gem and raises Attack Rating', async (t) => {
   const gems = [inventoryGem('big-phys', GemShape.Radial, ['Physical ATK UP +50%'])]
-  const [result] = optimize(['amygdalan_arm'], gems, ZERO_STATS, DamageTarget.Total, Mode.Compare)
+  const [result] = await optimize(['amygdalan_arm'], gems, ZERO_STATS, DamageTarget.Total, Mode.Compare)
 
   // The gem fits a Radial slot, boosting the 160 physical line by 50% to 240.
   t.true(result!.slots.some((s) => s.gem?.id === 'big-phys'))
@@ -118,8 +118,8 @@ test('optimize places a fitting damage gem and raises Attack Rating', (t) => {
   t.is(result?.score, 320)
 })
 
-test('optimize leaves slots empty when the inventory is empty', (t) => {
-  const [result] = optimize(['amygdalan_arm'], [], ZERO_STATS, DamageTarget.Total, Mode.Compare)
+test('optimize leaves slots empty when the inventory is empty', async (t) => {
+  const [result] = await optimize(['amygdalan_arm'], [], ZERO_STATS, DamageTarget.Total, Mode.Compare)
   t.true(result!.slots.every((s) => s.gem == null))
   t.is(result?.total, 240)
 })

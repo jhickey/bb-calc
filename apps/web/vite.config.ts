@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url'
 
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import { devtools } from '@tanstack/devtools-vite'
 
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
@@ -26,6 +26,32 @@ const crossOriginIsolation = {
   'Cross-Origin-Embedder-Policy': 'require-corp',
 }
 
+// `server.headers` only covers responses Vite's own middleware serves; the HTML
+// document goes through TanStack Start's SSR handler, which never sees them — so
+// the page isn't cross-origin isolated and `SharedArrayBuffer` can't be handed
+// to the WASM worker pool (the optimizer would hang on a postMessage clone
+// error). Set the headers as middleware so every response carries them,
+// document included.
+const crossOriginIsolationPlugin: Plugin = {
+  name: 'cross-origin-isolation-headers',
+  configureServer(server) {
+    server.middlewares.use((_req, res, next) => {
+      for (const [key, value] of Object.entries(crossOriginIsolation)) {
+        res.setHeader(key, value)
+      }
+      next()
+    })
+  },
+  configurePreviewServer(server) {
+    server.middlewares.use((_req, res, next) => {
+      for (const [key, value] of Object.entries(crossOriginIsolation)) {
+        res.setHeader(key, value)
+      }
+      next()
+    })
+  },
+}
+
 const config = defineConfig({
   // Resolve `bb-calc-js` to its WASM browser binding. This app drives the
   // calculator from the browser (client-side / client-gated rendering), so the
@@ -41,9 +67,7 @@ const config = defineConfig({
   optimizeDeps: {
     exclude: ['bb-calc-js', '@napi-rs/wasm-runtime'],
   },
-  server: { headers: crossOriginIsolation },
-  preview: { headers: crossOriginIsolation },
-  plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
+  plugins: [crossOriginIsolationPlugin, devtools(), tailwindcss(), tanstackStart(), viteReact()],
 })
 
 export default config
