@@ -308,6 +308,11 @@ mod tests {
     fn optimize_picks_highest_total_within_slot() {
         let mut w = weapon("Test Blade", WeaponType::Dual);
         w.phys = 100;
+        // Constrain to a single usable Radial slot so the two Radial gems compete
+        // for it; the other two slots take a shape neither gem fits.
+        w.gem_slot_1 = GemShape::Radial;
+        w.gem_slot_2 = GemShape::Triangle;
+        w.gem_slot_3 = GemShape::Triangle;
 
         let weak = candidate("weak", GemShape::Radial, |g| g.dmg_general = 1.2);
         let strong = candidate("strong", GemShape::Radial, |g| g.dmg_general = 2.0);
@@ -315,10 +320,10 @@ mod tests {
         let result =
             optimize_gems_for_weapon(&w, &[weak, strong], &ZERO_STATS, DamageTarget::Total);
 
-        // One Radial slot -> the 2.0x gem wins: floor(100 * 2.0) = 200.
+        // Only the one Radial slot is fillable -> the 2.0x gem wins: floor(100 * 2.0) = 200.
         assert_eq!(result.score, 200.0);
         assert_eq!(result.total, 200.0);
-        assert_eq!(result.slots.len(), 1);
+        assert_eq!(result.slots.len(), 3);
         assert_eq!(result.slots[0].gem.as_ref().unwrap().id, "strong");
     }
 
@@ -326,8 +331,13 @@ mod tests {
     fn optimize_respects_shape_fit_with_droplet_wildcard() {
         let mut w = weapon("Test Blade", WeaponType::Dual);
         w.phys = 100;
+        // Every slot is Triangle: the strong Radial gem fits none of them, while
+        // the weaker Droplet wildcard fits any.
+        w.gem_slot_1 = GemShape::Triangle;
+        w.gem_slot_2 = GemShape::Triangle;
+        w.gem_slot_3 = GemShape::Triangle;
 
-        // A strong gem that does not fit the Triangle slot, and a weaker Droplet
+        // A strong gem that does not fit a Triangle slot, and a weaker Droplet
         // wildcard that does.
         let mismatched = candidate("radial", GemShape::Radial, |g| g.dmg_general = 5.0);
         let droplet = candidate("droplet", GemShape::Droplet, |g| g.dmg_general = 1.5);
@@ -335,9 +345,14 @@ mod tests {
         let result =
             optimize_gems_for_weapon(&w, &[mismatched, droplet], &ZERO_STATS, DamageTarget::Total);
 
-        // Only the Droplet fits the Triangle slot: floor(100 * 1.5) = 150.
+        // Only the single Droplet instance can be slotted: floor(100 * 1.5) = 150.
         assert_eq!(result.total, 150.0);
-        assert_eq!(result.slots[0].gem.as_ref().unwrap().id, "droplet");
+        let placed: Vec<&str> = result
+            .slots
+            .iter()
+            .filter_map(|s| s.gem.as_ref().map(|g| g.id.as_str()))
+            .collect();
+        assert_eq!(placed, vec!["droplet"]);
     }
 
     #[test]
@@ -422,16 +437,26 @@ mod tests {
         // Conversion weapon: target fire output specifically.
         let mut w = weapon("Test Cannon", WeaponType::Conv);
         w.phys = 100;
+        // A single usable Radial slot so the fire and bolt gems compete for it.
+        w.gem_slot_1 = GemShape::Radial;
+        w.gem_slot_2 = GemShape::Triangle;
+        w.gem_slot_3 = GemShape::Triangle;
 
         let fire = candidate("fire", GemShape::Radial, |g| g.dmg_fire = 2.0);
         let bolt = candidate("bolt", GemShape::Radial, |g| g.dmg_bolt = 3.0);
 
         let result = optimize_gems_for_weapon(&w, &[fire, bolt], &ZERO_STATS, DamageTarget::Fire);
 
-        // The fire gem maximizes the fire line: floor(elemBase(100) * 2.0) = 200.
+        // With one slot and a Fire target, the fire gem wins over the (higher
+        // total) bolt gem: floor(elemBase(100) * 2.0) = 200.
         assert_eq!(result.score, 200.0);
         assert_eq!(result.breakdown.fire, 200.0);
-        assert_eq!(result.slots[0].gem.as_ref().unwrap().id, "fire");
+        let placed: Vec<&str> = result
+            .slots
+            .iter()
+            .filter_map(|s| s.gem.as_ref().map(|g| g.id.as_str()))
+            .collect();
+        assert_eq!(placed, vec!["fire"]);
     }
 }
 
