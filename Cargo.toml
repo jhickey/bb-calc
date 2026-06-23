@@ -1,5 +1,5 @@
 [workspace]
-members  = ["packages/bb-calc", "packages/bb-calc-js"]
+members  = ["packages/bb-calc", "packages/bb-calc-js", "apps/cli"]
 resolver = "3"
 
 [profile.release]

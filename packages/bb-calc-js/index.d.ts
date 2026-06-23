@@ -64,6 +64,8 @@ export interface Gem {
   shape: GemShape
   arcScale: number
   strScale: number
+  sklScale: number
+  bltScale: number
   dmgGeneral: number
   dmgArcane: number
   dmgFire: number
@@ -103,12 +105,26 @@ export declare const enum GemShape {
 /** Returns every weapon in the game. */
 export declare function getWeapons(): Array<Weapon>
 
+export interface InventoryGem {
+  id: string
+  name: string
+  shape: GemShape
+  rating: number
+  effects: Array<string>
+}
+
+export declare const enum Mode {
+  Compare = 'Compare',
+  Plan = 'Plan'
+}
+
 /**
- * Finds the socketing of `candidates` into `slot_shapes` that maximizes
- * `target` for the weapon with `weapon_id` at the given hunter `stats`,
- * respecting shape fit and per-gem counts. Supports up to 3 slots.
+ * Finds the socketing of `candidates` that maximizes `target` for the weapon
+ * with `weapon_id`, using that weapon variant's own baked-in imprint slots
+ * (Normal/Uncanny/Lost are distinct ids). Prefer this over {@link optimizeForSlots}
+ * unless the slots come from somewhere other than the chosen weapon.
  */
-export declare function optimizeForSlots(weaponId: string, slotShapes: Array<GemShape>, candidates: Array<Candidate>, stats: Stats, target: DamageTarget): OptimizeResult
+export declare function optimize(weaponIds: Array<string>, gems: Array<InventoryGem>, stats: Stats, target: DamageTarget, mode: Mode, excludedGems?: Array<string> | undefined | null): Array<OptimizeResult>
 
 /** The winning socketing found by {@link optimizeForSlots}. */
 export interface OptimizeResult {
@@ -118,6 +134,7 @@ export interface OptimizeResult {
   total: number
   breakdown: ArBreakdown
   slots: Array<SlotChoice>
+  weaponId: string
 }
 
 /**
@@ -148,6 +165,10 @@ export interface Weapon {
   arcane: number
   fire: number
   bolt: number
+  /** Imprint gem-slot shapes, baked in per weapon variant (Normal/Uncanny/Lost). */
+  gemSlot1: GemShape
+  gemSlot2: GemShape
+  gemSlot3: GemShape
 }
 
 /** How a weapon's damage is derived (mirrors `bb_calc::WeaponType`). */

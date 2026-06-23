@@ -1,17 +1,18 @@
 //! Build a player's gem [`Inventory`] from the bytes of a decrypted save.
 
+use serde::{Deserialize, Serialize};
 use crate::save::{lookup_effect, parse_save_gems, parse_save_name, parse_save_stats};
 use crate::types::{GemShape, Stats};
 
 /// Result that pairs produced data with non-fatal notes for the user.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WithWarnings<T> {
     pub value: T,
     pub warnings: Vec<String>,
 }
 
 /// A gem the player owns, captured from a decrypted save.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InventoryGem {
     /// Save instance id (hex u32) — stable and unique per physical gem.
     pub id: String,
@@ -23,7 +24,7 @@ pub struct InventoryGem {
 }
 
 /// A player's gem collection plus where it came from.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Inventory {
     pub character: Option<String>,
     pub imported_from: Option<String>,

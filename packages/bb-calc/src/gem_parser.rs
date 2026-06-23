@@ -12,7 +12,7 @@
 //!  - Flat damage `<+/-n> <type>`      → field += n   (leading sign required)
 //!      phys, arc|arcane, fire, bolt, blood
 //!  - Scaling     `<stat>-scale <n>`   → field += n
-//!      str-scale, arc-scale   (the only two gem-scale fields that exist)
+//!      str-scale, skl-scale, blt-scale, arc-scale
 //!
 //! The clause *form* disambiguates the overloaded keywords, e.g. `arc 30%`
 //! (dmg_arcane) vs `+18 arc` (flat_arcane) vs `arc-scale 0.42` (arc_scale).
@@ -30,6 +30,8 @@ pub fn base_gem(name: &str) -> Gem {
         shape: None,
         arc_scale: 0.0,
         str_scale: 0.0,
+        skl_scale: 0.0,
+        blt_scale: 0.0,
         dmg_general: 1.0,
         dmg_arcane: 1.0,
         dmg_fire: 1.0,
@@ -52,8 +54,7 @@ pub fn base_gem(name: &str) -> Gem {
 
 /// The valid multiplier keywords (for error messages), in the same order as the
 /// TypeScript `MULT_FIELDS` map.
-const MULT_KEYWORDS: &str =
-    "phys, blunt, thrust, arc, arcane, fire, bolt, blood, tinge, atk, nourishing, \
+const MULT_KEYWORDS: &str = "phys, blunt, thrust, arc, arcane, fire, bolt, blood, tinge, atk, nourishing, \
      open, openfoes, striking, kin, kinhunter, beast, beasthunter";
 const FLAT_KEYWORDS: &str = "phys, arc, arcane, fire, bolt, blood";
 
@@ -77,7 +78,10 @@ fn is_numeric_token(s: &str, require_sign: bool) -> bool {
         return false;
     }
     let body = if signed { &s[1..] } else { s };
-    !body.is_empty() && body.chars().all(|c| c.is_ascii_digit() || c == '.' || c == ',')
+    !body.is_empty()
+        && body
+            .chars()
+            .all(|c| c.is_ascii_digit() || c == '.' || c == ',')
 }
 
 fn is_word(s: &str) -> bool {
@@ -141,10 +145,12 @@ fn apply_clause(gem: &mut Gem, clause: &str) -> Result<(), String> {
     if let Some((stat, num)) = scale_form(clause) {
         let field: &mut f32 = match stat.as_str() {
             "str" => &mut gem.str_scale,
+            "skl" => &mut gem.skl_scale,
+            "blt" | "bloodtinge" => &mut gem.blt_scale,
             "arc" | "arcane" => &mut gem.arc_scale,
             _ => {
                 return Err(format!(
-                    "\"{clause}\": no scaling effect \"{stat}\" (valid: str-scale, arc-scale)"
+                    "\"{clause}\": no scaling effect \"{stat}\" (valid: str-scale, skl-scale, blt-scale, arc-scale)"
                 ));
             }
         };
@@ -201,7 +207,11 @@ fn apply_clause(gem: &mut Gem, clause: &str) -> Result<(), String> {
 /// Parse an effect spec into a [`Gem`], naming it `name` (defaulting to "Custom").
 pub fn parse_gem_effects(spec: &str, name: Option<&str>) -> Result<Gem, String> {
     let mut gem = base_gem(name.unwrap_or("Custom"));
-    let clauses: Vec<&str> = spec.split(';').map(str::trim).filter(|c| !c.is_empty()).collect();
+    let clauses: Vec<&str> = spec
+        .split(';')
+        .map(str::trim)
+        .filter(|c| !c.is_empty())
+        .collect();
     if clauses.is_empty() {
         return Err("Empty gem spec. Example: \"phys 27.2%; +15 phys\"".to_string());
     }
@@ -209,6 +219,107 @@ pub fn parse_gem_effects(spec: &str, name: Option<&str>) -> Result<Gem, String> 
         apply_clause(&mut gem, clause)?;
     }
     Ok(gem)
+}
+
+/// Apply one *in-game* effect string (as stored on an imported gem, e.g.
+/// "Physical ATK UP +27.2%", "Add fire ATK +50", "STR scaling +9.9") onto `gem`.
+///
+/// Returns `false` when the effect has no representation in the AR [`Gem`] model
+/// — conditionals ("ATK UP near death"), charge/rally/durability/stamina/poison/HP
+/// effects, flat all-type ATK (no per-type field), and "No Effect" — so the caller
+/// can surface it as skipped. Scaling values are percentage points (`÷100`), so
+/// "STR scaling +9.9" contributes `0.099` to the coefficient (matching the calc's
+/// additive `weapon.str_scale + gem.str_scale`).
+fn apply_ingame_effect(gem: &mut Gem, effect: &str) -> bool {
+    let tokens: Vec<&str> = effect.split_whitespace().collect();
+    if tokens.len() < 2 {
+        return false; // e.g. "No Effect"
+    }
+    let last = tokens[tokens.len() - 1];
+    let (num_str, is_pct) = match last.strip_suffix('%') {
+        Some(n) => (n, true),
+        None => (last, false),
+    };
+    let Ok(value) = num_str.parse::<f32>() else {
+        return false;
+    };
+    if !value.is_finite() {
+        return false;
+    }
+    let prefix = tokens[..tokens.len() - 1].join(" ");
+
+    // Percentage multipliers: field *= 1 + value/100. "DOWN" effects carry a
+    // negative value, so the same arithmetic expresses the curse.
+    if is_pct {
+        let field: Option<&mut f32> = match prefix.as_str() {
+            "Physical ATK UP" => Some(&mut gem.dmg_phys),
+            "Blunt ATK UP" => Some(&mut gem.dmg_blunt),
+            "Thrust ATK UP" => Some(&mut gem.dmg_thrust),
+            "Arcane ATK UP" => Some(&mut gem.dmg_arcane),
+            "Fire ATK UP" => Some(&mut gem.dmg_fire),
+            "Bolt ATK UP" => Some(&mut gem.dmg_bolt),
+            "Blood ATK UP" => Some(&mut gem.dmg_blood),
+            "ATK UP" | "ATK DOWN" => Some(&mut gem.dmg_general),
+            "ATK vs beasts UP" | "ATK vs beasts DOWN" => Some(&mut gem.beasthunter),
+            "ATK vs kin UP" | "ATK vs the kin UP" | "ATK vs the kin DOWN" => {
+                Some(&mut gem.kinhunter)
+            }
+            "ATK vs open foes UP" => Some(&mut gem.open_foes),
+            _ => None,
+        };
+        if let Some(f) = field {
+            *f *= 1.0 + value / 100.0;
+            return true;
+        }
+    }
+
+    // Flat per-type ATK adds: field += value.
+    {
+        let field: Option<&mut f32> = match prefix.as_str() {
+            "Add physical ATK" => Some(&mut gem.flat_phys),
+            "Add arcane ATK" => Some(&mut gem.flat_arcane),
+            "Add fire ATK" => Some(&mut gem.flat_fire),
+            "Add bolt ATK" => Some(&mut gem.flat_bolt),
+            "Add blood ATK" => Some(&mut gem.flat_blood),
+            _ => None,
+        };
+        if let Some(f) = field {
+            *f += value;
+            return true;
+        }
+    }
+
+    // Scaling: percentage points added to the scaling coefficient (value/100).
+    {
+        let field: Option<&mut f32> = match prefix.as_str() {
+            "STR scaling" => Some(&mut gem.str_scale),
+            "SKL scaling" => Some(&mut gem.skl_scale),
+            "Bloodtinge scaling" => Some(&mut gem.blt_scale),
+            "Arcane scaling" => Some(&mut gem.arc_scale),
+            _ => None,
+        };
+        if let Some(f) = field {
+            *f += value / 100.0;
+            return true;
+        }
+    }
+
+    false
+}
+
+/// Build a [`Gem`] from a physical gem's *in-game* effect strings (as captured on
+/// an imported `InventoryGem`). The returned `Vec` lists effects that could not be
+/// modeled by the AR calc, in input order, so callers can warn about them.
+pub fn gem_from_ingame_effects(name: &str, effects: &[String]) -> (Gem, Vec<String>) {
+    let mut gem = base_gem(name);
+    gem.source = "inventory".to_string();
+    let mut skipped = Vec::new();
+    for effect in effects {
+        if !apply_ingame_effect(&mut gem, effect) {
+            skipped.push(effect.clone());
+        }
+    }
+    (gem, skipped)
 }
 
 #[cfg(test)]
@@ -285,21 +396,106 @@ mod tests {
     #[test]
     fn uses_the_provided_name_defaulting_to_custom() {
         assert_eq!(parse("phys 10%").name, "Custom");
-        assert_eq!(parse_gem_effects("phys 10%", Some("My Gem")).unwrap().name, "My Gem");
+        assert_eq!(
+            parse_gem_effects("phys 10%", Some("My Gem")).unwrap().name,
+            "My Gem"
+        );
         assert_eq!(parse("phys 10%").source, "custom");
     }
 
     #[test]
     fn throws_on_an_unknown_keyword() {
-        assert!(parse_gem_effects("xyz 10%", None).unwrap_err().contains("no percentage effect"));
-        assert!(parse_gem_effects("+5 striking", None)
-            .unwrap_err()
-            .contains("no flat-damage type"));
+        assert!(
+            parse_gem_effects("xyz 10%", None)
+                .unwrap_err()
+                .contains("no percentage effect")
+        );
+        assert!(
+            parse_gem_effects("+5 striking", None)
+                .unwrap_err()
+                .contains("no flat-damage type")
+        );
     }
 
     #[test]
     fn throws_on_an_unparseable_clause() {
-        assert!(parse_gem_effects("phys", None).unwrap_err().contains("Could not parse"));
-        assert!(parse_gem_effects("", None).unwrap_err().contains("Empty gem spec"));
+        assert!(
+            parse_gem_effects("phys", None)
+                .unwrap_err()
+                .contains("Could not parse")
+        );
+        assert!(
+            parse_gem_effects("", None)
+                .unwrap_err()
+                .contains("Empty gem spec")
+        );
+    }
+
+    #[test]
+    fn parses_skl_and_blt_scaling_in_the_friendly_form() {
+        assert_eq!(parse("skl-scale 0.5").skl_scale, 0.5);
+        assert_eq!(parse("blt-scale 0.4").blt_scale, 0.4);
+        assert_eq!(parse("bloodtinge-scale 0.4").blt_scale, 0.4);
+    }
+
+    #[test]
+    fn ingame_maps_multipliers_flats_and_scaling() {
+        let (g, skipped) = gem_from_ingame_effects(
+            "Test",
+            &[
+                "Physical ATK UP +27.2%".to_string(),
+                "Add fire ATK +50".to_string(),
+                "STR scaling +9.9".to_string(),
+            ],
+        );
+        assert!((g.dmg_phys - 1.272).abs() < 1e-6);
+        assert_eq!(g.flat_fire, 50.0);
+        // Scaling is percentage points: +9.9 -> 0.099.
+        assert!((g.str_scale - 0.099).abs() < 1e-6);
+        assert!(skipped.is_empty());
+        assert_eq!(g.source, "inventory");
+    }
+
+    #[test]
+    fn ingame_maps_every_scaling_stat_to_its_coefficient() {
+        let scale = |e: &str| {
+            let (g, s) = gem_from_ingame_effects("g", &[e.to_string()]);
+            assert!(s.is_empty(), "{e} should map");
+            g
+        };
+        assert!((scale("SKL scaling +5").skl_scale - 0.05).abs() < 1e-6);
+        assert!((scale("Bloodtinge scaling +5").blt_scale - 0.05).abs() < 1e-6);
+        assert!((scale("Arcane scaling +5").arc_scale - 0.05).abs() < 1e-6);
+    }
+
+    #[test]
+    fn ingame_treats_down_effects_as_negative_multipliers() {
+        let (g, skipped) = gem_from_ingame_effects("Cursed", &["ATK DOWN -10.5%".to_string()]);
+        assert!((g.dmg_general - 0.895).abs() < 1e-6);
+        assert!(skipped.is_empty());
+    }
+
+    #[test]
+    fn ingame_skips_effects_with_no_ar_representation() {
+        let (g, skipped) = gem_from_ingame_effects(
+            "Mixed",
+            &[
+                "Physical ATK UP +20%".to_string(),
+                "ATK UP near death +10%".to_string(), // conditional -> skipped
+                "WPN durability DOWN -100".to_string(), // irrelevant -> skipped
+                "No Effect".to_string(),
+                "ATK DOWN -10".to_string(), // flat all-type, no field -> skipped
+            ],
+        );
+        assert!((g.dmg_phys - 1.2).abs() < 1e-6);
+        assert_eq!(
+            skipped,
+            vec![
+                "ATK UP near death +10%".to_string(),
+                "WPN durability DOWN -100".to_string(),
+                "No Effect".to_string(),
+                "ATK DOWN -10".to_string(),
+            ]
+        );
     }
 }

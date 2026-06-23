@@ -34,6 +34,8 @@ pub fn compute_ar(weapon: &Weapon, gems: [Option<&Gem>; 3], stats: &Stats) -> Ar
 
     let arc_scale_sum = sum(|g| g.arc_scale);
     let str_scale_sum = sum(|g| g.str_scale);
+    let skl_scale_sum = sum(|g| g.skl_scale);
+    let blt_scale_sum = sum(|g| g.blt_scale);
     let dmg = prod(|g| g.dmg_general);
     let phys_mult = prod(|g| g.dmg_phys);
     let arc_mult = prod(|g| g.dmg_arcane);
@@ -79,9 +81,10 @@ pub fn compute_ar(weapon: &Weapon, gems: [Option<&Gem>; 3], stats: &Stats) -> Ar
     let is_dual = weapon.weapon_type == WeaponType::Dual;
     let is_conv = weapon.weapon_type == WeaponType::Conv;
 
-    // base = P * (1 + (weaponStrScale + gemStrScale)*sat(Str) + weaponSklScale*sat(Skl))
+    // base = P * (1 + (weaponStrScale + gemStrScale)*sat(Str) + (weaponSklScale + gemSklScale)*sat(Skl))
     let phys_base = |p: f32| {
-        p + (p * (weapon.str_scale + str_scale_sum) * sat_str + p * weapon.skl_scale * sat_skl)
+        p + (p * (weapon.str_scale + str_scale_sum) * sat_str
+            + p * (weapon.skl_scale + skl_scale_sum) * sat_skl)
     };
     // base = E * (1 + (weaponArcScale + gemArcScale)*sat(Arc))
     let elem_base = |e: f32| e + e * (weapon.arc_scale + arc_scale_sum) * sat_arc;
@@ -132,7 +135,8 @@ pub fn compute_ar(weapon: &Weapon, gems: [Option<&Gem>; 3], stats: &Stats) -> Ar
     };
 
     // --- Blood (adds flat-physical + flat-blood gem bonuses per the sheet)
-    let blood = ((weapon.blood as f32 + weapon.blood as f32 * weapon.blt_scale * sat_blt)
+    let blood = ((weapon.blood as f32
+        + weapon.blood as f32 * (weapon.blt_scale + blt_scale_sum) * sat_blt)
         * phys_mult
         * blood_mult
         * dmg

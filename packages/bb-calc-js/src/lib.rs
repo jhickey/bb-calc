@@ -1,9 +1,9 @@
 #![deny(clippy::all)]
 
 use bb_calc::{
-  compute_ar as bb_compute_ar, optimize_for_slots as bb_optimize_for_slots,
-  ArBreakdown as BbArBreakdown, Candidate as BbCandidate, ConvertedElement as BbConvertedElement,
-  DamageTarget as BbDamageTarget, Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape,
+  compute_ar as bb_compute_ar, optimizer as bb_optimizer, ArBreakdown as BbArBreakdown,
+  Candidate as BbCandidate, ConvertedElement as BbConvertedElement, DamageTarget as BbDamageTarget,
+  Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape, InventoryGem as BbInventoryGem,
   OptimizeResult as BbOptimizeResult, SlotChoice as BbSlotChoice, Stats as BbStats,
   Weapon as BbWeapon, WeaponType as BbWeaponType,
 };
@@ -39,6 +39,10 @@ pub struct Weapon {
   pub arcane: u32,
   pub fire: u32,
   pub bolt: u32,
+  /// Imprint gem-slot shapes, baked in per weapon variant (Normal/Uncanny/Lost).
+  pub gem_slot_1: GemShape,
+  pub gem_slot_2: GemShape,
+  pub gem_slot_3: GemShape,
 }
 
 impl From<&BbWeapon> for Weapon {
@@ -52,6 +56,48 @@ impl From<&BbWeapon> for Weapon {
       arcane: value.arcane as u32,
       fire: value.fire as u32,
       bolt: value.bolt as u32,
+      gem_slot_1: value.gem_slot_1.into(),
+      gem_slot_2: value.gem_slot_2.into(),
+      gem_slot_3: value.gem_slot_3.into(),
+    }
+  }
+}
+
+impl From<BbWeapon> for Weapon {
+  fn from(value: BbWeapon) -> Self {
+    Weapon {
+      id: value.id.to_string(),
+      name: value.name.to_string(),
+      weapon_type: value.weapon_type.into(),
+      phys: value.phys as u32,
+      blood: value.blood as u32,
+      arcane: value.arcane as u32,
+      fire: value.fire as u32,
+      bolt: value.bolt as u32,
+      gem_slot_1: value.gem_slot_1.into(),
+      gem_slot_2: value.gem_slot_2.into(),
+      gem_slot_3: value.gem_slot_3.into(),
+    }
+  }
+}
+
+#[napi(object)]
+pub struct InventoryGem {
+  pub id: String,
+  pub name: String,
+  pub shape: GemShape,
+  pub rating: u8,
+  pub effects: Vec<String>,
+}
+
+impl From<&InventoryGem> for BbInventoryGem {
+  fn from(value: &InventoryGem) -> Self {
+    BbInventoryGem {
+      id: value.id.to_string(),
+      name: value.name.to_string(),
+      shape: value.shape.into(),
+      rating: value.rating,
+      effects: value.effects.clone(),
     }
   }
 }
@@ -118,6 +164,28 @@ impl From<BbConvertedElement> for ConvertedElement {
   }
 }
 
+impl From<ConvertedElement> for BbConvertedElement {
+  fn from(value: ConvertedElement) -> Self {
+    match value {
+      ConvertedElement::Phys => BbConvertedElement::Phys,
+      ConvertedElement::Bolt => BbConvertedElement::Bolt,
+      ConvertedElement::Fire => BbConvertedElement::Fire,
+      ConvertedElement::Arc => BbConvertedElement::Arc,
+    }
+  }
+}
+
+impl From<&ConvertedElement> for BbConvertedElement {
+  fn from(value: &ConvertedElement) -> Self {
+    match value {
+      ConvertedElement::Phys => BbConvertedElement::Phys,
+      ConvertedElement::Bolt => BbConvertedElement::Bolt,
+      ConvertedElement::Fire => BbConvertedElement::Fire,
+      ConvertedElement::Arc => BbConvertedElement::Arc,
+    }
+  }
+}
+
 /// A blood gem. Multiplier fields (`dmg*`) default to `1.0` for no effect;
 /// scaling and flat (`*scale`, `flat*`) fields default to `0.0`.
 #[napi(object)]
@@ -128,6 +196,8 @@ pub struct Gem {
   pub shape: GemShape,
   pub arc_scale: f64,
   pub str_scale: f64,
+  pub skl_scale: f64,
+  pub blt_scale: f64,
   pub dmg_general: f64,
   pub dmg_arcane: f64,
   pub dmg_fire: f64,
@@ -156,6 +226,8 @@ impl From<&Gem> for BbGem {
       shape: Some(value.shape.into()),
       arc_scale: value.arc_scale as f32,
       str_scale: value.str_scale as f32,
+      skl_scale: value.skl_scale as f32,
+      blt_scale: value.blt_scale as f32,
       dmg_general: value.dmg_general as f32,
       dmg_arcane: value.dmg_arcane as f32,
       dmg_fire: value.dmg_fire as f32,
@@ -227,6 +299,22 @@ impl From<BbArBreakdown> for ArBreakdown {
   }
 }
 
+impl From<ArBreakdown> for BbArBreakdown {
+  fn from(value: ArBreakdown) -> Self {
+    BbArBreakdown {
+      total: value.total as f32,
+      physical: value.physical as f32,
+      blunt: value.blunt as f32,
+      thrust: value.thrust as f32,
+      arcane: value.arcane as f32,
+      fire: value.fire as f32,
+      bolt: value.bolt as f32,
+      blood: value.blood as f32,
+      converted_element: value.converted_element.into(),
+    }
+  }
+}
+
 /// Computes the Attack Rating for the weapon with `weapon_id`, fitted with up
 /// to three `gems` at the given hunter `stats`. Gem slot order does not matter.
 #[napi]
@@ -293,6 +381,16 @@ pub struct GemRef {
   pub effects: Vec<String>,
 }
 
+impl From<GemRef> for BbGemRef {
+  fn from(value: GemRef) -> Self {
+    BbGemRef {
+      id: value.id,
+      name: value.name,
+      effects: value.effects,
+    }
+  }
+}
+
 impl From<&GemRef> for BbGemRef {
   fn from(value: &GemRef) -> Self {
     BbGemRef {
@@ -352,6 +450,16 @@ impl From<BbSlotChoice> for SlotChoice {
   }
 }
 
+impl From<SlotChoice> for BbSlotChoice {
+  fn from(value: SlotChoice) -> Self {
+    BbSlotChoice {
+      slot: value.slot as usize,
+      slot_shape: value.slot_shape.into(),
+      gem: value.gem.map(BbGemRef::from),
+    }
+  }
+}
+
 /// The winning socketing found by {@link optimizeForSlots}.
 #[napi(object)]
 pub struct OptimizeResult {
@@ -361,6 +469,7 @@ pub struct OptimizeResult {
   pub total: f64,
   pub breakdown: ArBreakdown,
   pub slots: Vec<SlotChoice>,
+  pub weapon_id: String,
 }
 
 impl From<BbOptimizeResult> for OptimizeResult {
@@ -370,44 +479,71 @@ impl From<BbOptimizeResult> for OptimizeResult {
       total: value.total as f64,
       breakdown: value.breakdown.into(),
       slots: value.slots.into_iter().map(SlotChoice::from).collect(),
+      weapon_id: value.weapon_id,
     }
   }
 }
 
-/// Finds the socketing of `candidates` into `slot_shapes` that maximizes
-/// `target` for the weapon with `weapon_id` at the given hunter `stats`,
-/// respecting shape fit and per-gem counts. Supports up to 3 slots.
+impl From<OptimizeResult> for BbOptimizeResult {
+  fn from(value: OptimizeResult) -> Self {
+    BbOptimizeResult {
+      score: value.score as f32,
+      total: value.total as f32,
+      breakdown: value.breakdown.into(),
+      slots: value.slots.into_iter().map(BbSlotChoice::from).collect(),
+      weapon_id: value.weapon_id,
+    }
+  }
+}
+
+#[napi(string_enum)]
+pub enum Mode {
+  Compare,
+  Plan,
+}
+
+impl From<Mode> for bb_optimizer::Mode {
+  fn from(value: Mode) -> Self {
+    match value {
+      Mode::Compare => bb_optimizer::Mode::Compare,
+      Mode::Plan => bb_optimizer::Mode::Plan,
+    }
+  }
+}
+
+/// Finds the socketing of `candidates` that maximizes `target` for the weapon
+/// with `weapon_id`, using that weapon variant's own baked-in imprint slots
+/// (Normal/Uncanny/Lost are distinct ids). Prefer this over {@link optimizeForSlots}
+/// unless the slots come from somewhere other than the chosen weapon.
 #[napi]
-pub fn optimize_for_slots(
-  weapon_id: String,
-  slot_shapes: Vec<GemShape>,
-  candidates: Vec<Candidate>,
+pub fn optimize(
+  weapon_ids: Vec<String>,
+  gems: Vec<InventoryGem>,
   stats: Stats,
   target: DamageTarget,
-) -> Result<OptimizeResult> {
-  let weapon = BbWeapon::by_id(&weapon_id).ok_or_else(|| {
-    Error::new(
-      Status::InvalidArg,
-      format!("unknown weapon id: {weapon_id}"),
-    )
-  })?;
-
-  if slot_shapes.len() > 3 {
-    return Err(Error::new(
-      Status::InvalidArg,
-      format!("a weapon takes at most 3 slots, got {}", slot_shapes.len()),
-    ));
+  mode: Mode,
+  excluded_gems: Option<Vec<String>>,
+) -> Result<Vec<OptimizeResult>> {
+  let mut weapons: Vec<&BbWeapon> = Vec::new();
+  for weapon_id in weapon_ids {
+    let weapon = BbWeapon::by_id(&weapon_id).ok_or_else(|| {
+      Error::new(
+        Status::InvalidArg,
+        format!("unknown weapon id: {weapon_id}"),
+      )
+    })?;
+    weapons.push(weapon);
   }
 
-  let bb_shapes: Vec<BbGemShape> = slot_shapes.iter().map(|s| (*s).into()).collect();
-  let bb_candidates: Vec<BbCandidate> = candidates.iter().map(BbCandidate::from).collect();
+  let bb_gems = gems.iter().map(BbInventoryGem::from).collect();
 
-  let result = bb_optimize_for_slots(
-    weapon,
-    &bb_shapes,
-    &bb_candidates,
+  let results = bb_optimizer::optimize(
+    weapons,
+    bb_gems,
     &BbStats::from(&stats),
     target.into(),
+    mode.into(),
+    excluded_gems,
   );
-  Ok(result.into())
+  Ok(results.iter().map(|r| r.clone().into()).collect())
 }

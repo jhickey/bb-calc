@@ -23,10 +23,10 @@ mod test_support;
 
 // Flat re-export of the public surface so callers can use `bb_calc::Foo`.
 pub use calc::{compute_ar, gem_sum};
-pub use gem_parser::{base_gem, parse_gem_effects};
+pub use gem_parser::{base_gem, gem_from_ingame_effects, parse_gem_effects};
 pub use inventory::{build_inventory_from_save, Inventory, InventoryGem, WithWarnings};
 pub use optimizer::{
-    optimize_for_slots, shape_fits, Candidate, DamageTarget, GemRef, OptimizeResult, SlotChoice,
+    optimize, shape_fits, Candidate, DamageTarget, GemRef, Mode, OptimizeResult, SlotChoice,
 };
 pub use save::{
     lookup_effect, parse_save_gems, parse_save_name, parse_save_stats, EffectInfo, RawSaveGem,
