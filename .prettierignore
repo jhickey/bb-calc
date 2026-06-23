@@ -3,6 +3,7 @@
 **/dist
 packages/bb-calc-js/index.js
 packages/bb-calc-js/index.d.ts
+packages/bb-calc-js/browser.js
 packages/bb-calc-js/*.wasi-browser.js
 packages/bb-calc-js/*.wasi.cjs
 packages/bb-calc-js/wasi-worker-browser.mjs

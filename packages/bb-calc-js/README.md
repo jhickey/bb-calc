@@ -23,9 +23,48 @@ pnpm add @napi-rs/package-template
 
 After `pnpm build/npm run build` command, you can see `package-template.[darwin|win32|linux].node` file in project root. This is the native addon built from [lib.rs](./src/lib.rs).
 
+### WebAssembly (browser + Node)
+
+In addition to the native `.node` addons, this package builds a
+`wasm32-wasip1-threads` target so the exact same API runs in the browser and in
+Node without a native binary.
+
+- **Node**: `import`/`require` works as usual. If no prebuilt native addon
+  matches the platform, the loader automatically falls back to the WASM binding
+  (the `bb-calc-js-wasm32-wasi` optional dependency). Set
+  `NAPI_RS_FORCE_WASI=true` to force the WASM path even when a native addon is
+  available.
+- **Browser / bundlers** (Vite, webpack, Rollup, esbuild, …): the package's
+  `browser` field redirects the native loader to the WASM binding, which
+  `fetch`es and instantiates the `.wasm` via
+  [`@napi-rs/wasm-runtime`](https://www.npmjs.com/package/@napi-rs/wasm-runtime).
+  Because the target uses WASM threads (shared memory), the page must be
+  [cross-origin isolated](https://web.dev/articles/coop-coep) — serve it with
+  `Cross-Origin-Opener-Policy: same-origin` and
+  `Cross-Origin-Embedder-Policy: require-corp` so `SharedArrayBuffer` is
+  available.
+
+```ts
+// Identical usage in both environments:
+import { getWeapons, computeAr } from 'bb-calc-js'
+
+const ar = computeAr('amygdalan_arm', [], { str: 50, skl: 50, blt: 25, arc: 25 })
+console.log(ar.total)
+```
+
+To build the WASM artifact locally:
+
+```bash
+rustup target add wasm32-wasip1-threads
+pnpm napi build --platform --release --target wasm32-wasip1-threads
+```
+
 ### Test
 
 With [ava](https://github.com/avajs/ava), run `pnpm test/npm run test` to testing native addon. You can also switch to another testing framework if you want.
+
+To run the suite against the WASM binding instead of the native addon, force the
+WASI path: `NAPI_RS_FORCE_WASI=true pnpm test`.
 
 ### CI
 

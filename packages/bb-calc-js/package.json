@@ -4,6 +4,9 @@
   "description": "napi-rs Node bindings for the bb-calc Bloodborne Attack Rating calculator",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "browser": {
+    "./index.js": "./browser.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jhickey/bb-calc.git",
@@ -21,6 +24,7 @@
   "files": [
     "index.d.ts",
     "index.js",
+    "browser.js",
     "dist"
   ],
   "napi": {
@@ -29,7 +33,8 @@
       "x86_64-pc-windows-msvc",
       "x86_64-apple-darwin",
       "x86_64-unknown-linux-gnu",
-      "aarch64-apple-darwin"
+      "aarch64-apple-darwin",
+      "wasm32-wasip1-threads"
     ]
   },
   "engines": {
@@ -54,6 +59,7 @@
     "@emnapi/core": "^1.5.0",
     "@emnapi/runtime": "^1.5.0",
     "@napi-rs/cli": "^3.2.0",
+    "@napi-rs/wasm-runtime": "^1.1.5",
     "@oxc-node/core": "^0.1.0",
     "@tybys/wasm-util": "^0.10.0",
     "ava": "^8.0.0",

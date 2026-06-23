@@ -5,9 +5,10 @@ import {
   DamageTarget,
   getWeapons,
   GemShape,
-  optimizeForSlots,
-  type Candidate,
+  Mode,
+  optimize,
   type Gem,
+  type InventoryGem,
   type Stats,
 } from '../index'
 
@@ -22,6 +23,8 @@ function identityGem(): Gem {
     shape: GemShape.Radial,
     arcScale: 0,
     strScale: 0,
+    sklScale: 0,
+    bltScale: 0,
     dmgGeneral: 1,
     dmgArcane: 1,
     dmgFire: 1,
@@ -44,10 +47,10 @@ function identityGem(): Gem {
 
 test('getWeapons returns all weapons', (t) => {
   const weapons = getWeapons()
-  t.is(weapons.length, 31)
+  t.is(weapons.length, 83)
 })
 
-test('getWeapons exposes weapon fields', (t) => {
+test('getWeapons exposes weapon fields, including baked-in gem slots', (t) => {
   const weapons = getWeapons()
   const arm = weapons.find((w) => w.id === 'amygdalan_arm')
   t.truthy(arm)
@@ -55,6 +58,9 @@ test('getWeapons exposes weapon fields', (t) => {
   t.is(arm?.phys, 160)
   t.is(arm?.arcane, 80)
   t.is(arm?.weaponType, 'Dual')
+  t.is(arm?.gemSlot1, GemShape.Radial)
+  t.is(arm?.gemSlot2, GemShape.Radial)
+  t.is(arm?.gemSlot3, GemShape.Triangle)
 })
 
 test('computeAr sums physical and arcane for a Dual weapon at zero stats', (t) => {
@@ -87,42 +93,33 @@ test('computeAr rejects more than three gems', (t) => {
   t.regex(err!.message, /at most 3 gems/)
 })
 
-/** Wraps a {@link Gem} as an owned optimizer candidate of the given shape. */
-function candidate(id: string, gem: Gem, shape: GemShape): Candidate {
-  return { gem, shape, gemRef: { id, name: gem.name, effects: [] } }
+/** An owned gem described by its in-game effect strings. */
+function inventoryGem(id: string, shape: GemShape, effects: Array<string>): InventoryGem {
+  return { id, name: id, shape, rating: 19, effects }
 }
 
-test('optimizeForSlots places a damage gem into a matching slot', (t) => {
-  const gem = identityGem()
-  gem.dmgGeneral = 2
-  const candidates = [candidate('big-phys', gem, GemShape.Radial)]
-
-  const result = optimizeForSlots('amygdalan_arm', [GemShape.Radial], candidates, ZERO_STATS, DamageTarget.Total)
-
-  t.is(result.slots.length, 1)
-  t.is(result.slots[0]?.gem?.id, 'big-phys')
-  // dmgGeneral doubles every line: physical 160→320, arcane 80→160.
-  t.is(result.breakdown.physical, 320)
-  t.is(result.breakdown.arcane, 160)
-  t.is(result.total, 480)
-  t.is(result.score, 480)
+test('optimize echoes the weapon id and exposes its baked-in slot shapes', (t) => {
+  const [result] = optimize(['amygdalan_arm'], [], ZERO_STATS, DamageTarget.Total, Mode.Compare)
+  t.is(result?.weaponId, 'amygdalan_arm')
+  t.deepEqual(
+    result?.slots.map((s) => s.slotShape),
+    [GemShape.Radial, GemShape.Radial, GemShape.Triangle],
+  )
 })
 
-test('optimizeForSlots leaves a slot empty when no gem fits its shape', (t) => {
-  const gem = identityGem()
-  gem.dmgGeneral = 2
-  // A Radial gem cannot fit a Triangle slot.
-  const candidates = [candidate('big-phys', gem, GemShape.Radial)]
+test('optimize places a fitting damage gem and raises Attack Rating', (t) => {
+  const gems = [inventoryGem('big-phys', GemShape.Radial, ['Physical ATK UP +50%'])]
+  const [result] = optimize(['amygdalan_arm'], gems, ZERO_STATS, DamageTarget.Total, Mode.Compare)
 
-  const result = optimizeForSlots('amygdalan_arm', [GemShape.Triangle], candidates, ZERO_STATS, DamageTarget.Total)
-
-  t.is(result.slots[0]?.slotShape, GemShape.Triangle)
-  t.is(result.slots[0]?.gem, undefined)
-  t.is(result.total, 240)
+  // The gem fits a Radial slot, boosting the 160 physical line by 50% to 240.
+  t.true(result!.slots.some((s) => s.gem?.id === 'big-phys'))
+  t.is(result?.breakdown.physical, 240)
+  t.is(result?.total, 320)
+  t.is(result?.score, 320)
 })
 
-test('optimizeForSlots rejects more than three slots', (t) => {
-  const shapes = [GemShape.Radial, GemShape.Radial, GemShape.Radial, GemShape.Radial]
-  const err = t.throws(() => optimizeForSlots('amygdalan_arm', shapes, [], ZERO_STATS, DamageTarget.Total))
-  t.regex(err!.message, /at most 3 slots/)
+test('optimize leaves slots empty when the inventory is empty', (t) => {
+  const [result] = optimize(['amygdalan_arm'], [], ZERO_STATS, DamageTarget.Total, Mode.Compare)
+  t.true(result!.slots.every((s) => s.gem == null))
+  t.is(result?.total, 240)
 })

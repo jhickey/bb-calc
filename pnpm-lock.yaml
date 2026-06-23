@@ -38,6 +38,9 @@ importers:
       '@napi-rs/cli':
         specifier: ^3.2.0
         version: 3.7.2(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)
+      '@napi-rs/wasm-runtime':
+        specifier: ^1.1.5
+        version: 1.1.5(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)
       '@oxc-node/core':
         specifier: ^0.1.0
         version: 0.1.0
@@ -1981,7 +1984,6 @@ snapshots:
       '@emnapi/core': 1.11.1
       '@emnapi/runtime': 1.11.1
       '@tybys/wasm-util': 0.10.2
-    optional: true
 
   '@napi-rs/wasm-runtime@1.1.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)':
     dependencies:
