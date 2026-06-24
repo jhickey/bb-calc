@@ -105,6 +105,12 @@ export declare const enum GemShape {
 /** Returns every weapon in the game. */
 export declare function getWeapons(): Array<Weapon>
 
+export interface Inventory {
+  character: string
+  stats: Stats
+  gems: Array<InventoryGem>
+}
+
 export interface InventoryGem {
   id: string
   name: string
@@ -140,6 +146,8 @@ export interface OptimizeResult {
   slots: Array<SlotChoice>
   weaponId: string
 }
+
+export declare function parseSave(saveFile: Buffer): Promise<unknown>
 
 /**
  * One imprint slot in the result: its shape and the owned gem placed in it

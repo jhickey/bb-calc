@@ -4,3 +4,4 @@ node_modules
 .claude
 packages/bb-calc/data/saves
 data/saves
+.DS_Store

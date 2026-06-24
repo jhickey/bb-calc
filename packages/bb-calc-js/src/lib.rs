@@ -1,5 +1,8 @@
 #![deny(clippy::all)]
 
+mod inventory;
+mod optimize;
+
 use bb_calc::{
   compute_ar as bb_compute_ar, optimizer as bb_optimizer, ArBreakdown as BbArBreakdown,
   Candidate as BbCandidate, ConvertedElement as BbConvertedElement, DamageTarget as BbDamageTarget,
@@ -7,8 +10,7 @@ use bb_calc::{
   OptimizeResult as BbOptimizeResult, SlotChoice as BbSlotChoice, Stats as BbStats,
   Weapon as BbWeapon, WeaponType as BbWeaponType,
 };
-use napi::bindgen_prelude::{AsyncTask, Error, Result, Status};
-use napi::{Env, Task};
+use napi::bindgen_prelude::{Error, Result, Status};
 use napi_derive::napi;
 
 /// How a weapon's damage is derived (mirrors `bb_calc::WeaponType`).
@@ -94,6 +96,30 @@ pub struct InventoryGem {
 impl From<&InventoryGem> for BbInventoryGem {
   fn from(value: &InventoryGem) -> Self {
     BbInventoryGem {
+      id: value.id.to_string(),
+      name: value.name.to_string(),
+      shape: value.shape.into(),
+      rating: value.rating,
+      effects: value.effects.clone(),
+    }
+  }
+}
+
+impl From<InventoryGem> for BbInventoryGem {
+  fn from(value: InventoryGem) -> Self {
+    BbInventoryGem {
+      id: value.id.to_string(),
+      name: value.name.to_string(),
+      shape: value.shape.into(),
+      rating: value.rating,
+      effects: value.effects.clone(),
+    }
+  }
+}
+
+impl From<BbInventoryGem> for InventoryGem {
+  fn from(value: BbInventoryGem) -> Self {
+    InventoryGem {
       id: value.id.to_string(),
       name: value.name.to_string(),
       shape: value.shape.into(),
@@ -253,19 +279,41 @@ impl From<&Gem> for BbGem {
 /// The four hunter stats that drive weapon scaling.
 #[napi(object)]
 pub struct Stats {
-  pub str: u32,
-  pub skl: u32,
-  pub blt: u32,
-  pub arc: u32,
+  pub str: u16,
+  pub skl: u16,
+  pub blt: u16,
+  pub arc: u16,
 }
 
 impl From<&Stats> for BbStats {
   fn from(value: &Stats) -> Self {
     BbStats {
-      str: value.str as u16,
-      skl: value.skl as u16,
-      blt: value.blt as u16,
-      arc: value.arc as u16,
+      str: value.str,
+      skl: value.skl,
+      blt: value.blt,
+      arc: value.arc,
+    }
+  }
+}
+
+impl From<Stats> for BbStats {
+  fn from(value: Stats) -> Self {
+    BbStats {
+      str: value.str,
+      skl: value.skl,
+      blt: value.blt,
+      arc: value.arc,
+    }
+  }
+}
+
+impl From<BbStats> for Stats {
+  fn from(value: BbStats) -> Self {
+    Stats {
+      str: value.str,
+      skl: value.skl,
+      blt: value.blt,
+      arc: value.arc,
     }
   }
 }
@@ -497,6 +545,33 @@ impl From<OptimizeResult> for BbOptimizeResult {
   }
 }
 
+#[napi(object)]
+pub struct Inventory {
+  pub character: String,
+  pub stats: Stats,
+  pub gems: Vec<InventoryGem>,
+}
+
+impl From<Inventory> for bb_calc::Inventory {
+  fn from(value: Inventory) -> Self {
+    bb_calc::Inventory {
+      character: value.character,
+      stats: value.stats.into(),
+      gems: value.gems.into_iter().map(BbInventoryGem::from).collect(),
+    }
+  }
+}
+
+impl From<bb_calc::Inventory> for Inventory {
+  fn from(value: bb_calc::Inventory) -> Self {
+    Inventory {
+      character: value.character,
+      stats: value.stats.into(),
+      gems: value.gems.into_iter().map(InventoryGem::from).collect(),
+    }
+  }
+}
+
 #[derive(Clone, Copy)]
 #[napi(string_enum)]
 pub enum Mode {
@@ -511,81 +586,4 @@ impl From<Mode> for bb_optimizer::Mode {
       Mode::Plan => bb_optimizer::Mode::Plan,
     }
   }
-}
-
-/// The owned inputs for a single {@link optimize} run, computed off the main
-/// thread.
-///
-/// The optimizer parallelizes `Mode::Compare` across weapons with
-/// `std::thread`, whose join blocks the calling thread via `Atomics.wait`. That
-/// is forbidden on a browser's main thread, so we run the whole computation as
-/// an N-API async task: `compute` executes on a libuv/worker thread (where
-/// `Atomics.wait` is legal), and JS gets a `Promise` instead of a blocking call.
-pub struct OptimizeTask {
-  weapon_ids: Vec<String>,
-  gems: Vec<InventoryGem>,
-  stats: Stats,
-  target: DamageTarget,
-  mode: Mode,
-  excluded_gems: Option<Vec<String>>,
-}
-
-impl Task for OptimizeTask {
-  type Output = Vec<BbOptimizeResult>;
-  type JsValue = Vec<OptimizeResult>;
-
-  fn compute(&mut self) -> Result<Self::Output> {
-    let mut weapons: Vec<&BbWeapon> = Vec::new();
-    for weapon_id in &self.weapon_ids {
-      let weapon = BbWeapon::by_id(weapon_id).ok_or_else(|| {
-        Error::new(
-          Status::InvalidArg,
-          format!("unknown weapon id: {weapon_id}"),
-        )
-      })?;
-      weapons.push(weapon);
-    }
-
-    let bb_gems = self.gems.iter().map(BbInventoryGem::from).collect();
-
-    Ok(bb_optimizer::optimize(
-      weapons,
-      bb_gems,
-      &BbStats::from(&self.stats),
-      self.target.into(),
-      self.mode.into(),
-      self.excluded_gems.take(),
-    ))
-  }
-
-  fn resolve(&mut self, _env: Env, output: Self::Output) -> Result<Self::JsValue> {
-    Ok(output.into_iter().map(OptimizeResult::from).collect())
-  }
-}
-
-/// Finds the socketing of `candidates` that maximizes `target` for the weapon
-/// with `weapon_id`, using that weapon variant's own baked-in imprint slots
-/// (Normal/Uncanny/Lost are distinct ids). Prefer this over {@link optimizeForSlots}
-/// unless the slots come from somewhere other than the chosen weapon.
-///
-/// Returns a `Promise`: the search runs on a worker thread so it never blocks
-/// the caller (required in the browser, where the optimizer's threaded
-/// `Mode::Compare` would otherwise call `Atomics.wait` on the main thread).
-#[napi]
-pub fn optimize(
-  weapon_ids: Vec<String>,
-  gems: Vec<InventoryGem>,
-  stats: Stats,
-  target: DamageTarget,
-  mode: Mode,
-  excluded_gems: Option<Vec<String>>,
-) -> AsyncTask<OptimizeTask> {
-  AsyncTask::new(OptimizeTask {
-    weapon_ids,
-    gems,
-    stats,
-    target,
-    mode,
-    excluded_gems,
-  })
 }

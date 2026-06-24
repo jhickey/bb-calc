@@ -115,4 +115,5 @@ module.exports.GemShape = __napiModule.exports.GemShape
 module.exports.getWeapons = __napiModule.exports.getWeapons
 module.exports.Mode = __napiModule.exports.Mode
 module.exports.optimize = __napiModule.exports.optimize
+module.exports.parseSave = __napiModule.exports.parseSave
 module.exports.WeaponType = __napiModule.exports.WeaponType
