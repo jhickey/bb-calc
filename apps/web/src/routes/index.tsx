@@ -4,6 +4,8 @@ import type { Inventory, OptimizeResult } from '#/lib/bb-calc';
 import { DamageTarget, Mode, optimize, parseSave } from '#/lib/bb-calc';
 
 import { Button } from '#/components/Button';
+import { InventoryView } from '#/components/InventoryView';
+import { OptimizeResults } from '#/components/OptimizeResults';
 import { SaveUpload } from '#/components/SaveUpload';
 
 export const Route = createFileRoute('/')({ component: Home });
@@ -40,14 +42,11 @@ function Home() {
       <h1 className="text-4xl font-bold">Bloodborne Optimizer</h1>
       {error && <p className="mt-4 text-red-400">Error: {error}</p>}
       <SaveUpload className="mt-4" onFile={handleFile} />
-      <Button className="mt-4" onClick={handleClickOptimize} disabled={!inventory}>
+      <Button className="mt-6" onClick={handleClickOptimize} disabled={!inventory}>
         Optimize
       </Button>
-      {results && (
-        <pre className="mt-4 overflow-x-auto rounded-md border border-black-wool bg-black-wool/40 p-4 text-sm text-pale-mocha">
-          {JSON.stringify(results, null, 2)}
-        </pre>
-      )}
+      {results && <OptimizeResults className="mt-6" results={results} />}
+      {inventory && <InventoryView className="mt-6" inventory={inventory} />}
     </div>
   );
 }
