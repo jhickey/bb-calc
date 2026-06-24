@@ -26,7 +26,7 @@ export function TargetSelect({ value, onChange, className = '' }: TargetSelectPr
       <select
         value={value}
         onChange={(event) => onChange(event.target.value as DamageTarget)}
-        className="rounded-md border border-black-wool bg-black-wool px-3 py-2 text-sm text-pale-mocha"
+        className="rounded-md border border-black-wool bg-black-wool py-2 pl-3 pr-10 text-sm text-pale-mocha"
       >
         {TARGETS.map((target) => (
           <option key={target.value} value={target.value}>

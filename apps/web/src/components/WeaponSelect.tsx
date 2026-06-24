@@ -35,14 +35,14 @@ export function WeaponSelect({ selected, onChange, className = '' }: WeaponSelec
         <div className="flex gap-3 text-xs">
           <button
             type="button"
-            className="text-au-chico transition-colors hover:text-pale-mocha"
+            className="cursor-pointer text-au-chico transition-colors hover:text-pale-mocha"
             onClick={() => onChange(weapons.map((weapon) => weapon.id))}
           >
             Select all
           </button>
           <button
             type="button"
-            className="text-au-chico transition-colors hover:text-pale-mocha"
+            className="cursor-pointer text-au-chico transition-colors hover:text-pale-mocha"
             onClick={() => onChange([])}
           >
             Clear
