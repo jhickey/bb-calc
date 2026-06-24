@@ -1,4 +1,4 @@
-import type { Inventory } from '#/lib/bb-calc';
+import type { Inventory } from 'bb-calc-js';
 
 import { SaveUpload } from '#/components/SaveUpload';
 import { StatsDisplay } from '#/components/StatsDisplay';

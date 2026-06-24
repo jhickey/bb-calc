@@ -147,7 +147,7 @@ export interface OptimizeResult {
   weaponId: string
 }
 
-export declare function parseSave(saveFile: Buffer): Promise<unknown>
+export declare function parseSave(saveFile: Uint8Array): Promise<unknown>
 
 /**
  * One imprint slot in the result: its shape and the owned gem placed in it

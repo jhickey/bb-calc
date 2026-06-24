@@ -1,4 +1,4 @@
-import type { InventoryGem } from '#/lib/bb-calc';
+import type { InventoryGem } from 'bb-calc-js';
 import { gemShapeIcon } from '#/lib/gems';
 
 type GemListProps = {

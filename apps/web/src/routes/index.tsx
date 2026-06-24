@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import type { Inventory, OptimizeResult } from '#/lib/bb-calc';
-import { DamageTarget, Mode, optimize, parseSave } from '#/lib/bb-calc';
+import type { Inventory, OptimizeResult } from 'bb-calc-js';
+import { DamageTarget, Mode, optimize, parseSave } from 'bb-calc-js';
 
 import { Button } from '#/components/Button';
 import { CharacterHeader } from '#/components/CharacterHeader';

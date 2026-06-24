@@ -1,4 +1,4 @@
-import { DamageTarget } from '#/lib/bb-calc';
+import { DamageTarget } from 'bb-calc-js';
 
 /** Optimization targets, in display order. `Total` is the full Attack Rating. */
 const TARGETS: ReadonlyArray<{ value: DamageTarget; label: string }> = [

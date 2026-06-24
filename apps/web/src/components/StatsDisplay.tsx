@@ -1,4 +1,4 @@
-import type { Stats } from '#/lib/bb-calc';
+import type { Stats } from 'bb-calc-js';
 
 /** The four scaling stats, in display order, with their icon + label. */
 const STATS = [

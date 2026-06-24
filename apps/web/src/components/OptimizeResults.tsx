@@ -1,5 +1,5 @@
-import type { OptimizeResult } from '#/lib/bb-calc';
-import { DamageTarget } from '#/lib/bb-calc';
+import type { OptimizeResult } from 'bb-calc-js';
+import { DamageTarget } from 'bb-calc-js';
 import { gemShapeIcon } from '#/lib/gems';
 import { PLACEHOLDER_WEAPON_ICON, weaponName, weaponThumbnail } from '#/lib/weapons';
 

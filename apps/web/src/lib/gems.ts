@@ -1,4 +1,4 @@
-import { GemShape } from '#/lib/bb-calc';
+import { GemShape } from 'bb-calc-js';
 
 /** Every gem shape, in display order. */
 export const GEM_SHAPES: ReadonlyArray<GemShape> = [

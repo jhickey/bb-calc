@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { getWeapons } from '#/lib/bb-calc';
+import { getWeapons } from 'bb-calc-js';
 import { PLACEHOLDER_WEAPON_ICON, weaponThumbnail } from '#/lib/weapons';
 
 type WeaponSelectProps = {

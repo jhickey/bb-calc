@@ -1,4 +1,4 @@
-import { getWeapons } from '#/lib/bb-calc';
+import { getWeapons } from 'bb-calc-js';
 
 /** The thumbnail shown when a weapon has no matching image. */
 export const PLACEHOLDER_WEAPON_ICON = '/imprints/placeholder.png';

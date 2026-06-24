@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import type { GemShape, InventoryGem } from '#/lib/bb-calc';
+import type { GemShape, InventoryGem } from 'bb-calc-js';
 import { GemList } from '#/components/GemList';
 import { GEM_SHAPES, gemShapeIcon } from '#/lib/gems';
 

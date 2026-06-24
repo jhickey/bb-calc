@@ -129,6 +129,9 @@ importers:
       '@tybys/wasm-util':
         specifier: ^0.10.0
         version: 0.10.2
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.0
       ava:
         specifier: ^8.0.0
         version: 8.0.1
