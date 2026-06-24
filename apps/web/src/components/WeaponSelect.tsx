@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { getWeapons } from '#/lib/bb-calc';
 import { PLACEHOLDER_WEAPON_ICON, weaponThumbnail } from '#/lib/weapons';
@@ -16,7 +16,11 @@ type WeaponSelectProps = {
  */
 export function WeaponSelect({ selected, onChange, className = '' }: WeaponSelectProps) {
   const weapons = useMemo(() => getWeapons(), []);
+  const [search, setSearch] = useState('');
   const selectedSet = new Set(selected);
+
+  const query = search.trim().toLowerCase();
+  const visible = query ? weapons.filter((weapon) => weapon.name.toLowerCase().includes(query)) : weapons;
 
   function toggle(id: string) {
     const next = new Set(selectedSet);
@@ -36,7 +40,7 @@ export function WeaponSelect({ selected, onChange, className = '' }: WeaponSelec
           <button
             type="button"
             className="cursor-pointer text-au-chico transition-colors hover:text-pale-mocha"
-            onClick={() => onChange(weapons.map((weapon) => weapon.id))}
+            onClick={() => onChange([...new Set([...selected, ...visible.map((weapon) => weapon.id)])])}
           >
             Select all
           </button>
@@ -49,8 +53,16 @@ export function WeaponSelect({ selected, onChange, className = '' }: WeaponSelec
           </button>
         </div>
       </div>
+      <input
+        type="search"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Search weapons…"
+        className="mt-2 w-full rounded-md border border-black-wool bg-black-wool px-3 py-2 text-sm text-pale-mocha placeholder:text-au-chico"
+      />
       <ul className="mt-2 max-h-72 overflow-y-auto rounded-md border border-black-wool bg-black-wool/40 p-2">
-        {weapons.map((weapon) => (
+        {visible.length === 0 && <li className="px-2 py-1 text-sm text-au-chico">No weapons match.</li>}
+        {visible.map((weapon) => (
           <li key={weapon.id}>
             <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-old-red/30">
               <input
