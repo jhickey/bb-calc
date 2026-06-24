@@ -19,6 +19,7 @@ export {
   GemShape,
   Mode,
   WeaponType,
+  parseSave,
 } from 'bb-calc-js';
 
 export type {

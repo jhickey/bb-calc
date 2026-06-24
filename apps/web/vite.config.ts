@@ -67,7 +67,16 @@ const config = defineConfig({
   optimizeDeps: {
     exclude: ['bb-calc-js', '@napi-rs/wasm-runtime'],
   },
-  plugins: [crossOriginIsolationPlugin, devtools(), tailwindcss(), tanstackStart(), viteReact()],
+  plugins: [
+    crossOriginIsolationPlugin,
+    devtools(),
+    tailwindcss(),
+    // SPA mode: skip SSR of route content and prerender a static shell
+    // (`/_shell.html`) at build time. The calculator runs entirely in the
+    // browser (WASM + workers), so SSR added complexity without benefit.
+    tanstackStart({ spa: { enabled: true } }),
+    viteReact(),
+  ],
 });
 
 export default config;
