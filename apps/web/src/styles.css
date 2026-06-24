@@ -1,5 +1,40 @@
 @import 'tailwindcss';
 
+/* The display face used for top-level headings; served from /public. */
+@font-face {
+  font-family: 'Flesh and Blood';
+  src: url('/Fleshandblood-MVA5x.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  /* Bloodborne palette — https://www.schemecolor.com/bloodborne.php */
+  --color-tamarillo: #9a1818;
+  --color-black-wool: #34302f;
+  --color-superhard: #1a0b06;
+  --color-old-red: #7f3335;
+  --color-au-chico: #99585c;
+  --color-pale-mocha: #c5a8aa;
+
+  /* Georgia is the default body face; the display face is opt-in via the
+     `font-display` utility (and applied to <h1> in the base layer below). */
+  --font-sans: Georgia, 'Times New Roman', serif;
+  --font-display: 'Flesh and Blood', Georgia, serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-superhard);
+    color: var(--color-pale-mocha);
+  }
+
+  h1 {
+    font-family: var(--font-display);
+  }
+}
+
 * {
   box-sizing: border-box;
 }

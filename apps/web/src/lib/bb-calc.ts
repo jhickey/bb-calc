@@ -10,6 +10,9 @@
  * UI code should import from here rather than reaching into `bb-calc-js`
  * directly, so the wiring lives in one place.
  */
+import { parseSave as parseSaveNative } from 'bb-calc-js';
+import type { Inventory } from 'bb-calc-js';
+
 export {
   computeAr,
   getWeapons,
@@ -19,7 +22,6 @@ export {
   GemShape,
   Mode,
   WeaponType,
-  parseSave,
 } from 'bb-calc-js';
 
 export type {
@@ -27,9 +29,21 @@ export type {
   Candidate,
   Gem,
   GemRef,
+  Inventory,
   InventoryGem,
   OptimizeResult,
   SlotChoice,
   Stats,
   Weapon,
 } from 'bb-calc-js';
+
+/**
+ * Parse a decrypted Bloodborne save into an {@link Inventory}.
+ *
+ * The generated binding types the argument as a Node `Buffer`, but the WASM
+ * build accepts any `Uint8Array` at runtime (and there is no `Buffer` in the
+ * browser), so we widen the parameter and cast at the call site.
+ */
+export function parseSave(saveFile: Uint8Array): Promise<Inventory> {
+  return parseSaveNative(saveFile as Parameters<typeof parseSaveNative>[0]) as Promise<Inventory>;
+}
