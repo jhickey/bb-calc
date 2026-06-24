@@ -13,7 +13,10 @@ import { WeaponSelect } from '#/components/WeaponSelect';
 export const Route = createFileRoute('/')({ component: Home });
 
 function Home() {
-  const [results, setResults] = useState<Array<OptimizeResult> | null>(null);
+  const [results, setResults] = useState<{
+    target: DamageTarget;
+    items: Array<OptimizeResult>;
+  } | null>(null);
   const [inventory, setInventory] = useState<Inventory | null>(null);
   const [weaponIds, setWeaponIds] = useState<Array<string>>([]);
   const [target, setTarget] = useState<DamageTarget>(DamageTarget.Total);
@@ -22,8 +25,8 @@ function Home() {
   async function handleClickOptimize() {
     if (!inventory) return;
     try {
-      const res = await optimize(weaponIds, inventory.gems, inventory.stats, target, Mode.Compare);
-      setResults(res);
+      const items = await optimize(weaponIds, inventory.gems, inventory.stats, target, Mode.Compare);
+      setResults({ target, items });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -50,7 +53,7 @@ function Home() {
           </Button>
         </section>
       )}
-      {results && <OptimizeResults className="mt-6" results={results} />}
+      {results && <OptimizeResults className="mt-6" results={results.items} target={results.target} />}
       {inventory && <InventoryView className="mt-6" inventory={inventory} />}
     </div>
   );

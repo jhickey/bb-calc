@@ -1,4 +1,5 @@
 import type { OptimizeResult } from '#/lib/bb-calc';
+import { DamageTarget } from '#/lib/bb-calc';
 import { gemShapeIcon } from '#/lib/gems';
 import { PLACEHOLDER_WEAPON_ICON, weaponName, weaponThumbnail } from '#/lib/weapons';
 
@@ -13,13 +14,27 @@ const ELEMENTS = [
   ['Blood', 'blood'],
 ] as const;
 
+/** The headline label for each target — what the prominent score represents. */
+const TARGET_LABEL: Record<DamageTarget, string> = {
+  [DamageTarget.Total]: 'Attack Rating',
+  [DamageTarget.Phys]: 'Physical',
+  [DamageTarget.Blunt]: 'Blunt',
+  [DamageTarget.Thrust]: 'Thrust',
+  [DamageTarget.Arcane]: 'Arcane',
+  [DamageTarget.Fire]: 'Fire',
+  [DamageTarget.Bolt]: 'Bolt',
+  [DamageTarget.Blood]: 'Blood',
+};
+
 type OptimizeResultsProps = {
   results: Array<OptimizeResult>;
+  /** The target these results were optimized (and ranked) for. */
+  target: DamageTarget;
   className?: string;
 };
 
-/** Ranks the optimizer's per-weapon results, best Attack Rating first. */
-export function OptimizeResults({ results, className = '' }: OptimizeResultsProps) {
+/** Ranks the optimizer's per-weapon results, best score (for `target`) first. */
+export function OptimizeResults({ results, target, className = '' }: OptimizeResultsProps) {
   if (results.length === 0) return null;
 
   const ranked = [...results].sort((a, b) => b.score - a.score);
@@ -40,12 +55,15 @@ export function OptimizeResults({ results, className = '' }: OptimizeResultsProp
                 }}
                 className="h-12 w-12 shrink-0 object-contain"
               />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between gap-2">
-                  <h3 className="truncate text-lg font-semibold text-pale-mocha">{weaponName(result.weaponId)}</h3>
-                  <span className="shrink-0 text-2xl font-bold text-tamarillo">{Math.round(result.total)}</span>
-                </div>
-                <span className="text-xs uppercase tracking-wide text-au-chico">Attack Rating</span>
+              <h3 className="min-w-0 flex-1 truncate text-lg font-semibold text-pale-mocha">
+                {weaponName(result.weaponId)}
+              </h3>
+              <div className="shrink-0 text-right">
+                <div className="text-2xl font-bold text-tamarillo">{Math.round(result.score)}</div>
+                <div className="text-xs uppercase tracking-wide text-au-chico">{TARGET_LABEL[target]}</div>
+                {target !== DamageTarget.Total && (
+                  <div className="text-xs text-pale-mocha/70">AR {Math.round(result.total)}</div>
+                )}
               </div>
             </div>
 
