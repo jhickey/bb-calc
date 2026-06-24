@@ -3,13 +3,14 @@ import { gemShapeIcon } from '#/lib/gems';
 
 type GemListProps = {
   gems: Array<InventoryGem>;
+  emptyMessage?: string;
   className?: string;
 };
 
 /** Lists the gems in an inventory, each with its imprint-shape icon. */
-export function GemList({ gems, className = '' }: GemListProps) {
+export function GemList({ gems, emptyMessage = 'No gems in inventory.', className = '' }: GemListProps) {
   if (gems.length === 0) {
-    return <p className={`text-sm text-au-chico ${className}`}>No gems in inventory.</p>;
+    return <p className={`text-sm text-au-chico ${className}`}>{emptyMessage}</p>;
   }
 
   return (

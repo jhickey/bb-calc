@@ -5,7 +5,7 @@ import { DamageTarget, Mode, optimize, parseSave } from '#/lib/bb-calc';
 
 import { Button } from '#/components/Button';
 import { CharacterHeader } from '#/components/CharacterHeader';
-import { GemList } from '#/components/GemList';
+import { GemsPanel } from '#/components/GemsPanel';
 import { OptimizeResults } from '#/components/OptimizeResults';
 import { Tabs } from '#/components/Tabs';
 import { TargetSelect } from '#/components/TargetSelect';
@@ -82,7 +82,7 @@ function Home() {
             </div>
           )}
 
-          {activeTab === TAB_GEMS && <GemList className="mt-6" gems={inventory.gems} />}
+          {activeTab === TAB_GEMS && <GemsPanel className="mt-6" gems={inventory.gems} />}
         </div>
       )}
     </div>

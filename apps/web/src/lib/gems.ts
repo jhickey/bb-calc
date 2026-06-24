@@ -1,4 +1,13 @@
-import type { GemShape } from '#/lib/bb-calc';
+import { GemShape } from '#/lib/bb-calc';
+
+/** Every gem shape, in display order. */
+export const GEM_SHAPES: ReadonlyArray<GemShape> = [
+  GemShape.Radial,
+  GemShape.Triangle,
+  GemShape.Waning,
+  GemShape.Circle,
+  GemShape.Droplet,
+];
 
 /**
  * Imprint icon per gem shape. `Circle` gems are firearm gems (gun icon);
