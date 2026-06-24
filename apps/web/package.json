@@ -10,7 +10,11 @@
     "generate-routes": "tsr generate",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "oxlint src",
+    "lint:fix": "oxlint src --fix",
+    "format": "prettier src --write --ignore-path ../../.prettierignore",
+    "format:check": "prettier src --check --ignore-path ../../.prettierignore"
   },
   "dependencies": {
     "@napi-rs/wasm-runtime": "^1.1.5",
