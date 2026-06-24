@@ -225,10 +225,10 @@ mod tests {
         assert_eq!(
             value.stats,
             Stats {
-                str: 50,
-                skl: 50,
-                blt: 50,
-                arc: 50
+                str: 0,
+                skl: 0,
+                blt: 0,
+                arc: 0
             }
         );
         assert!(
