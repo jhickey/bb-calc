@@ -7,23 +7,22 @@ import { Button } from '#/components/Button';
 import { InventoryView } from '#/components/InventoryView';
 import { OptimizeResults } from '#/components/OptimizeResults';
 import { SaveUpload } from '#/components/SaveUpload';
+import { TargetSelect } from '#/components/TargetSelect';
+import { WeaponSelect } from '#/components/WeaponSelect';
 
 export const Route = createFileRoute('/')({ component: Home });
 
 function Home() {
   const [results, setResults] = useState<Array<OptimizeResult> | null>(null);
   const [inventory, setInventory] = useState<Inventory | null>(null);
+  const [weaponIds, setWeaponIds] = useState<Array<string>>([]);
+  const [target, setTarget] = useState<DamageTarget>(DamageTarget.Total);
   const [error, setError] = useState<string | null>(null);
 
   async function handleClickOptimize() {
+    if (!inventory) return;
     try {
-      const res = await optimize(
-        ['beasthunter_saif', 'church_pick'],
-        inventory?.gems || [],
-        { arc: 10, str: 10, skl: 10, blt: 10 },
-        DamageTarget.Total,
-        Mode.Compare,
-      );
+      const res = await optimize(weaponIds, inventory.gems, inventory.stats, target, Mode.Compare);
       setResults(res);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -42,9 +41,15 @@ function Home() {
       <h1 className="text-4xl font-bold">Bloodborne Optimizer</h1>
       {error && <p className="mt-4 text-red-400">Error: {error}</p>}
       <SaveUpload className="mt-4" onFile={handleFile} />
-      <Button className="mt-6" onClick={handleClickOptimize} disabled={!inventory}>
-        Optimize
-      </Button>
+      {inventory && (
+        <section className="mt-6">
+          <WeaponSelect selected={weaponIds} onChange={setWeaponIds} />
+          <TargetSelect className="mt-4" value={target} onChange={setTarget} />
+          <Button className="mt-4" onClick={handleClickOptimize} disabled={weaponIds.length === 0}>
+            Optimize
+          </Button>
+        </section>
+      )}
       {results && <OptimizeResults className="mt-6" results={results} />}
       {inventory && <InventoryView className="mt-6" inventory={inventory} />}
     </div>
