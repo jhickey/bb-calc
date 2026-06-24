@@ -6,18 +6,18 @@
  * here or in sibling files under `lib/` — never edit the generated
  * `index.js` / `index.d.ts` at the repo root, as `napi build` overwrites them.
  */
-export * from '../index'
+export * from '../index';
 
 import {
   computeAr,
-  optimize as optimizeNative,
   type DamageTarget,
   type Gem,
   type InventoryGem,
   type Mode,
+  optimize as optimizeNative,
   type OptimizeResult,
   type Stats,
-} from '../index'
+} from '../index';
 
 /**
  * Finds the gem socketing that maximizes `target` for each weapon.
@@ -38,7 +38,7 @@ export function optimize(
   mode: Mode,
   excludedGems?: Array<string> | undefined | null,
 ): Promise<Array<OptimizeResult>> {
-  return optimizeNative(weaponIds, gems, stats, target, mode, excludedGems) as Promise<Array<OptimizeResult>>
+  return optimizeNative(weaponIds, gems, stats, target, mode, excludedGems) as Promise<Array<OptimizeResult>>;
 }
 
 /**
@@ -46,5 +46,5 @@ export function optimize(
  * breakdown. Thin convenience wrapper over {@link computeAr}.
  */
 export function computeArTotal(weaponId: string, gems: Array<Gem>, stats: Stats): number {
-  return computeAr(weaponId, gems, stats).total
+  return computeAr(weaponId, gems, stats).total;
 }

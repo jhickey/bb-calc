@@ -1,12 +1,12 @@
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath } from 'node:url';
 
-import { defineConfig, type Plugin } from 'vite'
-import { devtools } from '@tanstack/devtools-vite'
+import { defineConfig, type Plugin } from 'vite';
+import { devtools } from '@tanstack/devtools-vite';
 
-import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 
-import viteReact from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import viteReact from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 // `bb-calc-js` ships a native Node addon (for SSR/Node) and a WASM build (for
 // the browser) from the same Rust source. Its `browser` field would route the
@@ -17,14 +17,14 @@ import tailwindcss from '@tailwindcss/vite'
 // produce these artifacts; they are git-ignored build output.
 const bbCalcWasmBrowser = fileURLToPath(
   new URL('../../packages/bb-calc-js/bb-calc-js.wasi-browser.js', import.meta.url),
-)
+);
 
 // The WASM target uses threads (shared memory), so the page must be
 // cross-origin isolated for `SharedArrayBuffer` to be available.
 const crossOriginIsolation = {
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Embedder-Policy': 'require-corp',
-}
+};
 
 // `server.headers` only covers responses Vite's own middleware serves; the HTML
 // document goes through TanStack Start's SSR handler, which never sees them — so
@@ -37,20 +37,20 @@ const crossOriginIsolationPlugin: Plugin = {
   configureServer(server) {
     server.middlewares.use((_req, res, next) => {
       for (const [key, value] of Object.entries(crossOriginIsolation)) {
-        res.setHeader(key, value)
+        res.setHeader(key, value);
       }
-      next()
-    })
+      next();
+    });
   },
   configurePreviewServer(server) {
     server.middlewares.use((_req, res, next) => {
       for (const [key, value] of Object.entries(crossOriginIsolation)) {
-        res.setHeader(key, value)
+        res.setHeader(key, value);
       }
-      next()
-    })
+      next();
+    });
   },
-}
+};
 
 const config = defineConfig({
   // Resolve `bb-calc-js` to its WASM browser binding. This app drives the
@@ -68,6 +68,6 @@ const config = defineConfig({
     exclude: ['bb-calc-js', '@napi-rs/wasm-runtime'],
   },
   plugins: [crossOriginIsolationPlugin, devtools(), tailwindcss(), tanstackStart(), viteReact()],
-})
+});
 
-export default config
+export default config;

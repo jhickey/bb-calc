@@ -5,7 +5,10 @@
     {
       "files": ["apps/web/**/*.{ts,tsx,js,jsx}"],
       "plugins": ["react", "jsx-a11y"],
-      "env": { "browser": true, "es2024": true },
+      "env": {
+        "browser": true,
+        "es2024": true
+      },
       "rules": {
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "warn"

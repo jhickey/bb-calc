@@ -1,19 +1,19 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
 
-import type { OptimizeResult } from '#/lib/bb-calc'
+import type { OptimizeResult } from '#/lib/bb-calc';
 
-export const Route = createFileRoute('/')({ component: Home })
+export const Route = createFileRoute('/')({ component: Home });
 
 function Home() {
-  const [results, setResults] = useState<Array<OptimizeResult> | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [results, setResults] = useState<Array<OptimizeResult> | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Load the calculator lazily inside the effect: its browser-only WASM loader
   // (fetch + Worker + SharedArrayBuffer) must never run during SSR. `optimize`
   // returns a Promise — the search runs on a worker thread, off the main thread.
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
     import('#/lib/bb-calc')
       .then(({ optimize, DamageTarget, Mode }) =>
         optimize(
@@ -25,15 +25,15 @@ function Home() {
         ),
       )
       .then((res) => {
-        if (!cancelled) setResults(res)
+        if (!cancelled) setResults(res);
       })
       .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e))
-      })
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      });
     return () => {
-      cancelled = true
-    }
-  }, [])
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="p-8">
@@ -44,5 +44,5 @@ function Home() {
       {error && <p className="mt-4 text-red-600">Error: {error}</p>}
       <pre className="mt-4 text-sm">{results ? JSON.stringify(results, null, 2) : 'Optimizing…'}</pre>
     </div>
-  )
+  );
 }

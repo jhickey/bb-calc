@@ -28,7 +28,7 @@ pnpm --filter bb-web preview  # serve the production build
 there:
 
 ```ts
-import { getWeapons, computeAr, DamageTarget } from '#/lib/bb-calc'
+import { getWeapons, computeAr, DamageTarget } from '#/lib/bb-calc';
 ```
 
 The library ships two builds from one Rust source: a native Node addon and a

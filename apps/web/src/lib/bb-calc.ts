@@ -10,7 +10,16 @@
  * UI code should import from here rather than reaching into `bb-calc-js`
  * directly, so the wiring lives in one place.
  */
-export { computeAr, getWeapons, optimize, ConvertedElement, DamageTarget, GemShape, Mode, WeaponType } from 'bb-calc-js'
+export {
+  computeAr,
+  getWeapons,
+  optimize,
+  ConvertedElement,
+  DamageTarget,
+  GemShape,
+  Mode,
+  WeaponType,
+} from 'bb-calc-js';
 
 export type {
   ArBreakdown,
@@ -22,4 +31,4 @@ export type {
   SlotChoice,
   Stats,
   Weapon,
-} from 'bb-calc-js'
+} from 'bb-calc-js';
