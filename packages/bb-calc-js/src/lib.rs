@@ -9,8 +9,9 @@ use bb_calc::{
   DamageTarget as BbDamageTarget, Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape,
   InventoryGem as BbInventoryGem, ItemCategory as BbItemCategory, ItemLocation as BbItemLocation,
   OptimizeResult as BbOptimizeResult, OwnedArmor as BbOwnedArmor, OwnedItem as BbOwnedItem,
-  OwnedWeapon as BbOwnedWeapon, SlotChoice as BbSlotChoice, Stats as BbStats, Weapon as BbWeapon,
-  WeaponHand as BbWeaponHand, WeaponImprint as BbWeaponImprint, WeaponType as BbWeaponType,
+  OwnedRune as BbOwnedRune, OwnedWeapon as BbOwnedWeapon, SlotChoice as BbSlotChoice,
+  Stats as BbStats, Weapon as BbWeapon, WeaponHand as BbWeaponHand,
+  WeaponImprint as BbWeaponImprint, WeaponType as BbWeaponType,
 };
 use napi::bindgen_prelude::{Error, Result, Status};
 use napi_derive::napi;
@@ -875,6 +876,37 @@ impl From<OwnedItem> for BbOwnedItem {
   }
 }
 
+/// A Caryll rune the player owns, decoded from a save.
+#[napi(object)]
+pub struct OwnedRune {
+  pub id: String,
+  pub name: String,
+  pub rating: u8,
+  pub effects: Vec<String>,
+}
+
+impl From<BbOwnedRune> for OwnedRune {
+  fn from(value: BbOwnedRune) -> Self {
+    OwnedRune {
+      id: value.id,
+      name: value.name,
+      rating: value.rating,
+      effects: value.effects,
+    }
+  }
+}
+
+impl From<OwnedRune> for BbOwnedRune {
+  fn from(value: OwnedRune) -> Self {
+    BbOwnedRune {
+      id: value.id,
+      name: value.name,
+      rating: value.rating,
+      effects: value.effects,
+    }
+  }
+}
+
 #[napi(object)]
 pub struct Inventory {
   pub character: Character,
@@ -883,6 +915,7 @@ pub struct Inventory {
   pub weapons: Vec<OwnedWeapon>,
   pub armor: Vec<OwnedArmor>,
   pub items: Vec<OwnedItem>,
+  pub runes: Vec<OwnedRune>,
 }
 
 impl From<Inventory> for bb_calc::Inventory {
@@ -894,6 +927,7 @@ impl From<Inventory> for bb_calc::Inventory {
       weapons: value.weapons.into_iter().map(BbOwnedWeapon::from).collect(),
       armor: value.armor.into_iter().map(BbOwnedArmor::from).collect(),
       items: value.items.into_iter().map(BbOwnedItem::from).collect(),
+      runes: value.runes.into_iter().map(BbOwnedRune::from).collect(),
     }
   }
 }
@@ -907,6 +941,7 @@ impl From<bb_calc::Inventory> for Inventory {
       weapons: value.weapons.into_iter().map(OwnedWeapon::from).collect(),
       armor: value.armor.into_iter().map(OwnedArmor::from).collect(),
       items: value.items.into_iter().map(OwnedItem::from).collect(),
+      runes: value.runes.into_iter().map(OwnedRune::from).collect(),
     }
   }
 }

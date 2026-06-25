@@ -1,8 +1,8 @@
 //! Build a player's gem [`Inventory`] from the bytes of a decrypted save.
 
 use crate::save::{
-    lookup_effect, parse_owned_items, parse_save_character, parse_save_gems, parse_save_name,
-    OwnedArmor, OwnedItem, OwnedWeapon,
+    lookup_effect, lookup_rune_effect, parse_owned_items, parse_save_character, parse_save_gems,
+    parse_save_name, parse_save_runes, OwnedArmor, OwnedItem, OwnedWeapon,
 };
 use crate::types::{GemShape, Stats};
 use serde::{Deserialize, Serialize};
@@ -27,6 +27,17 @@ pub struct InventoryGem {
     pub effects: Vec<String>,
     /// Whether this gem is currently socketed in a weapon.
     pub in_use: bool,
+}
+
+/// A Caryll rune the player owns, captured from a decrypted save.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OwnedRune {
+    /// Save instance id (hex u32) — stable and unique per physical rune.
+    pub id: String,
+    pub name: String,
+    pub rating: u8,
+    /// In-game effect strings, primary first (e.g. "More echoes from slain enemies 1").
+    pub effects: Vec<String>,
 }
 
 /// A hunter's character data read from a save: name plus every scalar field
@@ -66,9 +77,12 @@ pub struct Inventory {
     pub armor: Vec<OwnedArmor>,
     /// Non-equipment items: consumables, materials, key items, and chalices.
     pub items: Vec<OwnedItem>,
+    /// Caryll runes the player owns.
+    pub runes: Vec<OwnedRune>,
 }
 
 const UNKNOWN_GEM: &str = "Unknown gem";
+const UNKNOWN_RUNE: &str = "Unknown rune";
 const UNKNOWN_CHARACTER: &str = "Unknown character";
 
 /// Build an [`Inventory`] from the bytes of a decrypted save. Resolves each gem's
@@ -142,6 +156,60 @@ pub fn build_inventory_from_save(bytes: &[u8]) -> WithWarnings<Inventory> {
         ));
     }
 
+    // Runes share the upgrades region with gems and resolve the same way: the
+    // first resolvable effect names the rune and sets its rating.
+    let mut unknown_rune_ids: Vec<u32> = Vec::new();
+    let runes: Vec<OwnedRune> = parse_save_runes(bytes)
+        .into_iter()
+        .map(|raw| {
+            let mut seen: Vec<u32> = Vec::new();
+            let mut effects: Vec<String> = Vec::new();
+            let mut name = UNKNOWN_RUNE.to_string();
+            let mut rating: u8 = 0;
+
+            for (index, &effect_id) in raw.effect_ids.iter().enumerate() {
+                if seen.contains(&effect_id) {
+                    continue;
+                }
+                seen.push(effect_id);
+
+                match lookup_rune_effect(effect_id) {
+                    None => {
+                        if !unknown_rune_ids.contains(&effect_id) {
+                            unknown_rune_ids.push(effect_id);
+                        }
+                    }
+                    Some(info) => {
+                        effects.push(info.effect.to_string());
+                        if index == 0 || name == UNKNOWN_RUNE {
+                            name = info.name.to_string();
+                            rating = info.rating;
+                        }
+                    }
+                }
+            }
+
+            OwnedRune {
+                id: raw.id,
+                name,
+                rating,
+                effects,
+            }
+        })
+        .collect();
+
+    if !unknown_rune_ids.is_empty() {
+        let ids = unknown_rune_ids
+            .iter()
+            .map(|id| id.to_string())
+            .collect::<Vec<_>>()
+            .join(", ");
+        warnings.push(format!(
+            "{} rune effect id(s) not found in the rune map (kept as the runes that carry them, but their effect text is missing): {ids}",
+            unknown_rune_ids.len(),
+        ));
+    }
+
     let scalars = parse_save_character(bytes);
     if scalars.is_none() {
         warnings.push(
@@ -207,6 +275,7 @@ pub fn build_inventory_from_save(bytes: &[u8]) -> WithWarnings<Inventory> {
             weapons,
             armor,
             items,
+            runes,
         },
         warnings,
     }

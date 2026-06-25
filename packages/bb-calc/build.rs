@@ -89,6 +89,40 @@ fn armor_kind_variant(kind: &str) -> &'static str {
     }
 }
 
+/// One rune-effect row keyed by its numeric effect id (the JSON object's keys).
+#[derive(Deserialize)]
+struct RawRune {
+    name: String,
+    effect: String,
+    rating: u8,
+}
+
+/// Code-generate `static RUNE_EFFECTS: &[(u32, RuneEffectInfo)]`, sorted ascending
+/// by id for binary search. `RuneEffectInfo` is defined in `save::runes`.
+fn generate_runes(out_dir: &str) {
+    let json = fs::read_to_string("data/runes.json").expect("read data/runes.json");
+    let runes: BTreeMap<u32, RawRune> =
+        serde_json::from_str(&json).expect("parse data/runes.json");
+
+    let mut out = String::new();
+    out.push_str("static RUNE_EFFECTS: &[(u32, RuneEffectInfo)] = &[\n");
+    for (id, r) in &runes {
+        write!(
+            out,
+            "    ({id}, RuneEffectInfo {{ name: {name:?}, effect: {effect:?}, rating: {rating} }}),\n",
+            id = id,
+            name = r.name,
+            effect = r.effect,
+            rating = r.rating,
+        )
+        .unwrap();
+    }
+    out.push_str("];\n");
+
+    let dest = Path::new(out_dir).join("runes_generated.rs");
+    fs::write(&dest, out).expect("write runes_generated.rs");
+}
+
 /// One item row keyed by its numeric save id (the JSON object's keys).
 #[derive(Deserialize)]
 struct RawItem {
@@ -214,6 +248,7 @@ fn main() {
     println!("cargo:rerun-if-changed=data/weapons_offhand.json");
     println!("cargo:rerun-if-changed=data/armor.json");
     println!("cargo:rerun-if-changed=data/items.json");
+    println!("cargo:rerun-if-changed=data/runes.json");
     println!("cargo:rerun-if-changed=data/gem-effects.json");
     println!("cargo:rerun-if-changed=build.rs");
 
@@ -290,4 +325,5 @@ fn main() {
     generate_offhand_weapons(&out_dir);
     generate_armor(&out_dir);
     generate_items(&out_dir);
+    generate_runes(&out_dir);
 }

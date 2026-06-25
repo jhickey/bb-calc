@@ -142,6 +142,7 @@ export interface Inventory {
   weapons: Array<OwnedWeapon>
   armor: Array<OwnedArmor>
   items: Array<OwnedItem>
+  runes: Array<OwnedRune>
 }
 
 export interface InventoryGem {
@@ -211,6 +212,14 @@ export interface OwnedItem {
   category: ItemCategory
   amount: number
   location: ItemLocation
+}
+
+/** A Caryll rune the player owns, decoded from a save. */
+export interface OwnedRune {
+  id: string
+  name: string
+  rating: number
+  effects: Array<string>
 }
 
 /** A weapon the player owns, decoded from a save. */
