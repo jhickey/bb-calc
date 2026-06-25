@@ -1,3 +1,4 @@
+import { motion } from 'motion/react';
 import type { Inventory, Stats } from 'bb-calc-js';
 
 import { SaveUpload } from '#/components/SaveUpload';
@@ -62,7 +63,12 @@ export function CharacterHeader({
     <header className={`flex flex-wrap items-start justify-between gap-4 ${className}`}>
       <div className="min-w-0">
         {character && stats ? (
-          <>
+          <motion.div
+            key={character.name}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+          >
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h2 className="text-2xl font-semibold text-pale-mocha">{character.name}</h2>
               <span className="text-au-chico">Level {character.level}</span>
@@ -95,7 +101,7 @@ export function CharacterHeader({
               <Figure label="Blood Echoes" value={character.bloodEchoes.toLocaleString()} />
               <Figure label="Playtime" value={formatPlaytime(character.playtimeMs)} />
             </div>
-          </>
+          </motion.div>
         ) : (
           <p className="text-au-chico">Import a save to begin.</p>
         )}

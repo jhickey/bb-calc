@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useCallback, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import type { Inventory, Stats } from 'bb-calc-js';
 import { DamageTarget, Mode, gemFromInventory, optimize, parseSave } from 'bb-calc-js';
 
@@ -103,7 +104,12 @@ function Home() {
       />
 
       {inventory && editStats && (
-        <div className="mt-8">
+        <motion.div
+          className="mt-8"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+        >
           <Tabs
             tabs={[
               { id: TAB_WEAPONS, label: 'Weapons' },
@@ -134,20 +140,22 @@ function Home() {
                   </p>
                 ) : (
                   <ul className="space-y-4">
-                    {weaponIds.map((weaponId) => (
-                      <WeaponCard
-                        key={weaponId}
-                        weaponId={weaponId}
-                        slots={slotsByWeapon[weaponId] ?? EMPTY_SLOTS}
-                        stats={editStats}
-                        inventoryGems={inventory.gems}
-                        customGems={customGems}
-                        onSlotChange={(slotIndex, socket) => setSlot(weaponId, slotIndex, socket)}
-                        onCreateCustom={(socket) => setCustomGems((prev) => [...prev, socket])}
-                        onOptimize={() => autoOptimize(weaponId)}
-                        onRemove={() => removeWeapon(weaponId)}
-                      />
-                    ))}
+                    <AnimatePresence mode="popLayout">
+                      {weaponIds.map((weaponId) => (
+                        <WeaponCard
+                          key={weaponId}
+                          weaponId={weaponId}
+                          slots={slotsByWeapon[weaponId] ?? EMPTY_SLOTS}
+                          stats={editStats}
+                          inventoryGems={inventory.gems}
+                          customGems={customGems}
+                          onSlotChange={(slotIndex, socket) => setSlot(weaponId, slotIndex, socket)}
+                          onCreateCustom={(socket) => setCustomGems((prev) => [...prev, socket])}
+                          onOptimize={() => autoOptimize(weaponId)}
+                          onRemove={() => removeWeapon(weaponId)}
+                        />
+                      ))}
+                    </AnimatePresence>
                   </ul>
                 )}
               </div>
@@ -155,7 +163,7 @@ function Home() {
           )}
 
           {activeTab === TAB_GEMS && <GemsPanel className="mt-6" gems={inventory.gems} />}
-        </div>
+        </motion.div>
       )}
     </div>
   );
