@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import type { GemShape, InventoryGem, Stats } from 'bb-calc-js';
 import { computeAr } from 'bb-calc-js';
 
 import { GemPickerModal } from '#/components/GemPickerModal';
+import { ArValue } from '#/components/ArValue';
 import type { Socket } from '#/lib/gems';
 import { gemShapeIcon } from '#/lib/gems';
 import { PLACEHOLDER_WEAPON_ICON, weaponById, weaponName, weaponThumbnail } from '#/lib/weapons';
@@ -63,7 +65,14 @@ export function WeaponCard({
   );
 
   return (
-    <li className={`rounded-md border border-black-wool bg-black-wool/40 p-4 ${className}`}>
+    <motion.li
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className={`rounded-md border border-black-wool bg-black-wool/40 p-4 ${className}`}
+    >
       <div className="flex items-center gap-3">
         <img
           src={weaponThumbnail(weaponId)}
@@ -76,7 +85,7 @@ export function WeaponCard({
         />
         <h3 className="min-w-0 flex-1 truncate text-lg font-semibold text-pale-mocha">{weaponName(weaponId)}</h3>
         <div className="shrink-0 text-right">
-          <div className="text-2xl font-bold text-tamarillo">{Math.round(breakdown.total)}</div>
+          <ArValue value={breakdown.total} className="text-2xl font-bold text-tamarillo" />
           <div className="text-xs uppercase tracking-wide text-au-chico">Attack Rating</div>
         </div>
         <button
@@ -148,17 +157,20 @@ export function WeaponCard({
         )}
       </div>
 
-      {openSlot != null && (
-        <GemPickerModal
-          slotShape={slotShapes[openSlot]}
-          inventoryGems={inventoryGems}
-          customGems={customGems}
-          onPick={(socket) => onSlotChange(openSlot, socket)}
-          onCreateCustom={onCreateCustom}
-          onClear={() => onSlotChange(openSlot, null)}
-          onClose={() => setOpenSlot(null)}
-        />
-      )}
-    </li>
+      <AnimatePresence>
+        {openSlot != null && (
+          <GemPickerModal
+            key="gem-picker"
+            slotShape={slotShapes[openSlot]}
+            inventoryGems={inventoryGems}
+            customGems={customGems}
+            onPick={(socket) => onSlotChange(openSlot, socket)}
+            onCreateCustom={onCreateCustom}
+            onClear={() => onSlotChange(openSlot, null)}
+            onClose={() => setOpenSlot(null)}
+          />
+        )}
+      </AnimatePresence>
+    </motion.li>
   );
 }

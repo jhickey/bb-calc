@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 
 import { getWeapons } from 'bb-calc-js';
 import { PLACEHOLDER_WEAPON_ICON, weaponThumbnail } from '#/lib/weapons';
@@ -62,28 +63,37 @@ export function WeaponSelect({ selected, onChange, className = '' }: WeaponSelec
       />
       <ul className="mt-2 max-h-72 overflow-y-auto rounded-md border border-black-wool bg-black-wool/40 p-2">
         {visible.length === 0 && <li className="px-2 py-1 text-sm text-au-chico">No weapons match.</li>}
-        {visible.map((weapon) => (
-          <li key={weapon.id}>
-            <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-old-red/30">
-              <input
-                type="checkbox"
-                checked={selectedSet.has(weapon.id)}
-                onChange={() => toggle(weapon.id)}
-                className="accent-tamarillo"
-              />
-              <img
-                src={weaponThumbnail(weapon.id)}
-                alt=""
-                onError={(event) => {
-                  event.currentTarget.onerror = null;
-                  event.currentTarget.src = PLACEHOLDER_WEAPON_ICON;
-                }}
-                className="h-6 w-6 shrink-0 object-contain"
-              />
-              <span className="text-sm text-pale-mocha">{weapon.name}</span>
-            </label>
-          </li>
-        ))}
+        <AnimatePresence initial={false}>
+          {visible.map((weapon) => (
+            <motion.li
+              key={weapon.id}
+              layout
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-old-red/30">
+                <input
+                  type="checkbox"
+                  checked={selectedSet.has(weapon.id)}
+                  onChange={() => toggle(weapon.id)}
+                  className="accent-tamarillo"
+                />
+                <img
+                  src={weaponThumbnail(weapon.id)}
+                  alt=""
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = PLACEHOLDER_WEAPON_ICON;
+                  }}
+                  className="h-6 w-6 shrink-0 object-contain"
+                />
+                <span className="text-sm text-pale-mocha">{weapon.name}</span>
+              </label>
+            </motion.li>
+          ))}
+        </AnimatePresence>
       </ul>
     </div>
   );

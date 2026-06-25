@@ -1,4 +1,5 @@
 import { useId, useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import type { GemShape, InventoryGem } from 'bb-calc-js';
 import { gemFromInventory, parseGemEffects } from 'bb-calc-js';
 
@@ -63,7 +64,13 @@ export function GemPickerModal({
   }, [inventoryGems, slotShape, search]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+    >
       {/* Full-screen backdrop; a real button so closing is keyboard-accessible. */}
       <button
         type="button"
@@ -71,10 +78,14 @@ export function GemPickerModal({
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-black/60"
       />
-      <div
+      <motion.div
         role="dialog"
         aria-modal="true"
         className="relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col rounded-lg border border-black-wool bg-superhard shadow-xl"
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
       >
         <header className="flex items-center justify-between gap-2 border-b border-black-wool px-4 py-3">
           <div className="flex items-center gap-2">
@@ -153,8 +164,8 @@ export function GemPickerModal({
             Empty this slot
           </button>
         </footer>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

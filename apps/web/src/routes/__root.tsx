@@ -1,6 +1,7 @@
 import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
+import { MotionConfig } from 'motion/react';
 
 import appCss from '../styles.css?url';
 
@@ -35,7 +36,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        {/* reducedMotion="user" makes every animation honor prefers-reduced-motion. */}
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
         <TanStackDevtools
           config={{
             position: 'bottom-right',
