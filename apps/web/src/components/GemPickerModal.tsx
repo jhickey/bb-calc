@@ -1,7 +1,8 @@
 import { useId, useMemo, useState } from 'react';
-import type { Gem, GemShape, InventoryGem } from 'bb-calc-js';
+import type { GemShape, InventoryGem } from 'bb-calc-js';
 import { gemFromInventory, parseGemEffects } from 'bb-calc-js';
 
+import type { Socket } from '#/lib/gems';
 import { GEM_SHAPES, gemShapeIcon } from '#/lib/gems';
 
 /** A gem fits a slot when shapes match or the gem is the universal Droplet. */
@@ -14,11 +15,11 @@ type GemPickerModalProps = {
   slotShape: GemShape;
   inventoryGems: Array<InventoryGem>;
   /** Ephemeral custom gems created this session, reusable across slots. */
-  customGems: Array<Gem>;
-  /** Socket the chosen gem (already a calc Gem). */
-  onPick: (gem: Gem) => void;
+  customGems: Array<Socket>;
+  /** Socket the chosen gem. */
+  onPick: (socket: Socket) => void;
   /** Register a newly created custom gem so it's reusable elsewhere. */
-  onCreateCustom: (gem: Gem) => void;
+  onCreateCustom: (socket: Socket) => void;
   /** Empty the slot. */
   onClear: () => void;
   onClose: () => void;
@@ -44,7 +45,7 @@ export function GemPickerModal({
   const [search, setSearch] = useState('');
 
   const fittingCustom = useMemo(
-    () => customGems.filter((gem) => shapeFits(gem.shape, slotShape)),
+    () => customGems.filter((socket) => shapeFits(socket.gem.shape, slotShape)),
     [customGems, slotShape],
   );
 
@@ -120,20 +121,20 @@ export function GemPickerModal({
               gems={visibleInventory}
               customGems={fittingCustom}
               onPickInventory={(gem) => {
-                onPick(gemFromInventory(gem));
+                onPick({ gem: gemFromInventory(gem), effects: gem.effects });
                 onClose();
               }}
-              onPickCustom={(gem) => {
-                onPick(gem);
+              onPickCustom={(socket) => {
+                onPick(socket);
                 onClose();
               }}
             />
           ) : (
             <CustomGemTab
               slotShape={slotShape}
-              onCreate={(gem) => {
-                onCreateCustom(gem);
-                onPick(gem);
+              onCreate={(socket) => {
+                onCreateCustom(socket);
+                onPick(socket);
                 onClose();
               }}
             />
@@ -161,9 +162,9 @@ type InventoryTabProps = {
   search: string;
   onSearch: (value: string) => void;
   gems: Array<InventoryGem>;
-  customGems: Array<Gem>;
+  customGems: Array<Socket>;
   onPickInventory: (gem: InventoryGem) => void;
-  onPickCustom: (gem: Gem) => void;
+  onPickCustom: (socket: Socket) => void;
 };
 
 function InventoryTab({ search, onSearch, gems, customGems, onPickInventory, onPickCustom }: InventoryTabProps) {
@@ -181,9 +182,9 @@ function InventoryTab({ search, onSearch, gems, customGems, onPickInventory, onP
         <>
           <p className="mt-4 text-xs uppercase tracking-wide text-au-chico">Custom gems</p>
           <ul className="mt-2 space-y-2">
-            {customGems.map((gem, i) => (
+            {customGems.map((socket, i) => (
               <li key={`custom-${i}`}>
-                <GemButton name={gem.name} effects={gemEffectSummary(gem)} onClick={() => onPickCustom(gem)} />
+                <GemButton name={socket.gem.name} effects={socket.effects} onClick={() => onPickCustom(socket)} />
               </li>
             ))}
           </ul>
@@ -244,7 +245,7 @@ function GemButton({ name, rating, effects, onClick }: GemButtonProps) {
 
 type CustomGemTabProps = {
   slotShape: GemShape;
-  onCreate: (gem: Gem) => void;
+  onCreate: (socket: Socket) => void;
 };
 
 function CustomGemTab({ slotShape, onCreate }: CustomGemTabProps) {
@@ -274,7 +275,7 @@ function CustomGemTab({ slotShape, onCreate }: CustomGemTabProps) {
   function create() {
     try {
       const gem = parseGemEffects(effects.join('; '), name || 'Custom gem', shape);
-      onCreate(gem);
+      onCreate({ gem, effects });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -375,35 +376,4 @@ function CustomGemTab({ slotShape, onCreate }: CustomGemTabProps) {
       </button>
     </div>
   );
-}
-
-/** A short, readable summary of a calc gem's non-trivial effects. */
-function gemEffectSummary(gem: Gem): Array<string> {
-  const out: Array<string> = [];
-  const mult: Array<[keyof Gem, string]> = [
-    ['dmgPhys', 'Physical'],
-    ['dmgBlunt', 'Blunt'],
-    ['dmgThrust', 'Thrust'],
-    ['dmgArcane', 'Arcane'],
-    ['dmgFire', 'Fire'],
-    ['dmgBolt', 'Bolt'],
-    ['dmgBlood', 'Blood'],
-    ['dmgGeneral', 'ATK'],
-  ];
-  for (const [key, label] of mult) {
-    const value = gem[key] as number;
-    if (value !== 1) out.push(`${label} ${value > 1 ? '+' : ''}${Math.round((value - 1) * 1000) / 10}%`);
-  }
-  const flat: Array<[keyof Gem, string]> = [
-    ['flatPhys', 'physical'],
-    ['flatArcane', 'arcane'],
-    ['flatFire', 'fire'],
-    ['flatBolt', 'bolt'],
-    ['flatBlood', 'blood'],
-  ];
-  for (const [key, label] of flat) {
-    const value = gem[key] as number;
-    if (value !== 0) out.push(`${value > 0 ? '+' : ''}${value} ${label}`);
-  }
-  return out.length > 0 ? out : ['No AR effect'];
 }

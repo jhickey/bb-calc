@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import type { Gem, GemShape, InventoryGem, Stats } from 'bb-calc-js';
+import type { GemShape, InventoryGem, Stats } from 'bb-calc-js';
 import { computeAr } from 'bb-calc-js';
 
 import { GemPickerModal } from '#/components/GemPickerModal';
+import type { Socket } from '#/lib/gems';
 import { gemShapeIcon } from '#/lib/gems';
 import { PLACEHOLDER_WEAPON_ICON, weaponById, weaponName, weaponThumbnail } from '#/lib/weapons';
 
@@ -20,12 +21,12 @@ const ELEMENTS = [
 type WeaponCardProps = {
   weaponId: string;
   /** Three slots, in imprint order; `null` is empty. */
-  slots: Array<Gem | null>;
+  slots: Array<Socket | null>;
   stats: Stats;
   inventoryGems: Array<InventoryGem>;
-  customGems: Array<Gem>;
-  onSlotChange: (slotIndex: number, gem: Gem | null) => void;
-  onCreateCustom: (gem: Gem) => void;
+  customGems: Array<Socket>;
+  onSlotChange: (slotIndex: number, socket: Socket | null) => void;
+  onCreateCustom: (socket: Socket) => void;
   onOptimize: () => void;
   onRemove: () => void;
   className?: string;
@@ -55,7 +56,7 @@ export function WeaponCard({
     () =>
       computeAr(
         weaponId,
-        slots.filter((gem): gem is Gem => gem != null),
+        slots.filter((socket): socket is Socket => socket != null).map((socket) => socket.gem),
         stats,
       ),
     [weaponId, slots, stats],
@@ -99,7 +100,7 @@ export function WeaponCard({
 
       <ul className="mt-3 space-y-2">
         {slotShapes.map((shape, index) => {
-          const gem = slots[index] ?? null;
+          const socket = slots[index] ?? null;
           return (
             <li key={index}>
               <button
@@ -108,9 +109,16 @@ export function WeaponCard({
                 className="flex w-full items-start gap-2 rounded border border-black-wool px-2 py-1.5 text-left text-xs transition-colors hover:border-tamarillo"
               >
                 <img src={gemShapeIcon(shape)} alt={shape} className="mt-0.5 h-5 w-5 shrink-0 object-contain" />
-                {gem ? (
+                {socket ? (
                   <div className="min-w-0 flex-1">
-                    <span className="text-pale-mocha">{gem.name}</span>
+                    <span className="text-pale-mocha">{socket.gem.name}</span>
+                    <ul className="mt-0.5 space-y-0.5">
+                      {socket.effects.map((effect, i) => (
+                        <li key={`${effect}-${i}`} className="text-pale-mocha/70">
+                          {effect}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 ) : (
                   <span className="flex-1 italic text-au-chico">Empty {shape} slot — click to socket</span>
@@ -129,7 +137,7 @@ export function WeaponCard({
         >
           Auto-optimize
         </button>
-        {slots.some((gem) => gem != null) && (
+        {slots.some((socket) => socket != null) && (
           <button
             type="button"
             onClick={() => slots.forEach((_, index) => onSlotChange(index, null))}
@@ -145,7 +153,7 @@ export function WeaponCard({
           slotShape={slotShapes[openSlot]}
           inventoryGems={inventoryGems}
           customGems={customGems}
-          onPick={(gem) => onSlotChange(openSlot, gem)}
+          onPick={(socket) => onSlotChange(openSlot, socket)}
           onCreateCustom={onCreateCustom}
           onClear={() => onSlotChange(openSlot, null)}
           onClose={() => setOpenSlot(null)}

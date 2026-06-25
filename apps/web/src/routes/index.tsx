@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useCallback, useState } from 'react';
-import type { Gem, Inventory, Stats } from 'bb-calc-js';
+import type { Inventory, Stats } from 'bb-calc-js';
 import { DamageTarget, Mode, gemFromInventory, optimize, parseSave } from 'bb-calc-js';
 
 import { Button } from '#/components/Button';
@@ -10,13 +10,14 @@ import { Tabs } from '#/components/Tabs';
 import { TargetSelect } from '#/components/TargetSelect';
 import { WeaponCard } from '#/components/WeaponCard';
 import { WeaponSelect } from '#/components/WeaponSelect';
+import type { Socket } from '#/lib/gems';
 
 export const Route = createFileRoute('/')({ component: Home });
 
 const TAB_WEAPONS = 'weapons';
 const TAB_GEMS = 'gems';
 
-const EMPTY_SLOTS: Array<Gem | null> = [null, null, null];
+const EMPTY_SLOTS: Array<Socket | null> = [null, null, null];
 
 function Home() {
   const [inventory, setInventory] = useState<Inventory | null>(null);
@@ -24,9 +25,9 @@ function Home() {
   const [editStats, setEditStats] = useState<Stats | null>(null);
   const [weaponIds, setWeaponIds] = useState<Array<string>>([]);
   // Per-weapon gem socketing (3 slots each); the source of truth for each card.
-  const [slotsByWeapon, setSlotsByWeapon] = useState<Record<string, Array<Gem | null>>>({});
+  const [slotsByWeapon, setSlotsByWeapon] = useState<Record<string, Array<Socket | null>>>({});
   // Custom gems created this session — ephemeral, reusable across slots.
-  const [customGems, setCustomGems] = useState<Array<Gem>>([]);
+  const [customGems, setCustomGems] = useState<Array<Socket>>([]);
   const [target, setTarget] = useState<DamageTarget>(DamageTarget.Total);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>(TAB_WEAPONS);
@@ -50,10 +51,10 @@ function Home() {
     if (inventory) setEditStats({ ...inventory.stats });
   }
 
-  function setSlot(weaponId: string, slotIndex: number, gem: Gem | null) {
+  function setSlot(weaponId: string, slotIndex: number, socket: Socket | null) {
     setSlotsByWeapon((prev) => {
       const slots = (prev[weaponId] ?? EMPTY_SLOTS).slice();
-      slots[slotIndex] = gem;
+      slots[slotIndex] = socket;
       return { ...prev, [weaponId]: slots };
     });
   }
@@ -70,11 +71,11 @@ function Home() {
       try {
         const [result] = await optimize([weaponId], inventory.gems, editStats, target, Mode.Compare);
         if (!result) return;
-        const slots: Array<Gem | null> = [null, null, null];
+        const slots: Array<Socket | null> = [null, null, null];
         for (const slot of result.slots) {
           if (slot.gem) {
             const owned = inventory.gems.find((gem) => gem.id === slot.gem?.id);
-            if (owned) slots[slot.slot] = gemFromInventory(owned);
+            if (owned) slots[slot.slot] = { gem: gemFromInventory(owned), effects: owned.effects };
           }
         }
         setSlotsByWeapon((prev) => ({ ...prev, [weaponId]: slots }));
@@ -141,8 +142,8 @@ function Home() {
                         stats={editStats}
                         inventoryGems={inventory.gems}
                         customGems={customGems}
-                        onSlotChange={(slotIndex, gem) => setSlot(weaponId, slotIndex, gem)}
-                        onCreateCustom={(gem) => setCustomGems((prev) => [...prev, gem])}
+                        onSlotChange={(slotIndex, socket) => setSlot(weaponId, slotIndex, socket)}
+                        onCreateCustom={(socket) => setCustomGems((prev) => [...prev, socket])}
                         onOptimize={() => autoOptimize(weaponId)}
                         onRemove={() => removeWeapon(weaponId)}
                       />
