@@ -160,6 +160,8 @@ export interface InventoryGem {
   effects: Array<string>
   /** Whether this gem is currently socketed in a weapon. */
   inUse: boolean
+  /** Whether this gem lives in the Hunter's Dream storage (vs carried). */
+  inStorage: boolean
 }
 
 /** The kind of a non-equipment item (mirrors `bb_calc::ItemCategory`). */

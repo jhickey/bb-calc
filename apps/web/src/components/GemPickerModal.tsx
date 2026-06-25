@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import type { GemShape, InventoryGem } from 'bb-calc-js';
 import { gemFromInventory, parseGemEffects } from 'bb-calc-js';
 
+import { StorageIcon } from '#/components/StorageIcon';
 import type { Socket } from '#/lib/gems';
 import { GEM_SHAPES, gemShapeIcon } from '#/lib/gems';
 
@@ -215,6 +216,7 @@ function InventoryTab({ search, onSearch, gems, customGems, onPickInventory, onP
                 name={gem.name}
                 rating={gem.rating}
                 effects={gem.effects}
+                inStorage={gem.inStorage}
                 onClick={() => onPickInventory(gem)}
               />
             </li>
@@ -229,18 +231,22 @@ type GemButtonProps = {
   name: string;
   rating?: number;
   effects: Array<string>;
+  inStorage?: boolean;
   onClick: () => void;
 };
 
-function GemButton({ name, rating, effects, onClick }: GemButtonProps) {
+function GemButton({ name, rating, effects, inStorage = false, onClick }: GemButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       className="w-full cursor-pointer rounded-md border border-black-wool bg-black-wool/40 px-3 py-2 text-left transition-colors hover:border-tamarillo"
     >
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="truncate font-semibold text-pale-mocha">{name}</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate font-semibold text-pale-mocha">{name}</span>
+          {inStorage && <StorageIcon />}
+        </span>
         {rating != null && <span className="shrink-0 text-xs text-au-chico">Rating {rating}</span>}
       </div>
       <ul className="mt-0.5 space-y-0.5">

@@ -280,6 +280,33 @@ fn parse_equipped_slots(bytes: &[u8], username: usize) -> HashMap<u64, Vec<u32>>
     map
 }
 
+/// Instance ids (hex) of every upgrade (gem/rune) referenced from the Hunter's
+/// Dream **storage** article region. A stored gem/rune carries no data here — it
+/// just appears as a reference whose `first_part` (+4) is the upgrade's instance
+/// id (the same id `parse_save_gems` reports). Callers intersect this with their
+/// gem list to flag which gems are in storage vs carried.
+///
+/// Returns every non-zero `first_part` in the region (weapon/armor/item codes
+/// included); the intersection with real gem ids is what makes it meaningful.
+pub fn parse_storage_upgrade_ids(bytes: &[u8]) -> Vec<String> {
+    let Some(username) = find_username(bytes) else {
+        return Vec::new();
+    };
+    let start = username + USERNAME_TO_INV + INV_TO_STORAGE;
+    let end = (start + REGION_SLOTS * ARTICLE_STRIDE).min(bytes.len());
+
+    let mut ids = Vec::new();
+    let mut i = start;
+    while i + ARTICLE_STRIDE <= end {
+        let first_part = read_u32_le(bytes, i + 4);
+        if first_part != 0 {
+            ids.push(format!("{first_part:08x}"));
+        }
+        i += ARTICLE_STRIDE;
+    }
+    ids
+}
+
 /// Decode the upgrade level and imprint from a weapon's canonical id.
 /// Returns `None` for an imprint value we don't recognise.
 fn level_and_imprint(canonical_with_level: u32) -> Option<(u8, WeaponImprint, u32)> {

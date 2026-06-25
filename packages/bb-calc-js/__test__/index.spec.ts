@@ -95,7 +95,7 @@ test('computeAr rejects more than three gems', (t) => {
 
 /** An owned gem described by its in-game effect strings. */
 function inventoryGem(id: string, shape: GemShape, effects: Array<string>): InventoryGem {
-  return { id, name: id, shape, rating: 19, effects, inUse: false };
+  return { id, name: id, shape, rating: 19, effects, inUse: false, inStorage: false };
 }
 
 test('optimize echoes the weapon id and exposes its baked-in slot shapes', async (t) => {

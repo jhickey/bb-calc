@@ -32,8 +32,8 @@ pub use optimizer::{
 };
 pub use save::{
     lookup_effect, lookup_rune_effect, parse_owned_items, parse_save_character, parse_save_gems,
-    parse_save_name, parse_save_runes, parse_save_stats, ArmorKind, CharacterStats, EffectInfo,
-    ItemCategory, ItemLocation, OwnedArmor, OwnedItem, OwnedItems, OwnedWeapon, RawSaveGem,
-    RawSaveRune, RuneEffectInfo, WeaponHand, WeaponImprint,
+    parse_save_name, parse_save_runes, parse_save_stats, parse_storage_upgrade_ids, ArmorKind,
+    CharacterStats, EffectInfo, ItemCategory, ItemLocation, OwnedArmor, OwnedItem, OwnedItems,
+    OwnedWeapon, RawSaveGem, RawSaveRune, RuneEffectInfo, WeaponHand, WeaponImprint,
 };
 pub use types::{ArBreakdown, ConvertedElement, Gem, GemShape, Stats, Weapon, WeaponType};
