@@ -57,6 +57,7 @@ const {
   },
 })
 export default __napiModule.exports
+export const ArmorKind = __napiModule.exports.ArmorKind
 export const computeAr = __napiModule.exports.computeAr
 export const ConvertedElement = __napiModule.exports.ConvertedElement
 export const DamageTarget = __napiModule.exports.DamageTarget

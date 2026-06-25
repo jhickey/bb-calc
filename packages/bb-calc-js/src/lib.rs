@@ -5,10 +5,11 @@ mod optimize;
 
 use bb_calc::{
   compute_ar as bb_compute_ar, optimizer as bb_optimizer, ArBreakdown as BbArBreakdown,
-  Candidate as BbCandidate, ConvertedElement as BbConvertedElement, DamageTarget as BbDamageTarget,
-  Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape, InventoryGem as BbInventoryGem,
-  ItemLocation as BbItemLocation, OptimizeResult as BbOptimizeResult, OwnedWeapon as BbOwnedWeapon,
-  SlotChoice as BbSlotChoice, Stats as BbStats, Weapon as BbWeapon, WeaponHand as BbWeaponHand,
+  ArmorKind as BbArmorKind, Candidate as BbCandidate, ConvertedElement as BbConvertedElement,
+  DamageTarget as BbDamageTarget, Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape,
+  InventoryGem as BbInventoryGem, ItemLocation as BbItemLocation, OptimizeResult as BbOptimizeResult,
+  OwnedArmor as BbOwnedArmor, OwnedWeapon as BbOwnedWeapon, SlotChoice as BbSlotChoice,
+  Stats as BbStats, Weapon as BbWeapon, WeaponHand as BbWeaponHand,
   WeaponImprint as BbWeaponImprint, WeaponType as BbWeaponType,
 };
 use napi::bindgen_prelude::{Error, Result, Status};
@@ -744,12 +745,78 @@ impl From<OwnedWeapon> for BbOwnedWeapon {
   }
 }
 
+/// The body slot a piece of attire occupies (mirrors `bb_calc::ArmorKind`).
+#[napi(string_enum)]
+pub enum ArmorKind {
+  Head,
+  Chest,
+  Hands,
+  Legs,
+  Other,
+}
+
+impl From<BbArmorKind> for ArmorKind {
+  fn from(value: BbArmorKind) -> Self {
+    match value {
+      BbArmorKind::Head => ArmorKind::Head,
+      BbArmorKind::Chest => ArmorKind::Chest,
+      BbArmorKind::Hands => ArmorKind::Hands,
+      BbArmorKind::Legs => ArmorKind::Legs,
+      BbArmorKind::Other => ArmorKind::Other,
+    }
+  }
+}
+
+impl From<ArmorKind> for BbArmorKind {
+  fn from(value: ArmorKind) -> Self {
+    match value {
+      ArmorKind::Head => BbArmorKind::Head,
+      ArmorKind::Chest => BbArmorKind::Chest,
+      ArmorKind::Hands => BbArmorKind::Hands,
+      ArmorKind::Legs => BbArmorKind::Legs,
+      ArmorKind::Other => BbArmorKind::Other,
+    }
+  }
+}
+
+/// A piece of attire the player owns, decoded from a save.
+#[napi(object)]
+pub struct OwnedArmor {
+  pub canonical_id: u32,
+  pub name: String,
+  pub kind: ArmorKind,
+  pub location: ItemLocation,
+}
+
+impl From<BbOwnedArmor> for OwnedArmor {
+  fn from(value: BbOwnedArmor) -> Self {
+    OwnedArmor {
+      canonical_id: value.canonical_id,
+      name: value.name,
+      kind: value.kind.into(),
+      location: value.location.into(),
+    }
+  }
+}
+
+impl From<OwnedArmor> for BbOwnedArmor {
+  fn from(value: OwnedArmor) -> Self {
+    BbOwnedArmor {
+      canonical_id: value.canonical_id,
+      name: value.name,
+      kind: value.kind.into(),
+      location: value.location.into(),
+    }
+  }
+}
+
 #[napi(object)]
 pub struct Inventory {
   pub character: Character,
   pub stats: Stats,
   pub gems: Vec<InventoryGem>,
   pub weapons: Vec<OwnedWeapon>,
+  pub armor: Vec<OwnedArmor>,
 }
 
 impl From<Inventory> for bb_calc::Inventory {
@@ -759,6 +826,7 @@ impl From<Inventory> for bb_calc::Inventory {
       stats: value.stats.into(),
       gems: value.gems.into_iter().map(BbInventoryGem::from).collect(),
       weapons: value.weapons.into_iter().map(BbOwnedWeapon::from).collect(),
+      armor: value.armor.into_iter().map(BbOwnedArmor::from).collect(),
     }
   }
 }
@@ -770,6 +838,7 @@ impl From<bb_calc::Inventory> for Inventory {
       stats: value.stats.into(),
       gems: value.gems.into_iter().map(InventoryGem::from).collect(),
       weapons: value.weapons.into_iter().map(OwnedWeapon::from).collect(),
+      armor: value.armor.into_iter().map(OwnedArmor::from).collect(),
     }
   }
 }

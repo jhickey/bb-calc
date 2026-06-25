@@ -13,6 +13,15 @@ export interface ArBreakdown {
   convertedElement: ConvertedElement
 }
 
+/** The body slot a piece of attire occupies (mirrors `bb_calc::ArmorKind`). */
+export declare const enum ArmorKind {
+  Head = 'Head',
+  Chest = 'Chest',
+  Hands = 'Hands',
+  Legs = 'Legs',
+  Other = 'Other'
+}
+
 /**
  * A gem the player owns, ready to feed the optimizer. `shape` is the
  * inventory-sourced shape (authoritative for slotting) and is kept separate
@@ -131,6 +140,7 @@ export interface Inventory {
   stats: Stats
   gems: Array<InventoryGem>
   weapons: Array<OwnedWeapon>
+  armor: Array<OwnedArmor>
 }
 
 export interface InventoryGem {
@@ -175,6 +185,14 @@ export interface OptimizeResult {
   breakdown: ArBreakdown
   slots: Array<SlotChoice>
   weaponId: string
+}
+
+/** A piece of attire the player owns, decoded from a save. */
+export interface OwnedArmor {
+  canonicalId: number
+  name: string
+  kind: ArmorKind
+  location: ItemLocation
 }
 
 /** A weapon the player owns, decoded from a save. */

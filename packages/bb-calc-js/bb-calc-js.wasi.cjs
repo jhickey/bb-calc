@@ -108,6 +108,7 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
   },
 })
 module.exports = __napiModule.exports
+module.exports.ArmorKind = __napiModule.exports.ArmorKind
 module.exports.computeAr = __napiModule.exports.computeAr
 module.exports.ConvertedElement = __napiModule.exports.ConvertedElement
 module.exports.DamageTarget = __napiModule.exports.DamageTarget

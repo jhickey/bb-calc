@@ -36,6 +36,34 @@ fn offhand_name(canonical_id: u32) -> Option<&'static str> {
         .map(|i| OFFHAND_WEAPONS[i].1)
 }
 
+/// The body slot a piece of attire occupies.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ArmorKind {
+    Head,
+    Chest,
+    Hands,
+    Legs,
+    /// Attire that isn't one of the four equip slots (special/unobtainable sets).
+    Other,
+}
+
+/// A generated armor table row: in-game name and body slot.
+#[derive(Debug, Clone, Copy)]
+struct ArmorInfo {
+    name: &'static str,
+    kind: ArmorKind,
+}
+
+include!(concat!(env!("OUT_DIR"), "/armor_generated.rs"));
+
+/// Look up an armor piece by its canonical id (binary search).
+fn armor_info(canonical_id: u32) -> Option<&'static ArmorInfo> {
+    ARMORS
+        .binary_search_by_key(&canonical_id, |&(id, _)| id)
+        .ok()
+        .map(|i| &ARMORS[i].1)
+}
+
 /// Which hand a weapon is wielded in. Left-hand weapons (firearms/shields) aren't
 /// in the AR `WEAPONS` table, so they carry no `weapon_id`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -78,9 +106,20 @@ pub struct OwnedWeapon {
     pub gem_ids: Vec<String>,
 }
 
-/// The weapons a save owns plus the set of socketed gem instance ids (hex).
+/// A piece of attire the player owns, decoded from a save.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OwnedArmor {
+    /// In-game id, e.g. `10000` (Grey Wolf Cap).
+    pub canonical_id: u32,
+    pub name: String,
+    pub kind: ArmorKind,
+    pub location: ItemLocation,
+}
+
+/// What a save owns: weapons, armor, and the set of socketed gem instance ids (hex).
 pub struct OwnedItems {
     pub weapons: Vec<OwnedWeapon>,
+    pub armor: Vec<OwnedArmor>,
     pub socketed_gem_ids: Vec<String>,
 }
 
@@ -266,7 +305,39 @@ fn collect_weapons(
     }
 }
 
-/// Parse every owned weapon (inventory + storage) and the set of socketed gem ids.
+/// Walk one 16-byte article region, collecting real armor (signature `(_, 0x10)`
+/// whose key is in `slots`).
+fn collect_armor(
+    bytes: &[u8],
+    start: usize,
+    location: ItemLocation,
+    slots: &HashMap<u64, Vec<u32>>,
+    out: &mut Vec<OwnedArmor>,
+) {
+    let end = (start + REGION_SLOTS * ARTICLE_STRIDE).min(bytes.len());
+    let mut i = start;
+    while i + ARTICLE_STRIDE <= end {
+        if bytes[i + 11] == 0x10 {
+            // The armor id is the low 3 bytes at +8 (the +11 byte is the 0x10 tag).
+            let canonical_id = read_u32_le(bytes, i + 8) & 0x00ff_ffff;
+            let key = read_u64_le(bytes, i + 4);
+            if slots.contains_key(&key) {
+                if let Some(info) = armor_info(canonical_id) {
+                    out.push(OwnedArmor {
+                        canonical_id,
+                        name: info.name.to_string(),
+                        kind: info.kind,
+                        location,
+                    });
+                }
+            }
+        }
+        i += ARTICLE_STRIDE;
+    }
+}
+
+/// Parse every owned weapon and armor piece (inventory + storage) and the set of
+/// socketed gem ids.
 pub fn parse_owned_items(bytes: &[u8]) -> Option<OwnedItems> {
     let username = find_username(bytes)?;
     let slots = parse_equipped_slots(bytes, username);
@@ -277,6 +348,10 @@ pub fn parse_owned_items(bytes: &[u8]) -> Option<OwnedItems> {
     let mut weapons = Vec::new();
     collect_weapons(bytes, inv_start, ItemLocation::Inventory, &slots, &mut weapons);
     collect_weapons(bytes, storage_start, ItemLocation::Storage, &slots, &mut weapons);
+
+    let mut armor = Vec::new();
+    collect_armor(bytes, inv_start, ItemLocation::Inventory, &slots, &mut armor);
+    collect_armor(bytes, storage_start, ItemLocation::Storage, &slots, &mut armor);
 
     // Every gem id referenced by any equipped slot (callers intersect with the
     // gem inventory, which drops equipped runes that also live here).
@@ -290,6 +365,7 @@ pub fn parse_owned_items(bytes: &[u8]) -> Option<OwnedItems> {
 
     Some(OwnedItems {
         weapons,
+        armor,
         socketed_gem_ids,
     })
 }

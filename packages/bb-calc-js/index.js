@@ -587,6 +587,7 @@ if (!nativeBinding) {
 }
 
 module.exports = nativeBinding
+module.exports.ArmorKind = nativeBinding.ArmorKind
 module.exports.computeAr = nativeBinding.computeAr
 module.exports.ConvertedElement = nativeBinding.ConvertedElement
 module.exports.DamageTarget = nativeBinding.DamageTarget
