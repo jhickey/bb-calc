@@ -218,10 +218,8 @@ fn main() {
             let file = file.canonicalize().unwrap();
             let inventory_dir = Config::get_config_dir().join("inventories");
             fs::create_dir_all(&inventory_dir).expect("Could not create inventories directory");
-            let inventory = build_inventory_from_save(
-                &fs::read(&file).expect("Could not read save file"),
-                Some(file.to_str().unwrap()),
-            );
+            let inventory =
+                build_inventory_from_save(&fs::read(&file).expect("Could not read save file"));
             if !inventory.warnings.is_empty() {
                 println!("Warnings: {:?}", inventory.warnings);
             }
@@ -256,20 +254,11 @@ fn main() {
                 std::process::exit(1);
             };
 
-            // Stats: imported character's stats, with per-flag overrides; 50 each
-            // when neither is available.
-            let base = inventory.stats.unwrap_or(Stats {
-                str: 50,
-                skl: 50,
-                blt: 50,
-                arc: 50,
-            });
-
             let stats = Stats {
-                str: str.unwrap_or(base.str),
-                skl: skl.unwrap_or(base.skl),
-                blt: blt.unwrap_or(base.blt),
-                arc: arc.unwrap_or(base.arc),
+                str: str.unwrap_or(inventory.stats.str),
+                skl: skl.unwrap_or(inventory.stats.skl),
+                blt: blt.unwrap_or(inventory.stats.blt),
+                arc: arc.unwrap_or(inventory.stats.arc),
             };
 
             let weapons = if weapons.is_empty() {

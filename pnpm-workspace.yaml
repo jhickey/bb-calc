@@ -1,3 +1,8 @@
 packages:
   - 'packages/*'
   - 'apps/*'
+
+# Native/build-time deps allowed to run install scripts (pnpm v10 gates these).
+onlyBuiltDependencies:
+  - esbuild
+  - lightningcss

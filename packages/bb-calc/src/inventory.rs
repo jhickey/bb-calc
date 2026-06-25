@@ -1,8 +1,8 @@
 //! Build a player's gem [`Inventory`] from the bytes of a decrypted save.
 
-use serde::{Deserialize, Serialize};
 use crate::save::{lookup_effect, parse_save_gems, parse_save_name, parse_save_stats};
 use crate::types::{GemShape, Stats};
+use serde::{Deserialize, Serialize};
 
 /// Result that pairs produced data with non-fatal notes for the user.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,10 +26,9 @@ pub struct InventoryGem {
 /// A player's gem collection plus where it came from.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Inventory {
-    pub character: Option<String>,
-    pub imported_from: Option<String>,
+    pub character: String,
     /// The four scaling stats read from the save, if available (optimizer default).
-    pub stats: Option<Stats>,
+    pub stats: Stats,
     pub gems: Vec<InventoryGem>,
 }
 
@@ -38,10 +37,7 @@ const UNKNOWN_GEM: &str = "Unknown gem";
 /// Build an [`Inventory`] from the bytes of a decrypted save. Resolves each gem's
 /// raw effect ids to their in-game strings; duplicate effect ids on one gem are
 /// collapsed (a single-effect gem can store the same id in several slots).
-pub fn build_inventory_from_save(
-    bytes: &[u8],
-    imported_from: Option<&str>,
-) -> WithWarnings<Inventory> {
+pub fn build_inventory_from_save(bytes: &[u8]) -> WithWarnings<Inventory> {
     let mut warnings: Vec<String> = Vec::new();
     // Insertion-ordered set of effect ids that weren't in the effect map.
     let mut unknown_ids: Vec<u32> = Vec::new();
@@ -113,9 +109,13 @@ pub fn build_inventory_from_save(
 
     WithWarnings {
         value: Inventory {
-            character,
-            imported_from: imported_from.map(str::to_string),
-            stats,
+            character: character.unwrap_or_else(|| "Unknown character".to_string()),
+            stats: stats.unwrap_or_else(|| Stats {
+                str: 0,
+                skl: 0,
+                blt: 0,
+                arc: 0,
+            }),
             gems,
         },
         warnings,
@@ -139,7 +139,11 @@ mod tests {
         r[8] = 0x01;
         r[12] = shape;
         for slot in 0..6 {
-            write_u32_le(&mut r, 16 + slot * 4, effect_ids.get(slot).copied().unwrap_or(NO_EFFECT));
+            write_u32_le(
+                &mut r,
+                16 + slot * 4,
+                effect_ids.get(slot).copied().unwrap_or(NO_EFFECT),
+            );
         }
         r
     }
@@ -156,7 +160,7 @@ mod tests {
     #[test]
     fn resolves_effect_ids_to_in_game_strings_name_and_rating() {
         let WithWarnings { value, .. } =
-            build_inventory_from_save(&save(&[gem(0xc080_0041, 0x01, &[26619])]), None);
+            build_inventory_from_save(&save(&[gem(0xc080_0041, 0x01, &[26619])]));
         assert_eq!(value.gems.len(), 1);
         let g = &value.gems[0];
         assert_eq!(g.id, "c0800041");
@@ -169,18 +173,19 @@ mod tests {
     #[test]
     fn collapses_duplicate_effect_ids_on_a_single_gem() {
         // A real save can repeat the same effect id across slots; count it once.
-        let WithWarnings { value, .. } = build_inventory_from_save(
-            &save(&[gem(0x1, 0x3f, &[17420, 17420, 17420, 17420])]),
-            None,
+        let WithWarnings { value, .. } =
+            build_inventory_from_save(&save(&[gem(0x1, 0x3f, &[17420, 17420, 17420, 17420])]));
+        assert_eq!(
+            value.gems[0].effects,
+            vec!["Add physical ATK +45".to_string()]
         );
-        assert_eq!(value.gems[0].effects, vec!["Add physical ATK +45".to_string()]);
         assert_eq!(value.gems[0].rating, 20);
     }
 
     #[test]
     fn warns_about_unknown_effect_ids_but_keeps_the_gem() {
         let WithWarnings { value, warnings } =
-            build_inventory_from_save(&save(&[gem(0x1, 0x01, &[999_999])]), None);
+            build_inventory_from_save(&save(&[gem(0x1, 0x01, &[999_999])]));
         assert_eq!(value.gems.len(), 1);
         assert!(value.gems[0].effects.is_empty());
         assert_eq!(value.gems[0].name, "Unknown gem");
@@ -200,20 +205,37 @@ mod tests {
         buf[u - 71] = 25; // SKL
         buf[u - 63] = 12; // BLT
         buf[u - 55] = 44; // ARC
-        let WithWarnings { value, .. } = build_inventory_from_save(&buf, None);
+        let WithWarnings { value, .. } = build_inventory_from_save(&buf);
         assert_eq!(value.gems.len(), 1);
         assert_eq!(
             value.stats,
-            Some(Stats { str: 50, skl: 25, blt: 12, arc: 44 })
+            Stats {
+                str: 50,
+                skl: 25,
+                blt: 12,
+                arc: 44
+            }
         );
     }
 
     #[test]
     fn omits_stats_and_warns_when_they_cant_be_read() {
         let WithWarnings { value, warnings } =
-            build_inventory_from_save(&save(&[gem(0x1, 0x01, &[26619])]), None);
-        assert!(value.stats.is_none());
-        assert!(warnings.join(" ").contains("Could not read character stats"));
+            build_inventory_from_save(&save(&[gem(0x1, 0x01, &[26619])]));
+        assert_eq!(
+            value.stats,
+            Stats {
+                str: 0,
+                skl: 0,
+                blt: 0,
+                arc: 0
+            }
+        );
+        assert!(
+            warnings
+                .join(" ")
+                .contains("Could not read character stats")
+        );
     }
 
     #[test]
@@ -228,14 +250,7 @@ mod tests {
             buf[u + 1 + i * 2] = (code & 0xff) as u8;
             buf[u + 1 + i * 2 + 1] = (code >> 8) as u8;
         }
-        let WithWarnings { value, .. } = build_inventory_from_save(&buf, None);
-        assert_eq!(value.character.as_deref(), Some("franq"));
-    }
-
-    #[test]
-    fn carries_provided_metadata() {
-        let WithWarnings { value, .. } =
-            build_inventory_from_save(&save(&[gem(0x1, 0x01, &[26619])]), Some("userdata0000"));
-        assert_eq!(value.imported_from.as_deref(), Some("userdata0000"));
+        let WithWarnings { value, .. } = build_inventory_from_save(&buf);
+        assert_eq!(value.character, "franq");
     }
 }

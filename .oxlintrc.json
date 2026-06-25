@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "ignorePatterns": ["**/routeTree.gen.ts", "**/dist/**", "**/target/**"],
+  "overrides": [
+    {
+      "files": ["apps/web/**/*.{ts,tsx,js,jsx}"],
+      "plugins": ["react", "jsx-a11y"],
+      "env": {
+        "browser": true,
+        "es2024": true
+      },
+      "rules": {
+        "react-hooks/rules-of-hooks": "error",
+        "react-hooks/exhaustive-deps": "warn"
+      }
+    },
+    {
+      "files": ["apps/web/**/*.{test,spec}.{ts,tsx}"],
+      "plugins": ["vitest"]
+    }
+  ]
+}

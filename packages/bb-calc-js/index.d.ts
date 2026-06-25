@@ -105,6 +105,12 @@ export declare const enum GemShape {
 /** Returns every weapon in the game. */
 export declare function getWeapons(): Array<Weapon>
 
+export interface Inventory {
+  character: string
+  stats: Stats
+  gems: Array<InventoryGem>
+}
+
 export interface InventoryGem {
   id: string
   name: string
@@ -123,8 +129,12 @@ export declare const enum Mode {
  * with `weapon_id`, using that weapon variant's own baked-in imprint slots
  * (Normal/Uncanny/Lost are distinct ids). Prefer this over {@link optimizeForSlots}
  * unless the slots come from somewhere other than the chosen weapon.
+ *
+ * Returns a `Promise`: the search runs on a worker thread so it never blocks
+ * the caller (required in the browser, where the optimizer's threaded
+ * `Mode::Compare` would otherwise call `Atomics.wait` on the main thread).
  */
-export declare function optimize(weaponIds: Array<string>, gems: Array<InventoryGem>, stats: Stats, target: DamageTarget, mode: Mode, excludedGems?: Array<string> | undefined | null): Array<OptimizeResult>
+export declare function optimize(weaponIds: Array<string>, gems: Array<InventoryGem>, stats: Stats, target: DamageTarget, mode: Mode, excludedGems?: Array<string> | undefined | null): Promise<unknown>
 
 /** The winning socketing found by {@link optimizeForSlots}. */
 export interface OptimizeResult {
@@ -136,6 +146,8 @@ export interface OptimizeResult {
   slots: Array<SlotChoice>
   weaponId: string
 }
+
+export declare function parseSave(saveFile: Uint8Array): Promise<unknown>
 
 /**
  * One imprint slot in the result: its shape and the owned gem placed in it

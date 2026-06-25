@@ -64,4 +64,5 @@ export const GemShape = __napiModule.exports.GemShape
 export const getWeapons = __napiModule.exports.getWeapons
 export const Mode = __napiModule.exports.Mode
 export const optimize = __napiModule.exports.optimize
+export const parseSave = __napiModule.exports.parseSave
 export const WeaponType = __napiModule.exports.WeaponType

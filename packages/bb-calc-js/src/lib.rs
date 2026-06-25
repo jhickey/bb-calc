@@ -1,5 +1,8 @@
 #![deny(clippy::all)]
 
+mod inventory;
+mod optimize;
+
 use bb_calc::{
   compute_ar as bb_compute_ar, optimizer as bb_optimizer, ArBreakdown as BbArBreakdown,
   Candidate as BbCandidate, ConvertedElement as BbConvertedElement, DamageTarget as BbDamageTarget,
@@ -93,6 +96,30 @@ pub struct InventoryGem {
 impl From<&InventoryGem> for BbInventoryGem {
   fn from(value: &InventoryGem) -> Self {
     BbInventoryGem {
+      id: value.id.to_string(),
+      name: value.name.to_string(),
+      shape: value.shape.into(),
+      rating: value.rating,
+      effects: value.effects.clone(),
+    }
+  }
+}
+
+impl From<InventoryGem> for BbInventoryGem {
+  fn from(value: InventoryGem) -> Self {
+    BbInventoryGem {
+      id: value.id.to_string(),
+      name: value.name.to_string(),
+      shape: value.shape.into(),
+      rating: value.rating,
+      effects: value.effects.clone(),
+    }
+  }
+}
+
+impl From<BbInventoryGem> for InventoryGem {
+  fn from(value: BbInventoryGem) -> Self {
+    InventoryGem {
       id: value.id.to_string(),
       name: value.name.to_string(),
       shape: value.shape.into(),
@@ -252,19 +279,41 @@ impl From<&Gem> for BbGem {
 /// The four hunter stats that drive weapon scaling.
 #[napi(object)]
 pub struct Stats {
-  pub str: u32,
-  pub skl: u32,
-  pub blt: u32,
-  pub arc: u32,
+  pub str: u16,
+  pub skl: u16,
+  pub blt: u16,
+  pub arc: u16,
 }
 
 impl From<&Stats> for BbStats {
   fn from(value: &Stats) -> Self {
     BbStats {
-      str: value.str as u16,
-      skl: value.skl as u16,
-      blt: value.blt as u16,
-      arc: value.arc as u16,
+      str: value.str,
+      skl: value.skl,
+      blt: value.blt,
+      arc: value.arc,
+    }
+  }
+}
+
+impl From<Stats> for BbStats {
+  fn from(value: Stats) -> Self {
+    BbStats {
+      str: value.str,
+      skl: value.skl,
+      blt: value.blt,
+      arc: value.arc,
+    }
+  }
+}
+
+impl From<BbStats> for Stats {
+  fn from(value: BbStats) -> Self {
+    Stats {
+      str: value.str,
+      skl: value.skl,
+      blt: value.blt,
+      arc: value.arc,
     }
   }
 }
@@ -496,6 +545,34 @@ impl From<OptimizeResult> for BbOptimizeResult {
   }
 }
 
+#[napi(object)]
+pub struct Inventory {
+  pub character: String,
+  pub stats: Stats,
+  pub gems: Vec<InventoryGem>,
+}
+
+impl From<Inventory> for bb_calc::Inventory {
+  fn from(value: Inventory) -> Self {
+    bb_calc::Inventory {
+      character: value.character,
+      stats: value.stats.into(),
+      gems: value.gems.into_iter().map(BbInventoryGem::from).collect(),
+    }
+  }
+}
+
+impl From<bb_calc::Inventory> for Inventory {
+  fn from(value: bb_calc::Inventory) -> Self {
+    Inventory {
+      character: value.character,
+      stats: value.stats.into(),
+      gems: value.gems.into_iter().map(InventoryGem::from).collect(),
+    }
+  }
+}
+
+#[derive(Clone, Copy)]
 #[napi(string_enum)]
 pub enum Mode {
   Compare,
@@ -509,41 +586,4 @@ impl From<Mode> for bb_optimizer::Mode {
       Mode::Plan => bb_optimizer::Mode::Plan,
     }
   }
-}
-
-/// Finds the socketing of `candidates` that maximizes `target` for the weapon
-/// with `weapon_id`, using that weapon variant's own baked-in imprint slots
-/// (Normal/Uncanny/Lost are distinct ids). Prefer this over {@link optimizeForSlots}
-/// unless the slots come from somewhere other than the chosen weapon.
-#[napi]
-pub fn optimize(
-  weapon_ids: Vec<String>,
-  gems: Vec<InventoryGem>,
-  stats: Stats,
-  target: DamageTarget,
-  mode: Mode,
-  excluded_gems: Option<Vec<String>>,
-) -> Result<Vec<OptimizeResult>> {
-  let mut weapons: Vec<&BbWeapon> = Vec::new();
-  for weapon_id in weapon_ids {
-    let weapon = BbWeapon::by_id(&weapon_id).ok_or_else(|| {
-      Error::new(
-        Status::InvalidArg,
-        format!("unknown weapon id: {weapon_id}"),
-      )
-    })?;
-    weapons.push(weapon);
-  }
-
-  let bb_gems = gems.iter().map(BbInventoryGem::from).collect();
-
-  let results = bb_optimizer::optimize(
-    weapons,
-    bb_gems,
-    &BbStats::from(&stats),
-    target.into(),
-    mode.into(),
-    excluded_gems,
-  );
-  Ok(results.iter().map(|r| r.clone().into()).collect())
 }

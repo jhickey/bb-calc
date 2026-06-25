@@ -46,10 +46,10 @@ Node without a native binary.
 
 ```ts
 // Identical usage in both environments:
-import { getWeapons, computeAr } from 'bb-calc-js'
+import { getWeapons, computeAr } from 'bb-calc-js';
 
-const ar = computeAr('amygdalan_arm', [], { str: 50, skl: 50, blt: 25, arc: 25 })
-console.log(ar.total)
+const ar = computeAr('amygdalan_arm', [], { str: 50, skl: 50, blt: 25, arc: 25 });
+console.log(ar.total);
 ```
 
 To build the WASM artifact locally:

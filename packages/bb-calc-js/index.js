@@ -594,4 +594,5 @@ module.exports.GemShape = nativeBinding.GemShape
 module.exports.getWeapons = nativeBinding.getWeapons
 module.exports.Mode = nativeBinding.Mode
 module.exports.optimize = nativeBinding.optimize
+module.exports.parseSave = nativeBinding.parseSave
 module.exports.WeaponType = nativeBinding.WeaponType

@@ -5,10 +5,12 @@
     "moduleResolution": "nodenext",
     "rootDir": "lib",
     "outDir": "dist",
+    "types": ["node"],
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "noEmit": false
+    "noEmit": false,
+    "noEmitOnError": true
   },
   "include": ["lib"]
 }
