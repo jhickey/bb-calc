@@ -2,7 +2,7 @@
 
 use crate::save::{
     lookup_effect, parse_owned_items, parse_save_character, parse_save_gems, parse_save_name,
-    OwnedArmor, OwnedWeapon,
+    OwnedArmor, OwnedItem, OwnedWeapon,
 };
 use crate::types::{GemShape, Stats};
 use serde::{Deserialize, Serialize};
@@ -64,6 +64,8 @@ pub struct Inventory {
     pub weapons: Vec<OwnedWeapon>,
     /// Armor/attire the player owns (inventory + storage).
     pub armor: Vec<OwnedArmor>,
+    /// Non-equipment items: consumables, materials, key items, and chalices.
+    pub items: Vec<OwnedItem>,
 }
 
 const UNKNOWN_GEM: &str = "Unknown gem";
@@ -193,8 +195,8 @@ pub fn build_inventory_from_save(bytes: &[u8]) -> WithWarnings<Inventory> {
         arc: character.arcane as u16,
     };
 
-    let (weapons, armor) = owned
-        .map(|o| (o.weapons, o.armor))
+    let (weapons, armor, items) = owned
+        .map(|o| (o.weapons, o.armor, o.items))
         .unwrap_or_default();
 
     WithWarnings {
@@ -204,6 +206,7 @@ pub fn build_inventory_from_save(bytes: &[u8]) -> WithWarnings<Inventory> {
             gems,
             weapons,
             armor,
+            items,
         },
         warnings,
     }

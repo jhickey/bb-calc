@@ -12,8 +12,8 @@ pub mod parse_save;
 pub use character::{parse_save_character, parse_save_stats, CharacterStats};
 pub use effect_map::{lookup_effect, EffectInfo};
 pub use items::{
-    parse_owned_items, ArmorKind, ItemLocation, OwnedArmor, OwnedItems, OwnedWeapon, WeaponHand,
-    WeaponImprint,
+    parse_owned_items, ArmorKind, ItemCategory, ItemLocation, OwnedArmor, OwnedItem, OwnedItems,
+    OwnedWeapon, WeaponHand, WeaponImprint,
 };
 pub use parse_name::parse_save_name;
 pub use parse_save::{parse_save_gems, upgrades_region_end, RawSaveGem};

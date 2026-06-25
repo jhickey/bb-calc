@@ -593,6 +593,7 @@ module.exports.ConvertedElement = nativeBinding.ConvertedElement
 module.exports.DamageTarget = nativeBinding.DamageTarget
 module.exports.GemShape = nativeBinding.GemShape
 module.exports.getWeapons = nativeBinding.getWeapons
+module.exports.ItemCategory = nativeBinding.ItemCategory
 module.exports.ItemLocation = nativeBinding.ItemLocation
 module.exports.Mode = nativeBinding.Mode
 module.exports.optimize = nativeBinding.optimize

@@ -63,6 +63,7 @@ export const ConvertedElement = __napiModule.exports.ConvertedElement
 export const DamageTarget = __napiModule.exports.DamageTarget
 export const GemShape = __napiModule.exports.GemShape
 export const getWeapons = __napiModule.exports.getWeapons
+export const ItemCategory = __napiModule.exports.ItemCategory
 export const ItemLocation = __napiModule.exports.ItemLocation
 export const Mode = __napiModule.exports.Mode
 export const optimize = __napiModule.exports.optimize

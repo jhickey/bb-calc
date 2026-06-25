@@ -114,6 +114,7 @@ module.exports.ConvertedElement = __napiModule.exports.ConvertedElement
 module.exports.DamageTarget = __napiModule.exports.DamageTarget
 module.exports.GemShape = __napiModule.exports.GemShape
 module.exports.getWeapons = __napiModule.exports.getWeapons
+module.exports.ItemCategory = __napiModule.exports.ItemCategory
 module.exports.ItemLocation = __napiModule.exports.ItemLocation
 module.exports.Mode = __napiModule.exports.Mode
 module.exports.optimize = __napiModule.exports.optimize

@@ -7,10 +7,10 @@ use bb_calc::{
   compute_ar as bb_compute_ar, optimizer as bb_optimizer, ArBreakdown as BbArBreakdown,
   ArmorKind as BbArmorKind, Candidate as BbCandidate, ConvertedElement as BbConvertedElement,
   DamageTarget as BbDamageTarget, Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape,
-  InventoryGem as BbInventoryGem, ItemLocation as BbItemLocation, OptimizeResult as BbOptimizeResult,
-  OwnedArmor as BbOwnedArmor, OwnedWeapon as BbOwnedWeapon, SlotChoice as BbSlotChoice,
-  Stats as BbStats, Weapon as BbWeapon, WeaponHand as BbWeaponHand,
-  WeaponImprint as BbWeaponImprint, WeaponType as BbWeaponType,
+  InventoryGem as BbInventoryGem, ItemCategory as BbItemCategory, ItemLocation as BbItemLocation,
+  OptimizeResult as BbOptimizeResult, OwnedArmor as BbOwnedArmor, OwnedItem as BbOwnedItem,
+  OwnedWeapon as BbOwnedWeapon, SlotChoice as BbSlotChoice, Stats as BbStats, Weapon as BbWeapon,
+  WeaponHand as BbWeaponHand, WeaponImprint as BbWeaponImprint, WeaponType as BbWeaponType,
 };
 use napi::bindgen_prelude::{Error, Result, Status};
 use napi_derive::napi;
@@ -810,6 +810,71 @@ impl From<OwnedArmor> for BbOwnedArmor {
   }
 }
 
+/// The kind of a non-equipment item (mirrors `bb_calc::ItemCategory`).
+#[napi(string_enum)]
+pub enum ItemCategory {
+  Consumable,
+  Material,
+  Key,
+  Chalice,
+}
+
+impl From<BbItemCategory> for ItemCategory {
+  fn from(value: BbItemCategory) -> Self {
+    match value {
+      BbItemCategory::Consumable => ItemCategory::Consumable,
+      BbItemCategory::Material => ItemCategory::Material,
+      BbItemCategory::Key => ItemCategory::Key,
+      BbItemCategory::Chalice => ItemCategory::Chalice,
+    }
+  }
+}
+
+impl From<ItemCategory> for BbItemCategory {
+  fn from(value: ItemCategory) -> Self {
+    match value {
+      ItemCategory::Consumable => BbItemCategory::Consumable,
+      ItemCategory::Material => BbItemCategory::Material,
+      ItemCategory::Key => BbItemCategory::Key,
+      ItemCategory::Chalice => BbItemCategory::Chalice,
+    }
+  }
+}
+
+/// A non-equipment item the player owns, decoded from a save.
+#[napi(object)]
+pub struct OwnedItem {
+  pub canonical_id: u32,
+  pub name: String,
+  pub category: ItemCategory,
+  pub amount: u32,
+  pub location: ItemLocation,
+}
+
+impl From<BbOwnedItem> for OwnedItem {
+  fn from(value: BbOwnedItem) -> Self {
+    OwnedItem {
+      canonical_id: value.canonical_id,
+      name: value.name,
+      category: value.category.into(),
+      amount: value.amount,
+      location: value.location.into(),
+    }
+  }
+}
+
+impl From<OwnedItem> for BbOwnedItem {
+  fn from(value: OwnedItem) -> Self {
+    BbOwnedItem {
+      canonical_id: value.canonical_id,
+      name: value.name,
+      category: value.category.into(),
+      amount: value.amount,
+      location: value.location.into(),
+    }
+  }
+}
+
 #[napi(object)]
 pub struct Inventory {
   pub character: Character,
@@ -817,6 +882,7 @@ pub struct Inventory {
   pub gems: Vec<InventoryGem>,
   pub weapons: Vec<OwnedWeapon>,
   pub armor: Vec<OwnedArmor>,
+  pub items: Vec<OwnedItem>,
 }
 
 impl From<Inventory> for bb_calc::Inventory {
@@ -827,6 +893,7 @@ impl From<Inventory> for bb_calc::Inventory {
       gems: value.gems.into_iter().map(BbInventoryGem::from).collect(),
       weapons: value.weapons.into_iter().map(BbOwnedWeapon::from).collect(),
       armor: value.armor.into_iter().map(BbOwnedArmor::from).collect(),
+      items: value.items.into_iter().map(BbOwnedItem::from).collect(),
     }
   }
 }
@@ -839,6 +906,7 @@ impl From<bb_calc::Inventory> for Inventory {
       gems: value.gems.into_iter().map(InventoryGem::from).collect(),
       weapons: value.weapons.into_iter().map(OwnedWeapon::from).collect(),
       armor: value.armor.into_iter().map(OwnedArmor::from).collect(),
+      items: value.items.into_iter().map(OwnedItem::from).collect(),
     }
   }
 }

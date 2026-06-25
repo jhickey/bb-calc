@@ -64,6 +64,33 @@ fn armor_info(canonical_id: u32) -> Option<&'static ArmorInfo> {
         .map(|i| &ARMORS[i].1)
 }
 
+/// The kind of a non-equipment item.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ItemCategory {
+    Consumable,
+    Material,
+    Key,
+    Chalice,
+}
+
+/// A generated item table row: in-game name and category.
+#[derive(Debug, Clone, Copy)]
+struct ItemInfo {
+    name: &'static str,
+    category: ItemCategory,
+}
+
+include!(concat!(env!("OUT_DIR"), "/items_generated.rs"));
+
+/// Look up an item by its canonical id (binary search). Item ids are globally
+/// unique across categories, so the id alone determines the category.
+fn item_info(canonical_id: u32) -> Option<&'static ItemInfo> {
+    ITEMS
+        .binary_search_by_key(&canonical_id, |&(id, _)| id)
+        .ok()
+        .map(|i| &ITEMS[i].1)
+}
+
 /// Which hand a weapon is wielded in. Left-hand weapons (firearms/shields) aren't
 /// in the AR `WEAPONS` table, so they carry no `weapon_id`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -116,14 +143,28 @@ pub struct OwnedArmor {
     pub location: ItemLocation,
 }
 
-/// What a save owns: weapons, armor, and the set of socketed gem instance ids (hex).
+/// A non-equipment item the player owns (consumable, material, key, or chalice).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OwnedItem {
+    pub canonical_id: u32,
+    pub name: String,
+    pub category: ItemCategory,
+    /// Stack count.
+    pub amount: u32,
+    pub location: ItemLocation,
+}
+
+/// What a save owns: weapons, armor, items, and the set of socketed gem ids (hex).
 pub struct OwnedItems {
     pub weapons: Vec<OwnedWeapon>,
     pub armor: Vec<OwnedArmor>,
+    pub items: Vec<OwnedItem>,
     pub socketed_gem_ids: Vec<String>,
 }
 
 const USERNAME_TO_INV: usize = 469;
+/// The key-items inventory begins here, just past the normal inventory.
+const USERNAME_TO_KEY_INV: usize = 32201;
 const INV_TO_STORAGE: usize = 34268;
 /// 1984 16-byte slots per region (the full-storage-glitch cap; the real arrays
 /// are shorter and padded, so we rely on the slots cross-reference, not length).
@@ -336,14 +377,48 @@ fn collect_armor(
     }
 }
 
-/// Parse every owned weapon and armor piece (inventory + storage) and the set of
+/// Walk a 16-byte article range `[start, end)`, collecting non-equipment items
+/// (signature `(0xB0, 0x40)`). Items carry no slot block, so validity is id
+/// resolution plus a non-zero stack count.
+fn collect_items(
+    bytes: &[u8],
+    start: usize,
+    end: usize,
+    location: ItemLocation,
+    out: &mut Vec<OwnedItem>,
+) {
+    let end = end.min(bytes.len());
+    let mut i = start;
+    while i + ARTICLE_STRIDE <= end {
+        if bytes[i + 7] == 0xB0 && bytes[i + 11] == 0x40 {
+            let canonical_id = read_u32_le(bytes, i + 8) & 0x00ff_ffff;
+            let amount = read_u32_le(bytes, i + 12);
+            if amount > 0 {
+                if let Some(info) = item_info(canonical_id) {
+                    out.push(OwnedItem {
+                        canonical_id,
+                        name: info.name.to_string(),
+                        category: info.category,
+                        amount,
+                        location,
+                    });
+                }
+            }
+        }
+        i += ARTICLE_STRIDE;
+    }
+}
+
+/// Parse everything a save owns — weapons, armor, items — plus the set of
 /// socketed gem ids.
 pub fn parse_owned_items(bytes: &[u8]) -> Option<OwnedItems> {
     let username = find_username(bytes)?;
     let slots = parse_equipped_slots(bytes, username);
 
     let inv_start = username + USERNAME_TO_INV;
+    let key_start = username + USERNAME_TO_KEY_INV;
     let storage_start = inv_start + INV_TO_STORAGE;
+    let storage_end = storage_start + REGION_SLOTS * ARTICLE_STRIDE;
 
     let mut weapons = Vec::new();
     collect_weapons(bytes, inv_start, ItemLocation::Inventory, &slots, &mut weapons);
@@ -352,6 +427,13 @@ pub fn parse_owned_items(bytes: &[u8]) -> Option<OwnedItems> {
     let mut armor = Vec::new();
     collect_armor(bytes, inv_start, ItemLocation::Inventory, &slots, &mut armor);
     collect_armor(bytes, storage_start, ItemLocation::Storage, &slots, &mut armor);
+
+    let mut items = Vec::new();
+    // Normal inventory runs up to the key-items region; key items are carried,
+    // so they're tagged Inventory too. Storage is its own region.
+    collect_items(bytes, inv_start, key_start, ItemLocation::Inventory, &mut items);
+    collect_items(bytes, key_start, storage_start, ItemLocation::Inventory, &mut items);
+    collect_items(bytes, storage_start, storage_end, ItemLocation::Storage, &mut items);
 
     // Every gem id referenced by any equipped slot (callers intersect with the
     // gem inventory, which drops equipped runes that also live here).
@@ -366,6 +448,7 @@ pub fn parse_owned_items(bytes: &[u8]) -> Option<OwnedItems> {
     Some(OwnedItems {
         weapons,
         armor,
+        items,
         socketed_gem_ids,
     })
 }

@@ -89,6 +89,48 @@ fn armor_kind_variant(kind: &str) -> &'static str {
     }
 }
 
+/// One item row keyed by its numeric save id (the JSON object's keys).
+#[derive(Deserialize)]
+struct RawItem {
+    name: String,
+    category: String,
+}
+
+fn item_category_variant(category: &str) -> &'static str {
+    match category {
+        "Consumable" => "ItemCategory::Consumable",
+        "Material" => "ItemCategory::Material",
+        "Key" => "ItemCategory::Key",
+        "Chalice" => "ItemCategory::Chalice",
+        other => panic!("unknown item category {other:?} in data/items.json"),
+    }
+}
+
+/// Code-generate `static ITEMS: &[(u32, ItemInfo)]`, sorted ascending by id for
+/// binary search. `ItemInfo`/`ItemCategory` are defined in `save::items`.
+fn generate_items(out_dir: &str) {
+    let json = fs::read_to_string("data/items.json").expect("read data/items.json");
+    let items: BTreeMap<u32, RawItem> =
+        serde_json::from_str(&json).expect("parse data/items.json");
+
+    let mut out = String::new();
+    out.push_str("static ITEMS: &[(u32, ItemInfo)] = &[\n");
+    for (id, it) in &items {
+        write!(
+            out,
+            "    ({id}, ItemInfo {{ name: {name:?}, category: {category} }}),\n",
+            id = id,
+            name = it.name,
+            category = item_category_variant(&it.category),
+        )
+        .unwrap();
+    }
+    out.push_str("];\n");
+
+    let dest = Path::new(out_dir).join("items_generated.rs");
+    fs::write(&dest, out).expect("write items_generated.rs");
+}
+
 /// Code-generate `static ARMORS: &[(u32, ArmorInfo)]`, sorted ascending by id for
 /// binary search. `ArmorInfo`/`ArmorKind` are defined in `save::items`, which
 /// `include!`s this output.
@@ -171,6 +213,7 @@ fn main() {
     println!("cargo:rerun-if-changed=data/weapons.json");
     println!("cargo:rerun-if-changed=data/weapons_offhand.json");
     println!("cargo:rerun-if-changed=data/armor.json");
+    println!("cargo:rerun-if-changed=data/items.json");
     println!("cargo:rerun-if-changed=data/gem-effects.json");
     println!("cargo:rerun-if-changed=build.rs");
 
@@ -246,4 +289,5 @@ fn main() {
     generate_effects(&out_dir);
     generate_offhand_weapons(&out_dir);
     generate_armor(&out_dir);
+    generate_items(&out_dir);
 }

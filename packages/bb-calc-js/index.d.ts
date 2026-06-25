@@ -141,6 +141,7 @@ export interface Inventory {
   gems: Array<InventoryGem>
   weapons: Array<OwnedWeapon>
   armor: Array<OwnedArmor>
+  items: Array<OwnedItem>
 }
 
 export interface InventoryGem {
@@ -151,6 +152,14 @@ export interface InventoryGem {
   effects: Array<string>
   /** Whether this gem is currently socketed in a weapon. */
   inUse: boolean
+}
+
+/** The kind of a non-equipment item (mirrors `bb_calc::ItemCategory`). */
+export declare const enum ItemCategory {
+  Consumable = 'Consumable',
+  Material = 'Material',
+  Key = 'Key',
+  Chalice = 'Chalice'
 }
 
 /** Where an owned item lives (mirrors `bb_calc::ItemLocation`). */
@@ -192,6 +201,15 @@ export interface OwnedArmor {
   canonicalId: number
   name: string
   kind: ArmorKind
+  location: ItemLocation
+}
+
+/** A non-equipment item the player owns, decoded from a save. */
+export interface OwnedItem {
+  canonicalId: number
+  name: string
+  category: ItemCategory
+  amount: number
   location: ItemLocation
 }
 
