@@ -5,3 +5,4 @@ node_modules
 packages/bb-calc/data/saves
 data/saves
 .DS_Store
+apps/web/dist
