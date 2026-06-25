@@ -34,6 +34,16 @@ pub struct RawSaveGem {
     pub effect_ids: Vec<u32>,
 }
 
+/// A rune as it appears in the save: identity and raw effect ids. Runes share the
+/// upgrades region with gems (type byte `0x02`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RawSaveRune {
+    /// u32 (little-endian) rendered as lowercase hex. Stable per-instance key.
+    pub id: String,
+    /// Non-padding effect ids in slot order.
+    pub effect_ids: Vec<u32>,
+}
+
 const REGION_START: usize = 84;
 const STRIDE: usize = 40;
 const TYPE_GEM: u8 = 0x01;
@@ -68,6 +78,26 @@ fn is_upgrade_record(type_byte: u8, shape_byte: u8) -> bool {
         TYPE_RUNE => shape_byte == 0x01 || shape_byte == 0x02,
         _ => false,
     }
+}
+
+/// The byte offset just past the gem/rune (upgrades) region — i.e. the first
+/// record that is neither a gem nor a rune, or the buffer end. The equipped-gem
+/// "slots" blocks begin somewhere after this point.
+pub fn upgrades_region_end(bytes: &[u8]) -> usize {
+    let mut i = REGION_START;
+    while i + STRIDE <= bytes.len() {
+        let clean_words = bytes[i + 9] == 0
+            && bytes[i + 10] == 0
+            && bytes[i + 11] == 0
+            && bytes[i + 13] == 0
+            && bytes[i + 14] == 0
+            && bytes[i + 15] == 0;
+        if !clean_words || !is_upgrade_record(bytes[i + 8], bytes[i + 12]) {
+            break;
+        }
+        i += STRIDE;
+    }
+    i
 }
 
 /// Extract every gem in the save (equipped and stored alike). Runes are walked
@@ -112,6 +142,46 @@ pub fn parse_save_gems(bytes: &[u8]) -> Vec<RawSaveGem> {
     }
 
     gems
+}
+
+/// Extract every rune in the save. Shares the upgrades region with gems; gems are
+/// walked through but filtered out of the result.
+pub fn parse_save_runes(bytes: &[u8]) -> Vec<RawSaveRune> {
+    let mut runes = Vec::new();
+
+    let mut i = REGION_START;
+    while i + STRIDE <= bytes.len() {
+        let type_byte = bytes[i + 8];
+        let shape_byte = bytes[i + 12];
+
+        let clean_words = bytes[i + 9] == 0
+            && bytes[i + 10] == 0
+            && bytes[i + 11] == 0
+            && bytes[i + 13] == 0
+            && bytes[i + 14] == 0
+            && bytes[i + 15] == 0;
+        if !clean_words || !is_upgrade_record(type_byte, shape_byte) {
+            break;
+        }
+
+        if type_byte == TYPE_RUNE {
+            let mut effect_ids = Vec::new();
+            for slot in 0..6 {
+                let id = read_u32_le(bytes, i + 16 + slot * 4);
+                if id != NO_EFFECT {
+                    effect_ids.push(id);
+                }
+            }
+            runes.push(RawSaveRune {
+                id: format!("{:08x}", read_u32_le(bytes, i)),
+                effect_ids,
+            });
+        }
+
+        i += STRIDE;
+    }
+
+    runes
 }
 
 #[cfg(test)]
