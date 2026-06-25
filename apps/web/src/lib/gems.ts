@@ -1,4 +1,15 @@
+import type { Gem } from 'bb-calc-js';
 import { GemShape } from 'bb-calc-js';
+
+/**
+ * A gem socketed into a weapon slot: the calc {@link Gem} (fed to `computeAr`)
+ * plus its human-readable effect strings, kept so the UI can tell otherwise
+ * identically-named gems apart.
+ */
+export type Socket = {
+  gem: Gem;
+  effects: Array<string>;
+};
 
 /** Every gem shape, in display order. */
 export const GEM_SHAPES: ReadonlyArray<GemShape> = [
