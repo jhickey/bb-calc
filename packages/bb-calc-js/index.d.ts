@@ -115,6 +115,13 @@ export interface Gem {
   beasthunter: number
 }
 
+/**
+ * Converts an owned {@link InventoryGem} into a calc {@link Gem} (resolving its
+ * in-game effect strings) so it can be socketed and fed to {@link computeAr}.
+ * Effects with no AR representation are silently dropped.
+ */
+export declare function gemFromInventory(gem: InventoryGem): Gem
+
 /** A minimal identity for reporting which owned gem the optimizer chose. */
 export interface GemRef {
   id: string
@@ -236,6 +243,14 @@ export interface OwnedWeapon {
   /** Instance ids (hex) of gems socketed in this weapon, in slot order. */
   gemIds: Array<string>
 }
+
+/**
+ * Parses a custom gem's friendly effect `spec` (clauses split by `;`, e.g.
+ * `"phys 27.2%; +15 phys"`) into a {@link Gem}, naming it `name` and tagging it
+ * with the given `shape` (imprint). Throws with a human-readable message if the
+ * spec doesn't parse, so callers can validate one effect at a time.
+ */
+export declare function parseGemEffects(spec: string, name: string | undefined | null, shape: GemShape): Gem
 
 export declare function parseSave(saveFile: Uint8Array): Promise<unknown>
 

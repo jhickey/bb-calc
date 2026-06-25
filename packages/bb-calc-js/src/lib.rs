@@ -4,7 +4,8 @@ mod inventory;
 mod optimize;
 
 use bb_calc::{
-  compute_ar as bb_compute_ar, optimizer as bb_optimizer, ArBreakdown as BbArBreakdown,
+  compute_ar as bb_compute_ar, gem_from_ingame_effects as bb_gem_from_ingame_effects,
+  optimizer as bb_optimizer, parse_gem_effects as bb_parse_gem_effects, ArBreakdown as BbArBreakdown,
   ArmorKind as BbArmorKind, Candidate as BbCandidate, ConvertedElement as BbConvertedElement,
   DamageTarget as BbDamageTarget, Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape,
   InventoryGem as BbInventoryGem, ItemCategory as BbItemCategory, ItemLocation as BbItemLocation,
@@ -289,6 +290,40 @@ impl From<&Gem> for BbGem {
   }
 }
 
+impl From<BbGem> for Gem {
+  fn from(value: BbGem) -> Self {
+    Gem {
+      name: value.name,
+      source: value.source,
+      tier: value.tier as u32,
+      // The calc never reads a gem's shape; default it when the source leaves it
+      // unset. Callers that care (custom/inventory gems) set it explicitly.
+      shape: value.shape.map(GemShape::from).unwrap_or(GemShape::Radial),
+      arc_scale: value.arc_scale as f64,
+      str_scale: value.str_scale as f64,
+      skl_scale: value.skl_scale as f64,
+      blt_scale: value.blt_scale as f64,
+      dmg_general: value.dmg_general as f64,
+      dmg_arcane: value.dmg_arcane as f64,
+      dmg_fire: value.dmg_fire as f64,
+      dmg_bolt: value.dmg_bolt as f64,
+      dmg_phys: value.dmg_phys as f64,
+      dmg_blood: value.dmg_blood as f64,
+      dmg_blunt: value.dmg_blunt as f64,
+      dmg_thrust: value.dmg_thrust as f64,
+      flat_phys: value.flat_phys as f64,
+      flat_arcane: value.flat_arcane as f64,
+      flat_fire: value.flat_fire as f64,
+      flat_bolt: value.flat_bolt as f64,
+      flat_blood: value.flat_blood as f64,
+      open_foes: value.open_foes as f64,
+      striking: value.striking as f64,
+      kinhunter: value.kinhunter as f64,
+      beasthunter: value.beasthunter as f64,
+    }
+  }
+}
+
 /// The four hunter stats that drive weapon scaling.
 #[napi(object)]
 pub struct Stats {
@@ -403,6 +438,30 @@ pub fn compute_ar(weapon_id: String, gems: Vec<Gem>, stats: Stats) -> Result<ArB
 
   let breakdown = bb_compute_ar(weapon, slots, &BbStats::from(&stats));
   Ok(breakdown.into())
+}
+
+/// Parses a custom gem's friendly effect `spec` (clauses split by `;`, e.g.
+/// `"phys 27.2%; +15 phys"`) into a {@link Gem}, naming it `name` and tagging it
+/// with the given `shape` (imprint). Throws with a human-readable message if the
+/// spec doesn't parse, so callers can validate one effect at a time.
+#[napi]
+pub fn parse_gem_effects(spec: String, name: Option<String>, shape: GemShape) -> Result<Gem> {
+  let mut gem = bb_parse_gem_effects(&spec, name.as_deref())
+    .map_err(|message| Error::new(Status::InvalidArg, message))?;
+  gem.shape = Some(shape.into());
+  Ok(gem.into())
+}
+
+/// Converts an owned {@link InventoryGem} into a calc {@link Gem} (resolving its
+/// in-game effect strings) so it can be socketed and fed to {@link computeAr}.
+/// Effects with no AR representation are silently dropped.
+#[napi]
+pub fn gem_from_inventory(gem: InventoryGem) -> Gem {
+  let inventory_gem = BbInventoryGem::from(&gem);
+  let (mut bb_gem, _skipped) =
+    bb_gem_from_ingame_effects(&inventory_gem.name, &inventory_gem.effects);
+  bb_gem.shape = Some(inventory_gem.shape);
+  bb_gem.into()
 }
 
 /// Which figure {@link optimizeForSlots} maximizes. `Total` is the full Attack

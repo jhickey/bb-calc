@@ -1,7 +1,16 @@
+import type { Weapon } from 'bb-calc-js';
 import { getWeapons } from 'bb-calc-js';
 
 /** The thumbnail shown when a weapon has no matching image. */
 export const PLACEHOLDER_WEAPON_ICON = '/imprints/placeholder.png';
+
+let byIdCache: Map<string, Weapon> | null = null;
+
+/** Look up a weapon by id from the static table (cached). */
+export function weaponById(weaponId: string): Weapon | undefined {
+  byIdCache ??= new Map(getWeapons().map((weapon) => [weapon.id, weapon]));
+  return byIdCache.get(weaponId);
+}
 
 /**
  * Variant/form suffixes layered onto a base weapon id. Normal/Uncanny/Lost and

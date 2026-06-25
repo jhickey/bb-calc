@@ -1,14 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useRef, useState } from 'react';
-import type { Inventory, OptimizeResult, Stats } from 'bb-calc-js';
-import { DamageTarget, Mode, optimize, parseSave } from 'bb-calc-js';
+import { useCallback, useState } from 'react';
+import type { Gem, Inventory, Stats } from 'bb-calc-js';
+import { DamageTarget, Mode, gemFromInventory, optimize, parseSave } from 'bb-calc-js';
 
 import { Button } from '#/components/Button';
 import { CharacterHeader } from '#/components/CharacterHeader';
 import { GemsPanel } from '#/components/GemsPanel';
-import { OptimizeResults } from '#/components/OptimizeResults';
 import { Tabs } from '#/components/Tabs';
 import { TargetSelect } from '#/components/TargetSelect';
+import { WeaponCard } from '#/components/WeaponCard';
 import { WeaponSelect } from '#/components/WeaponSelect';
 
 export const Route = createFileRoute('/')({ component: Home });
@@ -16,95 +16,75 @@ export const Route = createFileRoute('/')({ component: Home });
 const TAB_WEAPONS = 'weapons';
 const TAB_GEMS = 'gems';
 
+const EMPTY_SLOTS: Array<Gem | null> = [null, null, null];
+
 function Home() {
-  const [results, setResults] = useState<{
-    target: DamageTarget;
-    items: Array<OptimizeResult>;
-  } | null>(null);
   const [inventory, setInventory] = useState<Inventory | null>(null);
-  // The scaling stats fed to the optimizer: seeded from the save, then editable.
+  // The scaling stats fed to the calc: seeded from the save, then editable.
   const [editStats, setEditStats] = useState<Stats | null>(null);
   const [weaponIds, setWeaponIds] = useState<Array<string>>([]);
+  // Per-weapon gem socketing (3 slots each); the source of truth for each card.
+  const [slotsByWeapon, setSlotsByWeapon] = useState<Record<string, Array<Gem | null>>>({});
+  // Custom gems created this session — ephemeral, reusable across slots.
+  const [customGems, setCustomGems] = useState<Array<Gem>>([]);
   const [target, setTarget] = useState<DamageTarget>(DamageTarget.Total);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>(TAB_WEAPONS);
-  // Once the user has optimized once, keep the weapons panel live as inputs change.
-  const hasOptimized = useRef(false);
-  // Gem IDs chosen by the last full optimize run; used to keep the loadout fixed
-  // during live AR recomputes so only the numbers update, not the gem selection.
-  const selectedGemIdsRef = useRef<Set<string>>(new Set());
-  // Controls the Optimize button: disabled after a run, re-enabled on any input change.
-  const [optimizeEnabled, setOptimizeEnabled] = useState(true);
-
-  async function runOptimize() {
-    if (!inventory || !editStats || weaponIds.length === 0) return;
-    try {
-      const items = await optimize(weaponIds, inventory.gems, editStats, target, Mode.Compare);
-      hasOptimized.current = true;
-      const ids = new Set<string>();
-      items.forEach((item) => item.slots.forEach((slot) => { if (slot.gem) ids.add(slot.gem.id); }));
-      selectedGemIdsRef.current = ids;
-      setResults({ target, items });
-      setOptimizeEnabled(false);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  // After the first optimize, recompute AR live when stats/weapons/target change.
-  // Passes only the previously-selected gems so the loadout stays fixed — the
-  // optimizer's search space is 0–3 gems per weapon and completes near-instantly.
-  useEffect(() => {
-    if (!hasOptimized.current || !inventory || !editStats || weaponIds.length === 0) return;
-    const id = setTimeout(async () => {
-      const filteredGems = inventory.gems.filter((g) => selectedGemIdsRef.current.has(g.id));
-      try {
-        const items = await optimize(weaponIds, filteredGems, editStats, target, Mode.Compare);
-        setResults((prev) => (prev ? { target, items } : null));
-      } catch {
-        // Silently ignore live-recompute failures; stale results are better than an error flash.
-      }
-    }, 200);
-    return () => clearTimeout(id);
-  }, [inventory, editStats, weaponIds, target]);
 
   async function handleFile(file: File) {
     const arrayBuffer = await file.arrayBuffer();
-    const bufferView = new Uint8Array(arrayBuffer);
-    const inv = await parseSave(bufferView);
-    hasOptimized.current = false;
-    selectedGemIdsRef.current = new Set();
+    const inv = await parseSave(new Uint8Array(arrayBuffer));
     setInventory(inv);
     setEditStats({ ...inv.stats });
-    setResults(null);
-    setOptimizeEnabled(true);
+    setSlotsByWeapon({});
+    setCustomGems([]);
   }
 
   function editStat(key: keyof Stats, value: number) {
     setEditStats((prev) => (prev ? { ...prev, [key]: value } : prev));
-    setOptimizeEnabled(true);
   }
-
   function revertStat(key: keyof Stats) {
     setEditStats((prev) => (prev && inventory ? { ...prev, [key]: inventory.stats[key] } : prev));
-    setOptimizeEnabled(true);
   }
-
   function resetStats() {
     if (inventory) setEditStats({ ...inventory.stats });
-    setOptimizeEnabled(true);
   }
 
-  function handleWeaponsChange(ids: Array<string>) {
-    setWeaponIds(ids);
-    setOptimizeEnabled(true);
+  function setSlot(weaponId: string, slotIndex: number, gem: Gem | null) {
+    setSlotsByWeapon((prev) => {
+      const slots = (prev[weaponId] ?? EMPTY_SLOTS).slice();
+      slots[slotIndex] = gem;
+      return { ...prev, [weaponId]: slots };
+    });
   }
 
-  function handleTargetChange(t: DamageTarget) {
-    setTarget(t);
-    setOptimizeEnabled(true);
+  function removeWeapon(weaponId: string) {
+    setWeaponIds((prev) => prev.filter((id) => id !== weaponId));
   }
+
+  // Auto-fill a weapon's slots with the optimizer's best gems for the current
+  // target, resolving each chosen gem to a calc Gem the card can recompute with.
+  const autoOptimize = useCallback(
+    async (weaponId: string) => {
+      if (!inventory || !editStats) return;
+      try {
+        const [result] = await optimize([weaponId], inventory.gems, editStats, target, Mode.Compare);
+        if (!result) return;
+        const slots: Array<Gem | null> = [null, null, null];
+        for (const slot of result.slots) {
+          if (slot.gem) {
+            const owned = inventory.gems.find((gem) => gem.id === slot.gem?.id);
+            if (owned) slots[slot.slot] = gemFromInventory(owned);
+          }
+        }
+        setSlotsByWeapon((prev) => ({ ...prev, [weaponId]: slots }));
+        setError(null);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    },
+    [inventory, editStats, target],
+  );
 
   return (
     <div className="p-8">
@@ -121,7 +101,7 @@ function Home() {
         onFile={handleFile}
       />
 
-      {inventory && (
+      {inventory && editStats && (
         <div className="mt-8">
           <Tabs
             tabs={[
@@ -135,19 +115,39 @@ function Home() {
           {activeTab === TAB_WEAPONS && (
             <div className="mt-6 grid gap-6 lg:grid-cols-3">
               <div className="lg:col-span-1">
-                <WeaponSelect selected={weaponIds} onChange={handleWeaponsChange} />
-                <TargetSelect className="mt-4" value={target} onChange={handleTargetChange} />
-                <Button className="mt-4" onClick={runOptimize} disabled={weaponIds.length === 0 || !optimizeEnabled}>
-                  Optimize
+                <WeaponSelect selected={weaponIds} onChange={setWeaponIds} />
+                <TargetSelect className="mt-4" value={target} onChange={setTarget} />
+                <Button
+                  className="mt-4"
+                  onClick={() => weaponIds.forEach((id) => autoOptimize(id))}
+                  disabled={weaponIds.length === 0}
+                >
+                  Auto-optimize all
                 </Button>
               </div>
-              {/* lg:pt-6 offsets the results to start level with the weapon
-                  list box, which sits below the selector's "Weapons (n)" label. */}
+
               <div className="lg:col-span-2 lg:pt-6">
-                {results ? (
-                  <OptimizeResults results={results.items} target={results.target} />
+                {weaponIds.length === 0 ? (
+                  <p className="text-au-chico">
+                    Select weapons to build. Click a gem slot to socket a gem, or auto-optimize.
+                  </p>
                 ) : (
-                  <p className="text-au-chico">Select weapons and a target, then optimize.</p>
+                  <ul className="space-y-4">
+                    {weaponIds.map((weaponId) => (
+                      <WeaponCard
+                        key={weaponId}
+                        weaponId={weaponId}
+                        slots={slotsByWeapon[weaponId] ?? EMPTY_SLOTS}
+                        stats={editStats}
+                        inventoryGems={inventory.gems}
+                        customGems={customGems}
+                        onSlotChange={(slotIndex, gem) => setSlot(weaponId, slotIndex, gem)}
+                        onCreateCustom={(gem) => setCustomGems((prev) => [...prev, gem])}
+                        onOptimize={() => autoOptimize(weaponId)}
+                        onRemove={() => removeWeapon(weaponId)}
+                      />
+                    ))}
+                  </ul>
                 )}
               </div>
             </div>
