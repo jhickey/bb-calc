@@ -71,7 +71,7 @@ export function WeaponSelect({ selected, onChange, className = '' }: WeaponSelec
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.12 }}
+              transition={{ duration: 0.2 }}
             >
               <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-old-red/30">
                 <input
