@@ -1,10 +1,15 @@
-import type { Inventory } from 'bb-calc-js';
+import type { Inventory, Stats } from 'bb-calc-js';
 
 import { SaveUpload } from '#/components/SaveUpload';
 import { StatsDisplay } from '#/components/StatsDisplay';
 
 type CharacterHeaderProps = {
   inventory: Inventory | null;
+  /** The current (possibly edited) scaling stats; null until a save is imported. */
+  stats: Stats | null;
+  onEditStat: (key: keyof Stats, value: number) => void;
+  onRevertStat: (key: keyof Stats) => void;
+  onResetStats: () => void;
   onFile: (file: File) => void;
   className?: string;
 };
@@ -34,14 +39,29 @@ function Figure({ label, value }: { label: string; value: string | number }) {
  * stats on the left, with the Import Save button aligned right. Before a save is
  * imported, the left side shows a prompt instead.
  */
-export function CharacterHeader({ inventory, onFile, className = '' }: CharacterHeaderProps) {
+export function CharacterHeader({
+  inventory,
+  stats,
+  onEditStat,
+  onRevertStat,
+  onResetStats,
+  onFile,
+  className = '',
+}: CharacterHeaderProps) {
   const character = inventory?.character ?? null;
   const newGameLabel = character ? (character.newGame === 0 ? 'NG' : `NG+${character.newGame}`) : '';
+  const statsChanged =
+    character != null &&
+    stats != null &&
+    (stats.str !== character.strength ||
+      stats.skl !== character.skill ||
+      stats.blt !== character.bloodtinge ||
+      stats.arc !== character.arcane);
 
   return (
     <header className={`flex flex-wrap items-start justify-between gap-4 ${className}`}>
       <div className="min-w-0">
-        {character ? (
+        {character && stats ? (
           <>
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h2 className="text-2xl font-semibold text-pale-mocha">{character.name}</h2>
@@ -51,7 +71,22 @@ export function CharacterHeader({ inventory, onFile, className = '' }: Character
               </span>
             </div>
 
-            <StatsDisplay className="mt-3" character={character} />
+            <StatsDisplay
+              className="mt-3"
+              character={character}
+              stats={stats}
+              onEditStat={onEditStat}
+              onRevertStat={onRevertStat}
+            />
+            {statsChanged && (
+              <button
+                type="button"
+                onClick={onResetStats}
+                className="mt-2 cursor-pointer text-xs text-au-chico underline transition-colors hover:text-pale-mocha"
+              >
+                Reset stats to save
+              </button>
+            )}
 
             <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
               <Figure label="HP" value={character.health} />
