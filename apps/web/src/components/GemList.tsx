@@ -20,7 +20,17 @@ export function GemList({ gems, emptyMessage = 'No gems in inventory.', classNam
           <img src={gemShapeIcon(gem.shape)} alt={gem.shape} className="h-10 w-10 shrink-0 object-contain" />
           <div className="min-w-0">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="truncate font-semibold text-pale-mocha">{gem.name}</span>
+              <span className="flex min-w-0 items-baseline gap-2">
+                <span className="truncate font-semibold text-pale-mocha">{gem.name}</span>
+                {gem.inUse && (
+                  <span
+                    title="Currently socketed in a weapon"
+                    className="shrink-0 rounded-sm bg-tamarillo/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-tamarillo"
+                  >
+                    Equipped
+                  </span>
+                )}
+              </span>
               <span className="shrink-0 text-xs text-au-chico">Rating {gem.rating}</span>
             </div>
             <ul className="mt-1 space-y-0.5">

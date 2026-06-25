@@ -108,12 +108,17 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
   },
 })
 module.exports = __napiModule.exports
+module.exports.ArmorKind = __napiModule.exports.ArmorKind
 module.exports.computeAr = __napiModule.exports.computeAr
 module.exports.ConvertedElement = __napiModule.exports.ConvertedElement
 module.exports.DamageTarget = __napiModule.exports.DamageTarget
 module.exports.GemShape = __napiModule.exports.GemShape
 module.exports.getWeapons = __napiModule.exports.getWeapons
+module.exports.ItemCategory = __napiModule.exports.ItemCategory
+module.exports.ItemLocation = __napiModule.exports.ItemLocation
 module.exports.Mode = __napiModule.exports.Mode
 module.exports.optimize = __napiModule.exports.optimize
 module.exports.parseSave = __napiModule.exports.parseSave
+module.exports.WeaponHand = __napiModule.exports.WeaponHand
+module.exports.WeaponImprint = __napiModule.exports.WeaponImprint
 module.exports.WeaponType = __napiModule.exports.WeaponType

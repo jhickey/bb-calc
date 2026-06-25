@@ -13,6 +13,15 @@ export interface ArBreakdown {
   convertedElement: ConvertedElement
 }
 
+/** The body slot a piece of attire occupies (mirrors `bb_calc::ArmorKind`). */
+export declare const enum ArmorKind {
+  Head = 'Head',
+  Chest = 'Chest',
+  Hands = 'Hands',
+  Legs = 'Legs',
+  Other = 'Other'
+}
+
 /**
  * A gem the player owns, ready to feed the optimizer. `shape` is the
  * inventory-sourced shape (authoritative for slotting) and is kept separate
@@ -22,6 +31,27 @@ export interface Candidate {
   gem: Gem
   shape: GemShape
   gemRef: GemRef
+}
+
+/** A hunter's character data: name plus every scalar field read from the save. */
+export interface Character {
+  name: string
+  /** Soul level as stored in the save (the in-game level, not the stat sum). */
+  level: number
+  vitality: number
+  endurance: number
+  strength: number
+  skill: number
+  bloodtinge: number
+  arcane: number
+  health: number
+  stamina: number
+  insight: number
+  bloodEchoes: number
+  /** New-game cycle: 0 = NG, 1 = NG+1, 2 = NG+2, … */
+  newGame: number
+  /** Total playtime in milliseconds. */
+  playtimeMs: number
 }
 
 /**
@@ -106,9 +136,13 @@ export declare const enum GemShape {
 export declare function getWeapons(): Array<Weapon>
 
 export interface Inventory {
-  character: string
+  character: Character
   stats: Stats
   gems: Array<InventoryGem>
+  weapons: Array<OwnedWeapon>
+  armor: Array<OwnedArmor>
+  items: Array<OwnedItem>
+  runes: Array<OwnedRune>
 }
 
 export interface InventoryGem {
@@ -117,6 +151,22 @@ export interface InventoryGem {
   shape: GemShape
   rating: number
   effects: Array<string>
+  /** Whether this gem is currently socketed in a weapon. */
+  inUse: boolean
+}
+
+/** The kind of a non-equipment item (mirrors `bb_calc::ItemCategory`). */
+export declare const enum ItemCategory {
+  Consumable = 'Consumable',
+  Material = 'Material',
+  Key = 'Key',
+  Chalice = 'Chalice'
+}
+
+/** Where an owned item lives (mirrors `bb_calc::ItemLocation`). */
+export declare const enum ItemLocation {
+  Inventory = 'Inventory',
+  Storage = 'Storage'
 }
 
 export declare const enum Mode {
@@ -147,6 +197,46 @@ export interface OptimizeResult {
   weaponId: string
 }
 
+/** A piece of attire the player owns, decoded from a save. */
+export interface OwnedArmor {
+  canonicalId: number
+  name: string
+  kind: ArmorKind
+  location: ItemLocation
+}
+
+/** A non-equipment item the player owns, decoded from a save. */
+export interface OwnedItem {
+  canonicalId: number
+  name: string
+  category: ItemCategory
+  amount: number
+  location: ItemLocation
+}
+
+/** A Caryll rune the player owns, decoded from a save. */
+export interface OwnedRune {
+  id: string
+  name: string
+  rating: number
+  effects: Array<string>
+}
+
+/** A weapon the player owns, decoded from a save. */
+export interface OwnedWeapon {
+  /** In-game id with the upgrade level stripped (base + imprint). */
+  canonicalId: number
+  name: string
+  hand: WeaponHand
+  imprint: WeaponImprint
+  level: number
+  location: ItemLocation
+  /** The AR-table slug when this is a right-hand weapon we can optimize. */
+  weaponId?: string
+  /** Instance ids (hex) of gems socketed in this weapon, in slot order. */
+  gemIds: Array<string>
+}
+
 export declare function parseSave(saveFile: Uint8Array): Promise<unknown>
 
 /**
@@ -170,6 +260,11 @@ export interface Stats {
 /** A weapon and its base damage values, exposed to JavaScript. */
 export interface Weapon {
   id: string
+  /**
+   * In-game numeric id for matching owned weapons from a save; absent for
+   * calc-only variants (tricked forms, rune transforms).
+   */
+  canonicalId?: number
   name: string
   weaponType: WeaponType
   phys: number
@@ -181,6 +276,19 @@ export interface Weapon {
   gemSlot1: GemShape
   gemSlot2: GemShape
   gemSlot3: GemShape
+}
+
+/** Which hand a weapon is wielded in (mirrors `bb_calc::WeaponHand`). */
+export declare const enum WeaponHand {
+  Right = 'Right',
+  Left = 'Left'
+}
+
+/** A weapon's imprint (mirrors `bb_calc::WeaponImprint`). */
+export declare const enum WeaponImprint {
+  Normal = 'Normal',
+  Uncanny = 'Uncanny',
+  Lost = 'Lost'
 }
 
 /** How a weapon's damage is derived (mirrors `bb_calc::WeaponType`). */
