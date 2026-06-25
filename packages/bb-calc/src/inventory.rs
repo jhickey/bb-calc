@@ -1,8 +1,12 @@
 //! Build a player's gem [`Inventory`] from the bytes of a decrypted save.
 
-use crate::save::{lookup_effect, parse_save_gems, parse_save_name, parse_save_stats};
+use crate::save::{
+    lookup_effect, parse_owned_items, parse_save_character, parse_save_gems, parse_save_name,
+    OwnedWeapon,
+};
 use crate::types::{GemShape, Stats};
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 /// Result that pairs produced data with non-fatal notes for the user.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -21,18 +25,47 @@ pub struct InventoryGem {
     pub rating: u8,
     /// In-game effect strings, primary first (e.g. "Physical ATK UP +27.2%").
     pub effects: Vec<String>,
+    /// Whether this gem is currently socketed in a weapon.
+    pub in_use: bool,
 }
 
-/// A player's gem collection plus where it came from.
+/// A hunter's character data read from a save: name plus every scalar field
+/// (the six leveling stats, derived HP/stamina, and progression counters).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Character {
+    pub name: String,
+    /// Soul level as stored in the save (the in-game level, not the stat sum).
+    pub level: u32,
+    pub vitality: u32,
+    pub endurance: u32,
+    pub strength: u32,
+    pub skill: u32,
+    pub bloodtinge: u32,
+    pub arcane: u32,
+    pub health: u32,
+    pub stamina: u32,
+    pub insight: u32,
+    pub blood_echoes: u32,
+    /// New-game cycle: 0 = NG, 1 = NG+1, 2 = NG+2, …
+    pub new_game: u32,
+    /// Total playtime in milliseconds.
+    pub playtime_ms: u32,
+}
+
+/// A player's gem collection plus the character it came from.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Inventory {
-    pub character: String,
-    /// The four scaling stats read from the save, if available (optimizer default).
+    pub character: Character,
+    /// The four scaling stats read from the save (optimizer input). A projection
+    /// of `character`, kept as the calc-facing contract.
     pub stats: Stats,
     pub gems: Vec<InventoryGem>,
+    /// Weapons the player owns (inventory + storage), with upgrade level/imprint.
+    pub weapons: Vec<OwnedWeapon>,
 }
 
 const UNKNOWN_GEM: &str = "Unknown gem";
+const UNKNOWN_CHARACTER: &str = "Unknown character";
 
 /// Build an [`Inventory`] from the bytes of a decrypted save. Resolves each gem's
 /// raw effect ids to their in-game strings; duplicate effect ids on one gem are
@@ -41,6 +74,13 @@ pub fn build_inventory_from_save(bytes: &[u8]) -> WithWarnings<Inventory> {
     let mut warnings: Vec<String> = Vec::new();
     // Insertion-ordered set of effect ids that weren't in the effect map.
     let mut unknown_ids: Vec<u32> = Vec::new();
+
+    // Owned weapons (inventory + storage) and the gems socketed in them.
+    let owned = parse_owned_items(bytes);
+    let socketed: HashSet<&str> = owned
+        .as_ref()
+        .map(|o| o.socketed_gem_ids.iter().map(String::as_str).collect())
+        .unwrap_or_default();
 
     let gems: Vec<InventoryGem> = parse_save_gems(bytes)
         .into_iter()
@@ -74,12 +114,14 @@ pub fn build_inventory_from_save(bytes: &[u8]) -> WithWarnings<Inventory> {
                 }
             }
 
+            let in_use = socketed.contains(raw.id.as_str());
             InventoryGem {
                 id: raw.id,
                 name,
                 shape: raw.shape,
                 rating,
                 effects,
+                in_use,
             }
         })
         .collect();
@@ -96,8 +138,8 @@ pub fn build_inventory_from_save(bytes: &[u8]) -> WithWarnings<Inventory> {
         ));
     }
 
-    let stats = parse_save_stats(bytes);
-    if stats.is_none() {
+    let scalars = parse_save_character(bytes);
+    if scalars.is_none() {
         warnings.push(
             "Could not read character stats from the save; optimize will use defaults unless overridden."
                 .to_string(),
@@ -105,18 +147,58 @@ pub fn build_inventory_from_save(bytes: &[u8]) -> WithWarnings<Inventory> {
     }
 
     // The save is the source of truth for the character name.
-    let character = parse_save_name(bytes);
+    let name = parse_save_name(bytes).unwrap_or_else(|| UNKNOWN_CHARACTER.to_string());
+
+    let character = match scalars {
+        Some(c) => Character {
+            name,
+            level: c.level,
+            vitality: c.vitality,
+            endurance: c.endurance,
+            strength: c.strength,
+            skill: c.skill,
+            bloodtinge: c.bloodtinge,
+            arcane: c.arcane,
+            health: c.health,
+            stamina: c.stamina,
+            insight: c.insight,
+            blood_echoes: c.blood_echoes,
+            new_game: c.new_game,
+            playtime_ms: c.playtime_ms,
+        },
+        None => Character {
+            name,
+            level: 0,
+            vitality: 0,
+            endurance: 0,
+            strength: 0,
+            skill: 0,
+            bloodtinge: 0,
+            arcane: 0,
+            health: 0,
+            stamina: 0,
+            insight: 0,
+            blood_echoes: 0,
+            new_game: 0,
+            playtime_ms: 0,
+        },
+    };
+
+    let stats = Stats {
+        str: character.strength as u16,
+        skl: character.skill as u16,
+        blt: character.bloodtinge as u16,
+        arc: character.arcane as u16,
+    };
+
+    let weapons = owned.map(|o| o.weapons).unwrap_or_default();
 
     WithWarnings {
         value: Inventory {
-            character: character.unwrap_or_else(|| "Unknown character".to_string()),
-            stats: stats.unwrap_or_else(|| Stats {
-                str: 0,
-                skl: 0,
-                blt: 0,
-                arc: 0,
-            }),
+            character,
+            stats,
             gems,
+            weapons,
         },
         warnings,
     }
@@ -201,12 +283,15 @@ mod tests {
         let mut buf = vec![0u8; FACE_INDEX + 16];
         buf[84..84 + 40].copy_from_slice(&gem(0xc080_0041, 0x01, &[26619])); // one gem
         buf[FACE_INDEX..FACE_INDEX + 4].copy_from_slice(&[0x46, 0x41, 0x43, 0x45]); // "FACE"
+        buf[u - 103] = 30; // VIT
+        buf[u - 95] = 18; // END
         buf[u - 79] = 50; // STR
         buf[u - 71] = 25; // SKL
         buf[u - 63] = 12; // BLT
         buf[u - 55] = 44; // ARC
         let WithWarnings { value, .. } = build_inventory_from_save(&buf);
         assert_eq!(value.gems.len(), 1);
+        // The calc-facing stats projection holds the four scaling stats…
         assert_eq!(
             value.stats,
             Stats {
@@ -216,6 +301,11 @@ mod tests {
                 arc: 44
             }
         );
+        // …and the full character carries vitality/endurance too.
+        assert_eq!(value.character.vitality, 30);
+        assert_eq!(value.character.endurance, 18);
+        assert_eq!(value.character.strength, 50);
+        assert_eq!(value.character.arcane, 44);
     }
 
     #[test]
@@ -251,6 +341,6 @@ mod tests {
             buf[u + 1 + i * 2 + 1] = (code >> 8) as u8;
         }
         let WithWarnings { value, .. } = build_inventory_from_save(&buf);
-        assert_eq!(value.character, "franq");
+        assert_eq!(value.character.name, "franq");
     }
 }

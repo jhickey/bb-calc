@@ -70,6 +70,26 @@ fn is_upgrade_record(type_byte: u8, shape_byte: u8) -> bool {
     }
 }
 
+/// The byte offset just past the gem/rune (upgrades) region — i.e. the first
+/// record that is neither a gem nor a rune, or the buffer end. The equipped-gem
+/// "slots" blocks begin somewhere after this point.
+pub fn upgrades_region_end(bytes: &[u8]) -> usize {
+    let mut i = REGION_START;
+    while i + STRIDE <= bytes.len() {
+        let clean_words = bytes[i + 9] == 0
+            && bytes[i + 10] == 0
+            && bytes[i + 11] == 0
+            && bytes[i + 13] == 0
+            && bytes[i + 14] == 0
+            && bytes[i + 15] == 0;
+        if !clean_words || !is_upgrade_record(bytes[i + 8], bytes[i + 12]) {
+            break;
+        }
+        i += STRIDE;
+    }
+    i
+}
+
 /// Extract every gem in the save (equipped and stored alike). Runes are walked
 /// through — they share the region — but filtered out of the result.
 pub fn parse_save_gems(bytes: &[u8]) -> Vec<RawSaveGem> {

@@ -24,11 +24,13 @@ mod test_support;
 // Flat re-export of the public surface so callers can use `bb_calc::Foo`.
 pub use calc::{compute_ar, gem_sum};
 pub use gem_parser::{base_gem, gem_from_ingame_effects, parse_gem_effects};
-pub use inventory::{build_inventory_from_save, Inventory, InventoryGem, WithWarnings};
+pub use inventory::{build_inventory_from_save, Character, Inventory, InventoryGem, WithWarnings};
 pub use optimizer::{
     optimize, shape_fits, Candidate, DamageTarget, GemRef, Mode, OptimizeResult, SlotChoice,
 };
 pub use save::{
-    lookup_effect, parse_save_gems, parse_save_name, parse_save_stats, EffectInfo, RawSaveGem,
+    lookup_effect, parse_owned_items, parse_save_character, parse_save_gems, parse_save_name,
+    parse_save_stats, CharacterStats, EffectInfo, ItemLocation, OwnedItems, OwnedWeapon, RawSaveGem,
+    WeaponHand, WeaponImprint,
 };
 pub use types::{ArBreakdown, ConvertedElement, Gem, GemShape, Stats, Weapon, WeaponType};

@@ -18,6 +18,9 @@ use serde::Deserialize;
 #[serde(rename_all = "camelCase")]
 struct RawWeapon {
     id: String,
+    /// In-game numeric id for matching owned weapons from a save; `null` for
+    /// calc-only variants (tricked / rune transforms) that aren't distinct items.
+    canonical_id: Option<u32>,
     name: String,
     #[serde(rename = "type")]
     kind: String,
@@ -98,8 +101,31 @@ fn generate_effects(out_dir: &str) {
     fs::write(&dest, out).expect("write effects_generated.rs");
 }
 
+/// Code-generate `static OFFHAND_WEAPONS: &[(u32, &str)]`, sorted ascending by the
+/// in-game canonical id so it can be binary-searched. These are left-hand weapons
+/// (firearms/shields), which have no entry in the AR `WEAPONS` table but still need
+/// a name when listing a save's owned weapons. The lookup lives in `save::items`.
+fn generate_offhand_weapons(out_dir: &str) {
+    let json =
+        fs::read_to_string("data/weapons_offhand.json").expect("read data/weapons_offhand.json");
+    // BTreeMap parses the JSON's string keys into u32 and keeps them ascending.
+    let names: BTreeMap<u32, String> =
+        serde_json::from_str(&json).expect("parse data/weapons_offhand.json");
+
+    let mut out = String::new();
+    out.push_str("static OFFHAND_WEAPONS: &[(u32, &str)] = &[\n");
+    for (id, name) in &names {
+        write!(out, "    ({id}, {name:?}),\n").unwrap();
+    }
+    out.push_str("];\n");
+
+    let dest = Path::new(out_dir).join("offhand_weapons_generated.rs");
+    fs::write(&dest, out).expect("write offhand_weapons_generated.rs");
+}
+
 fn main() {
     println!("cargo:rerun-if-changed=data/weapons.json");
+    println!("cargo:rerun-if-changed=data/weapons_offhand.json");
     println!("cargo:rerun-if-changed=data/gem-effects.json");
     println!("cargo:rerun-if-changed=build.rs");
 
@@ -120,6 +146,7 @@ fn main() {
             out,
             "    Weapon {{\n\
              \x20       id: {id:?},\n\
+             \x20       canonical_id: {canonical_id},\n\
              \x20       name: {name:?},\n\
              \x20       weapon_type: {kind},\n\
              \x20       phys: {phys},\n\
@@ -140,6 +167,10 @@ fn main() {
              \x20       righteous_tricked: {righteous_tricked}f32,\n\
              \x20   }},\n",
             id = w.id,
+            canonical_id = match w.canonical_id {
+                Some(v) => format!("Some({v})"),
+                None => "None".to_string(),
+            },
             name = w.name,
             kind = weapon_type_variant(&w.kind),
             phys = w.phys,
@@ -168,4 +199,5 @@ fn main() {
     fs::write(&dest, out).expect("write weapons_generated.rs");
 
     generate_effects(&out_dir);
+    generate_offhand_weapons(&out_dir);
 }

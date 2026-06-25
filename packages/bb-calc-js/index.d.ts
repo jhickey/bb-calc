@@ -24,6 +24,27 @@ export interface Candidate {
   gemRef: GemRef
 }
 
+/** A hunter's character data: name plus every scalar field read from the save. */
+export interface Character {
+  name: string
+  /** Soul level as stored in the save (the in-game level, not the stat sum). */
+  level: number
+  vitality: number
+  endurance: number
+  strength: number
+  skill: number
+  bloodtinge: number
+  arcane: number
+  health: number
+  stamina: number
+  insight: number
+  bloodEchoes: number
+  /** New-game cycle: 0 = NG, 1 = NG+1, 2 = NG+2, … */
+  newGame: number
+  /** Total playtime in milliseconds. */
+  playtimeMs: number
+}
+
 /**
  * Computes the Attack Rating for the weapon with `weapon_id`, fitted with up
  * to three `gems` at the given hunter `stats`. Gem slot order does not matter.
@@ -106,9 +127,10 @@ export declare const enum GemShape {
 export declare function getWeapons(): Array<Weapon>
 
 export interface Inventory {
-  character: string
+  character: Character
   stats: Stats
   gems: Array<InventoryGem>
+  weapons: Array<OwnedWeapon>
 }
 
 export interface InventoryGem {
@@ -117,6 +139,14 @@ export interface InventoryGem {
   shape: GemShape
   rating: number
   effects: Array<string>
+  /** Whether this gem is currently socketed in a weapon. */
+  inUse: boolean
+}
+
+/** Where an owned item lives (mirrors `bb_calc::ItemLocation`). */
+export declare const enum ItemLocation {
+  Inventory = 'Inventory',
+  Storage = 'Storage'
 }
 
 export declare const enum Mode {
@@ -147,6 +177,21 @@ export interface OptimizeResult {
   weaponId: string
 }
 
+/** A weapon the player owns, decoded from a save. */
+export interface OwnedWeapon {
+  /** In-game id with the upgrade level stripped (base + imprint). */
+  canonicalId: number
+  name: string
+  hand: WeaponHand
+  imprint: WeaponImprint
+  level: number
+  location: ItemLocation
+  /** The AR-table slug when this is a right-hand weapon we can optimize. */
+  weaponId?: string
+  /** Instance ids (hex) of gems socketed in this weapon, in slot order. */
+  gemIds: Array<string>
+}
+
 export declare function parseSave(saveFile: Uint8Array): Promise<unknown>
 
 /**
@@ -170,6 +215,11 @@ export interface Stats {
 /** A weapon and its base damage values, exposed to JavaScript. */
 export interface Weapon {
   id: string
+  /**
+   * In-game numeric id for matching owned weapons from a save; absent for
+   * calc-only variants (tricked forms, rune transforms).
+   */
+  canonicalId?: number
   name: string
   weaponType: WeaponType
   phys: number
@@ -181,6 +231,19 @@ export interface Weapon {
   gemSlot1: GemShape
   gemSlot2: GemShape
   gemSlot3: GemShape
+}
+
+/** Which hand a weapon is wielded in (mirrors `bb_calc::WeaponHand`). */
+export declare const enum WeaponHand {
+  Right = 'Right',
+  Left = 'Left'
+}
+
+/** A weapon's imprint (mirrors `bb_calc::WeaponImprint`). */
+export declare const enum WeaponImprint {
+  Normal = 'Normal',
+  Uncanny = 'Uncanny',
+  Lost = 'Lost'
 }
 
 /** How a weapon's damage is derived (mirrors `bb_calc::WeaponType`). */
