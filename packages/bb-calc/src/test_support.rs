@@ -6,6 +6,7 @@ use crate::types::{Gem, GemShape, Stats, Weapon, WeaponType};
 pub(crate) fn weapon(name: &'static str, weapon_type: WeaponType) -> Weapon {
     Weapon {
         id: "",
+        canonical_id: None,
         name,
         weapon_type,
         phys: 0,

@@ -22,6 +22,10 @@ pub enum GemShape {
 #[derive(Debug, Clone)]
 pub struct Weapon {
     pub id: &'static str,
+    /// In-game numeric id used to match owned weapons read from a save. `None`
+    /// for calc-only variants (tricked forms, rune transforms) that don't exist
+    /// as distinct items in a save.
+    pub canonical_id: Option<u32>,
     pub name: &'static str,
     pub weapon_type: WeaponType,
     pub phys: u16,
@@ -61,6 +65,13 @@ impl Weapon {
     /// Look up a weapon by its normalized `id` (see `data/weapons.json`).
     pub fn by_id(id: &str) -> Option<&'static Weapon> {
         WEAPONS.iter().find(|w| w.id == id)
+    }
+
+    /// Look up a weapon by its in-game numeric `canonical_id` (the base+imprint id,
+    /// with any upgrade-level digits already stripped). Calc-only variants have no
+    /// `canonical_id` and are never returned here.
+    pub fn by_canonical_id(canonical_id: u32) -> Option<&'static Weapon> {
+        WEAPONS.iter().find(|w| w.canonical_id == Some(canonical_id))
     }
 }
 
@@ -137,6 +148,7 @@ mod tests {
     fn by_id_finds_generated_weapon() {
         let w = Weapon::by_id("amygdalan_arm").expect("amygdalan_arm exists");
         assert_eq!(w.name, "Amygdalan Arm");
+        assert_eq!(w.canonical_id, Some(25_000_000));
         assert_eq!(w.phys, 160);
         assert_eq!(w.arcane, 80);
         assert_eq!(w.weapon_type, WeaponType::Dual);
@@ -160,5 +172,30 @@ mod tests {
         // Trick forms share their base weapon's (Normal) slots and stay Normal-only.
         assert!(Weapon::by_id("logarius_wheel_tricked").is_some());
         assert!(Weapon::by_id("logarius_wheel_tricked_uncanny").is_none());
+    }
+
+    #[test]
+    fn by_canonical_id_resolves_owned_weapons_and_imprints() {
+        // Base / Uncanny / Lost derive as base + 0 / 10000 / 20000.
+        assert_eq!(
+            Weapon::by_canonical_id(25_000_000).map(|w| w.id),
+            Some("amygdalan_arm")
+        );
+        assert_eq!(
+            Weapon::by_canonical_id(25_010_000).map(|w| w.id),
+            Some("amygdalan_arm_uncanny")
+        );
+        assert_eq!(
+            Weapon::by_canonical_id(25_020_000).map(|w| w.id),
+            Some("amygdalan_arm_lost")
+        );
+        // An owned weapon from franq's save (Chikage) resolves to its slug.
+        assert_eq!(Weapon::by_canonical_id(2_000_000).map(|w| w.id), Some("chikage"));
+        // Calc-only variants carry no canonical_id and are never matched.
+        assert_eq!(
+            Weapon::by_id("logarius_wheel_tricked").unwrap().canonical_id,
+            None
+        );
+        assert!(Weapon::by_canonical_id(999_999_999).is_none());
     }
 }

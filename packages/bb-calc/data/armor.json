@@ -1,0 +1,1022 @@
+{
+  "10000": {
+    "name": "Grey Wolf Cap",
+    "kind": "Head"
+  },
+  "11000": {
+    "name": "Charred Hunter Garb",
+    "kind": "Chest"
+  },
+  "12000": {
+    "name": "Charred Hunter Gloves",
+    "kind": "Hands"
+  },
+  "13000": {
+    "name": "Charred Hunter Trousers",
+    "kind": "Legs"
+  },
+  "20000": {
+    "name": "Black Hooded Iron Helm",
+    "kind": "Head"
+  },
+  "21000": {
+    "name": "Yahar'gul Black Garb",
+    "kind": "Chest"
+  },
+  "22000": {
+    "name": "Yahar'gul Black Gloves",
+    "kind": "Hands"
+  },
+  "23000": {
+    "name": "Yahar'gul Black Trousers",
+    "kind": "Legs"
+  },
+  "30000": {
+    "name": "Graveguard Mask",
+    "kind": "Head"
+  },
+  "31000": {
+    "name": "Graveguard Robe",
+    "kind": "Chest"
+  },
+  "32000": {
+    "name": "Graveguard Manchettes",
+    "kind": "Hands"
+  },
+  "33000": {
+    "name": "Graveguard Kilt",
+    "kind": "Legs"
+  },
+  "40000": {
+    "name": "Bone Ash Mask",
+    "kind": "Head"
+  },
+  "41000": {
+    "name": "Bone Ash Armor",
+    "kind": "Chest"
+  },
+  "42000": {
+    "name": "Bone Ash Gauntlets",
+    "kind": "Hands"
+  },
+  "43000": {
+    "name": "Bone Ash Leggings",
+    "kind": "Legs"
+  },
+  "50000": {
+    "name": "Henryk's Hunter Cap",
+    "kind": "Head"
+  },
+  "51000": {
+    "name": "Henryk's Hunter Garb",
+    "kind": "Chest"
+  },
+  "52000": {
+    "name": "Henryk's Hunter Gloves",
+    "kind": "Hands"
+  },
+  "53000": {
+    "name": "Henryk's Hunter Trousers",
+    "kind": "Legs"
+  },
+  "60000": {
+    "name": "Yharnam Hunter Cap",
+    "kind": "Head"
+  },
+  "61000": {
+    "name": "Yharnam Hunter Garb",
+    "kind": "Chest"
+  },
+  "62000": {
+    "name": "Yharnam Hunter Trousers",
+    "kind": "Legs"
+  },
+  "63000": {
+    "name": "Yharnam Hunter Gloves",
+    "kind": "Hands"
+  },
+  "70000": {
+    "name": "Hunter Hat",
+    "kind": "Head"
+  },
+  "71000": {
+    "name": "Hunter Garb (Cape)",
+    "kind": "Chest"
+  },
+  "72000": {
+    "name": "Hunter Gloves",
+    "kind": "Hands"
+  },
+  "73000": {
+    "name": "Hunter Trousers",
+    "kind": "Legs"
+  },
+  "80000": {
+    "name": "Knight's Wig",
+    "kind": "Head"
+  },
+  "81000": {
+    "name": "Knight's Garb",
+    "kind": "Chest"
+  },
+  "82000": {
+    "name": "Knight's Gloves",
+    "kind": "Hands"
+  },
+  "83000": {
+    "name": "Knight's Trousers",
+    "kind": "Legs"
+  },
+  "90000": {
+    "name": "[CUT] en5304.",
+    "kind": "Head"
+  },
+  "91000": {
+    "name": "[CUT] en5305 (FEMALE).",
+    "kind": "Chest"
+  },
+  "100000": {
+    "name": "Cainhurst Helmet",
+    "kind": "Head"
+  },
+  "101000": {
+    "name": "Cainhurst Armor",
+    "kind": "Chest"
+  },
+  "102000": {
+    "name": "Cainhurst Gauntlets",
+    "kind": "Hands"
+  },
+  "103000": {
+    "name": "Cainhurst Leggings",
+    "kind": "Legs"
+  },
+  "110000": {
+    "name": "Black Church Hat",
+    "kind": "Head"
+  },
+  "111000": {
+    "name": "Black Church Garb",
+    "kind": "Chest"
+  },
+  "112000": {
+    "name": "Surgical Long Gloves",
+    "kind": "Hands"
+  },
+  "113000": {
+    "name": "Black Church Trousers/Dress",
+    "kind": "Legs"
+  },
+  "120000": {
+    "name": "Blindfold Cap",
+    "kind": "Head"
+  },
+  "121000": {
+    "name": "Choir Garb",
+    "kind": "Chest"
+  },
+  "122000": {
+    "name": "Choir Gloves",
+    "kind": "Hands"
+  },
+  "123000": {
+    "name": "Choir Trousers",
+    "kind": "Legs"
+  },
+  "130000": {
+    "name": "Gascoigne's Cap",
+    "kind": "Head"
+  },
+  "131000": {
+    "name": "Gascoigne's Garb",
+    "kind": "Chest"
+  },
+  "132000": {
+    "name": "Gascoigne's Gloves",
+    "kind": "Hands"
+  },
+  "133000": {
+    "name": "Gascoigne's Trousers",
+    "kind": "Legs"
+  },
+  "140000": {
+    "name": "Tomb Prospector Hood",
+    "kind": "Head"
+  },
+  "141000": {
+    "name": "Tomb Prospector Garb",
+    "kind": "Chest"
+  },
+  "142000": {
+    "name": "Tomb Prospector Gloves",
+    "kind": "Hands"
+  },
+  "143000": {
+    "name": "Tomb Prospector Trousers",
+    "kind": "Legs"
+  },
+  "150000": {
+    "name": "Gold Ardeo",
+    "kind": "Head"
+  },
+  "151000": {
+    "name": "Executioner Garb",
+    "kind": "Chest"
+  },
+  "152000": {
+    "name": "Executioner Gauntlets",
+    "kind": "Hands"
+  },
+  "153000": {
+    "name": "Executioner Trousers",
+    "kind": "Legs"
+  },
+  "160000": {
+    "name": "[CUT] Executioner Otto (Head)",
+    "kind": "Other"
+  },
+  "161000": {
+    "name": "[CUT] Executioner Otto (Torso)",
+    "kind": "Other"
+  },
+  "162000": {
+    "name": "[CUT] Executioner Otto (Arms)",
+    "kind": "Other"
+  },
+  "163000": {
+    "name": "[CUT] Executioner Otto (Legs)",
+    "kind": "Other"
+  },
+  "170000": {
+    "name": "[CUT] Yharnam Spy (Head)",
+    "kind": "Other"
+  },
+  "171000": {
+    "name": "[CUT] Yharnam Spy (Torso)",
+    "kind": "Other"
+  },
+  "172000": {
+    "name": "[CUT] Yharnam Spy (Arms)",
+    "kind": "Other"
+  },
+  "173000": {
+    "name": "[CUT] Yharnam Spy (Legs)",
+    "kind": "Other"
+  },
+  "180000": {
+    "name": "Beak Mask",
+    "kind": "Head"
+  },
+  "181000": {
+    "name": "Crowfeather Garb",
+    "kind": "Chest"
+  },
+  "182000": {
+    "name": "Crowfeather Manchettes",
+    "kind": "Hands"
+  },
+  "183000": {
+    "name": "Crowfeather Trousers",
+    "kind": "Legs"
+  },
+  "190000": {
+    "name": "Mensis Cage",
+    "kind": "Head"
+  },
+  "191000": {
+    "name": "Student Uniform",
+    "kind": "Chest"
+  },
+  "192000": {
+    "name": "[CUT] Nightmare Lord (Arms)",
+    "kind": "Other"
+  },
+  "193000": {
+    "name": "Student Trousers",
+    "kind": "Legs"
+  },
+  "200000": {
+    "name": "Gehrman's Hunter Cap",
+    "kind": "Head"
+  },
+  "201000": {
+    "name": "Gehrman's Hunter Garb",
+    "kind": "Chest"
+  },
+  "203000": {
+    "name": "Gehrman's Hunter Trousers",
+    "kind": "Legs"
+  },
+  "210000": {
+    "name": "Madman Hood",
+    "kind": "Head"
+  },
+  "211000": {
+    "name": "Madman Garb",
+    "kind": "Chest"
+  },
+  "212000": {
+    "name": "Madman Manchettes",
+    "kind": "Hands"
+  },
+  "213000": {
+    "name": "Madman Leggings",
+    "kind": "Legs"
+  },
+  "220000": {
+    "name": "Doll Hat",
+    "kind": "Head"
+  },
+  "221000": {
+    "name": "Doll Clothes",
+    "kind": "Chest"
+  },
+  "222000": {
+    "name": "Doll Gloves",
+    "kind": "Hands"
+  },
+  "223000": {
+    "name": "Doll Skirt",
+    "kind": "Legs"
+  },
+  "230000": {
+    "name": "Black Hood",
+    "kind": "Head"
+  },
+  "231000": {
+    "name": "Foreign Garb",
+    "kind": "Chest"
+  },
+  "232000": {
+    "name": "Sullied Bandage",
+    "kind": "Hands"
+  },
+  "233000": {
+    "name": "Foreign Trousers",
+    "kind": "Legs"
+  },
+  "240000": {
+    "name": "[CUT] Stealth (Head)",
+    "kind": "Other"
+  },
+  "241000": {
+    "name": "Ashen Hunter Garb",
+    "kind": "Chest"
+  },
+  "242000": {
+    "name": "Ashen Hunter Gloves",
+    "kind": "Hands"
+  },
+  "243000": {
+    "name": "Ashen Hunter Trousers",
+    "kind": "Legs"
+  },
+  "250000": {
+    "name": "Crown of Illusions",
+    "kind": "Head"
+  },
+  "260000": {
+    "name": "Master's Iron Helm",
+    "kind": "Head"
+  },
+  "270000": {
+    "name": "Iron Yahar'gul Helm",
+    "kind": "Head"
+  },
+  "280000": {
+    "name": "Top Hat",
+    "kind": "Head"
+  },
+  "281000": {
+    "name": "Hunter Garb",
+    "kind": "Chest"
+  },
+  "290000": {
+    "name": "White Church Hat",
+    "kind": "Head"
+  },
+  "291000": {
+    "name": "White Church Garb",
+    "kind": "Chest"
+  },
+  "293000": {
+    "name": "White Church Trousers/Dress",
+    "kind": "Legs"
+  },
+  "301000": {
+    "name": "Student Uniform (Cape)",
+    "kind": "Chest"
+  },
+  "311000": {
+    "name": "Noble Dress",
+    "kind": "Chest"
+  },
+  "313000": {
+    "name": "Arianna's Shoes",
+    "kind": "Legs"
+  },
+  "320000": {
+    "name": "Rumpled Yharnam Hat",
+    "kind": "Head"
+  },
+  "321000": {
+    "name": "Sweaty Clothes",
+    "kind": "Chest"
+  },
+  "330000": {
+    "name": "Butcher Mask",
+    "kind": "Head"
+  },
+  "331000": {
+    "name": "Butcher Garb",
+    "kind": "Chest"
+  },
+  "332000": {
+    "name": "Butcher Gloves",
+    "kind": "Hands"
+  },
+  "333000": {
+    "name": "Butcher Trousers",
+    "kind": "Legs"
+  },
+  "340000": {
+    "name": "Harrowed Hood",
+    "kind": "Head"
+  },
+  "341000": {
+    "name": "Harrowed Garb",
+    "kind": "Chest"
+  },
+  "342000": {
+    "name": "Harrowed Gloves",
+    "kind": "Hands"
+  },
+  "343000": {
+    "name": "Harrowed Trousers",
+    "kind": "Legs"
+  },
+  "350000": {
+    "name": "Old Hunter Cap",
+    "kind": "Head"
+  },
+  "351000": {
+    "name": "Old Hunter Garb",
+    "kind": "Chest"
+  },
+  "352000": {
+    "name": "Old Hunter Gloves",
+    "kind": "Hands"
+  },
+  "353000": {
+    "name": "Old Hunter Trousers",
+    "kind": "Legs"
+  },
+  "360000": {
+    "name": "Old Hunter Top Hat",
+    "kind": "Head"
+  },
+  "361000": {
+    "name": "Decorative Old Hunter Garb",
+    "kind": "Chest"
+  },
+  "363000": {
+    "name": "Decorative Old Hunter Trousers",
+    "kind": "Legs"
+  },
+  "370000": {
+    "name": "Maria Hunter Cap",
+    "kind": "Head"
+  },
+  "371000": {
+    "name": "Maria Hunter Garb",
+    "kind": "Chest"
+  },
+  "372000": {
+    "name": "Maria Hunter Gloves",
+    "kind": "Hands"
+  },
+  "373000": {
+    "name": "Maria Hunter Trousers",
+    "kind": "Legs"
+  },
+  "380000": {
+    "name": "One-eyed Iron Helm",
+    "kind": "Head"
+  },
+  "381000": {
+    "name": "Constable's Garb",
+    "kind": "Chest"
+  },
+  "382000": {
+    "name": "Constable's Gloves",
+    "kind": "Hands"
+  },
+  "383000": {
+    "name": "Constable's Trousers",
+    "kind": "Hands"
+  },
+  "390000": {
+    "name": "Brador's Testimony",
+    "kind": "Head"
+  },
+  "391000": {
+    "name": "Beast Hide Garb",
+    "kind": "Chest"
+  },
+  "392000": {
+    "name": "Bloodied Arm Bands",
+    "kind": "Hands"
+  },
+  "393000": {
+    "name": "Bloodied Trousers",
+    "kind": "Legs"
+  },
+  "400000": {
+    "name": "Yamamura Hunter Hat",
+    "kind": "Head"
+  },
+  "401000": {
+    "name": "Khaki Haori",
+    "kind": "Chest"
+  },
+  "402000": {
+    "name": "Old Hunter Arm Bands",
+    "kind": "Hands"
+  },
+  "403000": {
+    "name": "Wine Hakama",
+    "kind": "Legs"
+  },
+  "410000": {
+    "name": "[CUT] Beast head.",
+    "kind": "Head"
+  },
+  "411000": {
+    "name": "[CUT] Beast body.",
+    "kind": "Chest"
+  },
+  "412000": {
+    "name": "[CUT] Beast arms.",
+    "kind": "Hands"
+  },
+  "413000": {
+    "name": "[CUT] Beast legs.",
+    "kind": "Legs"
+  },
+  "420000": {
+    "name": "[CUT] Kin transform (Head).",
+    "kind": "Head"
+  },
+  "421000": {
+    "name": "[CUT] Kin transform (Body).",
+    "kind": "Chest"
+  },
+  "422000": {
+    "name": "[CUT] Kin transform (Arms).",
+    "kind": "Hands"
+  },
+  "423000": {
+    "name": "[CUT] Kin transform (Legs).",
+    "kind": "Legs"
+  },
+  "430000": {
+    "name": "Enlarged Head",
+    "kind": "Head"
+  },
+  "440000": {
+    "name": "[CUT] Madman? (GHOST) (Head).",
+    "kind": "Head"
+  },
+  "441000": {
+    "name": "[CUT] Madman? (GHOST) (Chest).",
+    "kind": "Chest"
+  },
+  "442000": {
+    "name": "[CUT] Madman? (GHOST) (Arms).",
+    "kind": "Hands"
+  },
+  "443000": {
+    "name": "[CUT] Madman? (GHOST) (Legs).",
+    "kind": "Legs"
+  },
+  "450000": {
+    "name": "[CUT] Harrowed (GHOST) (Head).",
+    "kind": "Head"
+  },
+  "451000": {
+    "name": "[CUT] Harrowed (GHOST) (Body).",
+    "kind": "Chest"
+  },
+  "452000": {
+    "name": "[CUT] Harrowed (GHOST) (Arms).",
+    "kind": "Hands"
+  },
+  "453000": {
+    "name": "[CUT] Harrowed (GHOST) (Legs).",
+    "kind": "Legs"
+  },
+  "460000": {
+    "name": "[CUT] Maria Hunter (GHOST) (Head).",
+    "kind": "Head"
+  },
+  "461000": {
+    "name": "[CUT] Maria Hunter (GHOST) (Body).",
+    "kind": "Chest"
+  },
+  "470000": {
+    "name": "[CUT] Master's iron helm (GHOST) (Head).",
+    "kind": "Head"
+  },
+  "471000": {
+    "name": "[CUT] ? (GHOST) (Body).",
+    "kind": "Chest"
+  },
+  "480000": {
+    "name": "[CUT] Bloody Executioner (MALE) (Head).",
+    "kind": "Head"
+  },
+  "481000": {
+    "name": "[CUT] Bloody Executioner (MALE) (Body).",
+    "kind": "Chest"
+  },
+  "482000": {
+    "name": "[CUT] Bloody Executioner (MALE) (Arms).",
+    "kind": "Hands"
+  },
+  "483000": {
+    "name": "[CUT] Bloody Executioner (MALE) (Legs).",
+    "kind": "Legs"
+  },
+  "490000": {
+    "name": "[CUT] Bloody Eileen (FEMALE) (Head).",
+    "kind": "Head"
+  },
+  "491000": {
+    "name": "[CUT] Bloody Eileen (FEMALE) (Body).",
+    "kind": "Chest"
+  },
+  "492000": {
+    "name": "[CUT] Bloody Eileen (FEMALE) (Arms).",
+    "kind": "Hands"
+  },
+  "493000": {
+    "name": "[CUT] Bloody Eileen (FEMALE) (Legs).",
+    "kind": "Legs"
+  },
+  "503000": {
+    "name": "[CUT] Iosefka's Skirt Barefoot (FEMALE) (Legs).",
+    "kind": "Legs"
+  },
+  "511000": {
+    "name": "[CUT] Arianna's Pregnant (FEMALE) (Body).",
+    "kind": "Chest"
+  },
+  "521000": {
+    "name": "[CUT] Old Woman Clothes (FEMALE) (Body).",
+    "kind": "Chest"
+  },
+  "531000": {
+    "name": "[CUT] BECOME ANNALISE (FEMALE) (Body).",
+    "kind": "Chest"
+  },
+  "541000": {
+    "name": "[CUT] Bloody Adella Robe (FEMALE).",
+    "kind": "Chest"
+  },
+  "542000": {
+    "name": "[CUT] Bloody Adella Gloves (FEMALE).",
+    "kind": "Hands"
+  },
+  "543000": {
+    "name": "[CUT] Bloody Adella Skirt (FEMALE).",
+    "kind": "Legs"
+  },
+  "550000": {
+    "name": "[CUT] Suspicious Beggar Headpiece (MALE).",
+    "kind": "Head"
+  },
+  "563000": {
+    "name": "[CUT] Mad Heretic (Bloodstained) (Legs)",
+    "kind": "Other"
+  },
+  "571000": {
+    "name": "[CUT] Bloody Arianna Dress (FEMALE).",
+    "kind": "Chest"
+  },
+  "573000": {
+    "name": "[CUT] Prostitute (Post-Birth) (Legs)",
+    "kind": "Other"
+  },
+  "581000": {
+    "name": "[CUT] WHITE CHURCH SET? (Body).",
+    "kind": "Chest"
+  },
+  "582000": {
+    "name": "[CUT] BLACK UNTEXTURED (Arms).",
+    "kind": "Hands"
+  },
+  "592000": {
+    "name": "[CUT] UNTEXTURED BEAST ARMS (Arms).",
+    "kind": "Hands"
+  },
+  "600000": {
+    "name": "[CUT] Black Iron Hood (GHOST).",
+    "kind": "Head"
+  },
+  "602000": {
+    "name": "[CUT] Black Iron Arms (GHOST).",
+    "kind": "Hands"
+  },
+  "610000": {
+    "name": "[CUT] Graveguard Hood (GHOST).",
+    "kind": "Head"
+  },
+  "611000": {
+    "name": "[CUT] Graveguard Robe (GHOST).",
+    "kind": "Chest"
+  },
+  "620000": {
+    "name": "[CUT] Bone Ash Hat (GHOST).",
+    "kind": "Head"
+  },
+  "621000": {
+    "name": "[CUT] Bone Ash Body (GHOST).",
+    "kind": "Chest"
+  },
+  "623000": {
+    "name": "[CUT] Bone Ash Leggings (GHOST).",
+    "kind": "Legs"
+  },
+  "630000": {
+    "name": "[CUT] Knight Wig (GHOST).",
+    "kind": "Head"
+  },
+  "631000": {
+    "name": "[CUT] Knight Armor (GHOST).",
+    "kind": "Chest"
+  },
+  "633000": {
+    "name": "[CUT] Knight Leggings (GHOST).",
+    "kind": "Legs"
+  },
+  "641000": {
+    "name": "[CUT] Dress (GHOST).",
+    "kind": "Chest"
+  },
+  "650000": {
+    "name": "[CUT] Vampire Knight (Head)",
+    "kind": "Other"
+  },
+  "651000": {
+    "name": "[CUT] Vampire Knight (Torso)",
+    "kind": "Other"
+  },
+  "653000": {
+    "name": "[CUT] Vampire Knight (Legs)",
+    "kind": "Other"
+  },
+  "660000": {
+    "name": "[CUT] Choir (Head)",
+    "kind": "Other"
+  },
+  "661000": {
+    "name": "[CUT] Choir (Torso)",
+    "kind": "Other"
+  },
+  "671000": {
+    "name": "[CUT] Church Hunter (Torso)",
+    "kind": "Other"
+  },
+  "680000": {
+    "name": "[CUT] Bloodline Hunter (Head)",
+    "kind": "Other"
+  },
+  "682000": {
+    "name": "[CUT] Bloodline Hunter (Arms)",
+    "kind": "Other"
+  },
+  "690000": {
+    "name": "[CUT] Executioner (Head)",
+    "kind": "Other"
+  },
+  "700000": {
+    "name": "[CUT] Beggar Hunter (Head)",
+    "kind": "Other"
+  },
+  "701000": {
+    "name": "[CUT] Beggar Hunter (Torso)",
+    "kind": "Other"
+  },
+  "703000": {
+    "name": "[CUT] Beggar Hunter (Legs)",
+    "kind": "Other"
+  },
+  "710000": {
+    "name": "[CUT] Nightmare Lord (Head)",
+    "kind": "Other"
+  },
+  "712000": {
+    "name": "[CUT] Nightmare Lord (Arms)",
+    "kind": "Other"
+  },
+  "723000": {
+    "name": "[CUT] Base Elder (Legs)",
+    "kind": "Other"
+  },
+  "730000": {
+    "name": "[CUT] Mad Heretic (Head)",
+    "kind": "Other"
+  },
+  "732000": {
+    "name": "[CUT] Mad Heretic (Arms)",
+    "kind": "Other"
+  },
+  "740000": {
+    "name": "[CUT] Doll Heroine (Head)",
+    "kind": "Other"
+  },
+  "741000": {
+    "name": "[CUT] Doll Heroine (Torso)",
+    "kind": "Other"
+  },
+  "743000": {
+    "name": "[CUT] Doll Heroine (Legs)",
+    "kind": "Other"
+  },
+  "750000": {
+    "name": "[CUT] Starter Gear (Head)",
+    "kind": "Other"
+  },
+  "751000": {
+    "name": "[CUT] Starter Gear (Torso)",
+    "kind": "Other"
+  },
+  "762000": {
+    "name": "[CUT] Starter Gear (Arms)",
+    "kind": "Other"
+  },
+  "772000": {
+    "name": "[CUT] Fist Beast (Pre-Transformation) (Arms)",
+    "kind": "Other"
+  },
+  "782000": {
+    "name": "[CUT] Fist Beast (Post-Transformation) (Arms)",
+    "kind": "Other"
+  },
+  "790000": {
+    "name": "[CUT] Castle Boss (Head)",
+    "kind": "Other"
+  },
+  "800000": {
+    "name": "[CUT] Spider Cthulhu (Head)",
+    "kind": "Other"
+  },
+  "811000": {
+    "name": "[CUT] Prostitute (Torso)",
+    "kind": "Other"
+  },
+  "813000": {
+    "name": "[CUT] Prostitute (Legs)",
+    "kind": "Other"
+  },
+  "820000": {
+    "name": "[CUT] Cranky Old Man (Head)",
+    "kind": "Other"
+  },
+  "821000": {
+    "name": "[CUT] Cranky Old Man (Torso)",
+    "kind": "Other"
+  },
+  "831000": {
+    "name": "[CUT] Lonely Old Woman (Torso)",
+    "kind": "Other"
+  },
+  "900000": {
+    "name": "[CUT] Head",
+    "kind": "Other"
+  },
+  "901000": {
+    "name": "[CUT] Body",
+    "kind": "Other"
+  },
+  "902000": {
+    "name": "[CUT] Arms",
+    "kind": "Other"
+  },
+  "903000": {
+    "name": "[CUT] Legs",
+    "kind": "Other"
+  },
+  "910000": {
+    "name": "[CUT][GHOST] Equipment Naked (Head)",
+    "kind": "Other"
+  },
+  "911000": {
+    "name": "[CUT][GHOST] Equipment Naked (Torso)",
+    "kind": "Other"
+  },
+  "912000": {
+    "name": "[CUT][GHOST] Equipment Naked (Arms)",
+    "kind": "Other"
+  },
+  "913000": {
+    "name": "[CUT][GHOST] Equipment Naked (Legs)",
+    "kind": "Other"
+  },
+  "920000": {
+    "name": "[CUT][GHOST] Equipment Old Hunter (Head)",
+    "kind": "Other"
+  },
+  "921000": {
+    "name": "[CUT][GHOST] Equipment Old Hunter (Torso)",
+    "kind": "Other"
+  },
+  "930000": {
+    "name": "[CUT][GHOST] Equipment Immortal Pilgrim (No Hood) (Head)",
+    "kind": "Other"
+  },
+  "940000": {
+    "name": "[CUT][GHOST] Equipment Gascoigne (Head)",
+    "kind": "Other"
+  },
+  "950000": {
+    "name": "[CUT][GHOST] Equipment Lower Hunter (Head)",
+    "kind": "Other"
+  },
+  "951000": {
+    "name": "[CUT][GHOST] Equipment Lower Hunter (Torso)",
+    "kind": "Other"
+  },
+  "952000": {
+    "name": "[CUT][GHOST] Equipment Lower Hunter (Arms)",
+    "kind": "Other"
+  },
+  "953000": {
+    "name": "[CUT][GHOST] Equipment Lower Hunter (Legs)",
+    "kind": "Other"
+  },
+  "960000": {
+    "name": "[CUT][GHOST] Equipment City Hunter (Head)",
+    "kind": "Other"
+  },
+  "961000": {
+    "name": "[CUT][GHOST] Equipment City Hunter (Torso)",
+    "kind": "Other"
+  },
+  "962000": {
+    "name": "[CUT][GHOST] Equipment City Hunter (Arms)",
+    "kind": "Other"
+  },
+  "963000": {
+    "name": "[CUT][GHOST] Equipment City Hunter (Legs)",
+    "kind": "Other"
+  },
+  "970000": {
+    "name": "[CUT][GHOST] Equipment Ripper Jack (Head)",
+    "kind": "Other"
+  },
+  "971000": {
+    "name": "[CUT][GHOST] Equipment Ripper Jack (Torso)",
+    "kind": "Other"
+  },
+  "972000": {
+    "name": "[CUT][GHOST] Equipment Ripper Jack (Arms)",
+    "kind": "Other"
+  },
+  "973000": {
+    "name": "[CUT][GHOST] Equipment Ripper Jack (Legs)",
+    "kind": "Other"
+  },
+  "980000": {
+    "name": "[CUT][GHOST] Equipment Church Servant (Head)",
+    "kind": "Other"
+  },
+  "981000": {
+    "name": "[CUT][GHOST] Equipment Church Servant (Torso)",
+    "kind": "Other"
+  },
+  "982000": {
+    "name": "[CUT][GHOST] Equipment Church Servant (Arms)",
+    "kind": "Other"
+  },
+  "983000": {
+    "name": "[CUT][GHOST] Equipment Church Servant (Legs)",
+    "kind": "Other"
+  },
+  "990000": {
+    "name": "[CUT][GHOST] Equipment Hunter (Head)",
+    "kind": "Other"
+  },
+  "991000": {
+    "name": "[CUT][GHOST] Equipment Hunter (Torso)",
+    "kind": "Other"
+  },
+  "992000": {
+    "name": "[CUT][GHOST] Equipment Hunter (Arms)",
+    "kind": "Other"
+  },
+  "993000": {
+    "name": "[CUT][GHOST] Equipment Hunter (Legs)",
+    "kind": "Other"
+  }
+}

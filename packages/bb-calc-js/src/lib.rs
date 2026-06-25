@@ -5,10 +5,13 @@ mod optimize;
 
 use bb_calc::{
   compute_ar as bb_compute_ar, optimizer as bb_optimizer, ArBreakdown as BbArBreakdown,
-  Candidate as BbCandidate, ConvertedElement as BbConvertedElement, DamageTarget as BbDamageTarget,
-  Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape, InventoryGem as BbInventoryGem,
-  OptimizeResult as BbOptimizeResult, SlotChoice as BbSlotChoice, Stats as BbStats,
-  Weapon as BbWeapon, WeaponType as BbWeaponType,
+  ArmorKind as BbArmorKind, Candidate as BbCandidate, ConvertedElement as BbConvertedElement,
+  DamageTarget as BbDamageTarget, Gem as BbGem, GemRef as BbGemRef, GemShape as BbGemShape,
+  InventoryGem as BbInventoryGem, ItemCategory as BbItemCategory, ItemLocation as BbItemLocation,
+  OptimizeResult as BbOptimizeResult, OwnedArmor as BbOwnedArmor, OwnedItem as BbOwnedItem,
+  OwnedRune as BbOwnedRune, OwnedWeapon as BbOwnedWeapon, SlotChoice as BbSlotChoice,
+  Stats as BbStats, Weapon as BbWeapon, WeaponHand as BbWeaponHand,
+  WeaponImprint as BbWeaponImprint, WeaponType as BbWeaponType,
 };
 use napi::bindgen_prelude::{Error, Result, Status};
 use napi_derive::napi;
@@ -35,6 +38,9 @@ impl From<BbWeaponType> for WeaponType {
 #[napi(object)]
 pub struct Weapon {
   pub id: String,
+  /// In-game numeric id for matching owned weapons from a save; absent for
+  /// calc-only variants (tricked forms, rune transforms).
+  pub canonical_id: Option<u32>,
   pub name: String,
   pub weapon_type: WeaponType,
   pub phys: u32,
@@ -52,6 +58,7 @@ impl From<&BbWeapon> for Weapon {
   fn from(value: &BbWeapon) -> Self {
     Weapon {
       id: value.id.to_string(),
+      canonical_id: value.canonical_id,
       name: value.name.to_string(),
       weapon_type: value.weapon_type.into(),
       phys: value.phys as u32,
@@ -70,6 +77,7 @@ impl From<BbWeapon> for Weapon {
   fn from(value: BbWeapon) -> Self {
     Weapon {
       id: value.id.to_string(),
+      canonical_id: value.canonical_id,
       name: value.name.to_string(),
       weapon_type: value.weapon_type.into(),
       phys: value.phys as u32,
@@ -91,6 +99,8 @@ pub struct InventoryGem {
   pub shape: GemShape,
   pub rating: u8,
   pub effects: Vec<String>,
+  /// Whether this gem is currently socketed in a weapon.
+  pub in_use: bool,
 }
 
 impl From<&InventoryGem> for BbInventoryGem {
@@ -101,6 +111,7 @@ impl From<&InventoryGem> for BbInventoryGem {
       shape: value.shape.into(),
       rating: value.rating,
       effects: value.effects.clone(),
+      in_use: value.in_use,
     }
   }
 }
@@ -113,6 +124,7 @@ impl From<InventoryGem> for BbInventoryGem {
       shape: value.shape.into(),
       rating: value.rating,
       effects: value.effects.clone(),
+      in_use: value.in_use,
     }
   }
 }
@@ -125,6 +137,7 @@ impl From<BbInventoryGem> for InventoryGem {
       shape: value.shape.into(),
       rating: value.rating,
       effects: value.effects.clone(),
+      in_use: value.in_use,
     }
   }
 }
@@ -545,19 +558,376 @@ impl From<OptimizeResult> for BbOptimizeResult {
   }
 }
 
+/// A hunter's character data: name plus every scalar field read from the save.
+#[napi(object)]
+pub struct Character {
+  pub name: String,
+  /// Soul level as stored in the save (the in-game level, not the stat sum).
+  pub level: u32,
+  pub vitality: u32,
+  pub endurance: u32,
+  pub strength: u32,
+  pub skill: u32,
+  pub bloodtinge: u32,
+  pub arcane: u32,
+  pub health: u32,
+  pub stamina: u32,
+  pub insight: u32,
+  pub blood_echoes: u32,
+  /// New-game cycle: 0 = NG, 1 = NG+1, 2 = NG+2, …
+  pub new_game: u32,
+  /// Total playtime in milliseconds.
+  pub playtime_ms: u32,
+}
+
+impl From<bb_calc::Character> for Character {
+  fn from(value: bb_calc::Character) -> Self {
+    Character {
+      name: value.name,
+      level: value.level,
+      vitality: value.vitality,
+      endurance: value.endurance,
+      strength: value.strength,
+      skill: value.skill,
+      bloodtinge: value.bloodtinge,
+      arcane: value.arcane,
+      health: value.health,
+      stamina: value.stamina,
+      insight: value.insight,
+      blood_echoes: value.blood_echoes,
+      new_game: value.new_game,
+      playtime_ms: value.playtime_ms,
+    }
+  }
+}
+
+impl From<Character> for bb_calc::Character {
+  fn from(value: Character) -> Self {
+    bb_calc::Character {
+      name: value.name,
+      level: value.level,
+      vitality: value.vitality,
+      endurance: value.endurance,
+      strength: value.strength,
+      skill: value.skill,
+      bloodtinge: value.bloodtinge,
+      arcane: value.arcane,
+      health: value.health,
+      stamina: value.stamina,
+      insight: value.insight,
+      blood_echoes: value.blood_echoes,
+      new_game: value.new_game,
+      playtime_ms: value.playtime_ms,
+    }
+  }
+}
+
+/// Which hand a weapon is wielded in (mirrors `bb_calc::WeaponHand`).
+#[napi(string_enum)]
+pub enum WeaponHand {
+  Right,
+  Left,
+}
+
+impl From<BbWeaponHand> for WeaponHand {
+  fn from(value: BbWeaponHand) -> Self {
+    match value {
+      BbWeaponHand::Right => WeaponHand::Right,
+      BbWeaponHand::Left => WeaponHand::Left,
+    }
+  }
+}
+
+impl From<WeaponHand> for BbWeaponHand {
+  fn from(value: WeaponHand) -> Self {
+    match value {
+      WeaponHand::Right => BbWeaponHand::Right,
+      WeaponHand::Left => BbWeaponHand::Left,
+    }
+  }
+}
+
+/// A weapon's imprint (mirrors `bb_calc::WeaponImprint`).
+#[napi(string_enum)]
+pub enum WeaponImprint {
+  Normal,
+  Uncanny,
+  Lost,
+}
+
+impl From<BbWeaponImprint> for WeaponImprint {
+  fn from(value: BbWeaponImprint) -> Self {
+    match value {
+      BbWeaponImprint::Normal => WeaponImprint::Normal,
+      BbWeaponImprint::Uncanny => WeaponImprint::Uncanny,
+      BbWeaponImprint::Lost => WeaponImprint::Lost,
+    }
+  }
+}
+
+impl From<WeaponImprint> for BbWeaponImprint {
+  fn from(value: WeaponImprint) -> Self {
+    match value {
+      WeaponImprint::Normal => BbWeaponImprint::Normal,
+      WeaponImprint::Uncanny => BbWeaponImprint::Uncanny,
+      WeaponImprint::Lost => BbWeaponImprint::Lost,
+    }
+  }
+}
+
+/// Where an owned item lives (mirrors `bb_calc::ItemLocation`).
+#[napi(string_enum)]
+pub enum ItemLocation {
+  Inventory,
+  Storage,
+}
+
+impl From<BbItemLocation> for ItemLocation {
+  fn from(value: BbItemLocation) -> Self {
+    match value {
+      BbItemLocation::Inventory => ItemLocation::Inventory,
+      BbItemLocation::Storage => ItemLocation::Storage,
+    }
+  }
+}
+
+impl From<ItemLocation> for BbItemLocation {
+  fn from(value: ItemLocation) -> Self {
+    match value {
+      ItemLocation::Inventory => BbItemLocation::Inventory,
+      ItemLocation::Storage => BbItemLocation::Storage,
+    }
+  }
+}
+
+/// A weapon the player owns, decoded from a save.
+#[napi(object)]
+pub struct OwnedWeapon {
+  /// In-game id with the upgrade level stripped (base + imprint).
+  pub canonical_id: u32,
+  pub name: String,
+  pub hand: WeaponHand,
+  pub imprint: WeaponImprint,
+  pub level: u8,
+  pub location: ItemLocation,
+  /// The AR-table slug when this is a right-hand weapon we can optimize.
+  pub weapon_id: Option<String>,
+  /// Instance ids (hex) of gems socketed in this weapon, in slot order.
+  pub gem_ids: Vec<String>,
+}
+
+impl From<BbOwnedWeapon> for OwnedWeapon {
+  fn from(value: BbOwnedWeapon) -> Self {
+    OwnedWeapon {
+      canonical_id: value.canonical_id,
+      name: value.name,
+      hand: value.hand.into(),
+      imprint: value.imprint.into(),
+      level: value.level,
+      location: value.location.into(),
+      weapon_id: value.weapon_id,
+      gem_ids: value.gem_ids,
+    }
+  }
+}
+
+impl From<OwnedWeapon> for BbOwnedWeapon {
+  fn from(value: OwnedWeapon) -> Self {
+    BbOwnedWeapon {
+      canonical_id: value.canonical_id,
+      name: value.name,
+      hand: value.hand.into(),
+      imprint: value.imprint.into(),
+      level: value.level,
+      location: value.location.into(),
+      weapon_id: value.weapon_id,
+      gem_ids: value.gem_ids,
+    }
+  }
+}
+
+/// The body slot a piece of attire occupies (mirrors `bb_calc::ArmorKind`).
+#[napi(string_enum)]
+pub enum ArmorKind {
+  Head,
+  Chest,
+  Hands,
+  Legs,
+  Other,
+}
+
+impl From<BbArmorKind> for ArmorKind {
+  fn from(value: BbArmorKind) -> Self {
+    match value {
+      BbArmorKind::Head => ArmorKind::Head,
+      BbArmorKind::Chest => ArmorKind::Chest,
+      BbArmorKind::Hands => ArmorKind::Hands,
+      BbArmorKind::Legs => ArmorKind::Legs,
+      BbArmorKind::Other => ArmorKind::Other,
+    }
+  }
+}
+
+impl From<ArmorKind> for BbArmorKind {
+  fn from(value: ArmorKind) -> Self {
+    match value {
+      ArmorKind::Head => BbArmorKind::Head,
+      ArmorKind::Chest => BbArmorKind::Chest,
+      ArmorKind::Hands => BbArmorKind::Hands,
+      ArmorKind::Legs => BbArmorKind::Legs,
+      ArmorKind::Other => BbArmorKind::Other,
+    }
+  }
+}
+
+/// A piece of attire the player owns, decoded from a save.
+#[napi(object)]
+pub struct OwnedArmor {
+  pub canonical_id: u32,
+  pub name: String,
+  pub kind: ArmorKind,
+  pub location: ItemLocation,
+}
+
+impl From<BbOwnedArmor> for OwnedArmor {
+  fn from(value: BbOwnedArmor) -> Self {
+    OwnedArmor {
+      canonical_id: value.canonical_id,
+      name: value.name,
+      kind: value.kind.into(),
+      location: value.location.into(),
+    }
+  }
+}
+
+impl From<OwnedArmor> for BbOwnedArmor {
+  fn from(value: OwnedArmor) -> Self {
+    BbOwnedArmor {
+      canonical_id: value.canonical_id,
+      name: value.name,
+      kind: value.kind.into(),
+      location: value.location.into(),
+    }
+  }
+}
+
+/// The kind of a non-equipment item (mirrors `bb_calc::ItemCategory`).
+#[napi(string_enum)]
+pub enum ItemCategory {
+  Consumable,
+  Material,
+  Key,
+  Chalice,
+}
+
+impl From<BbItemCategory> for ItemCategory {
+  fn from(value: BbItemCategory) -> Self {
+    match value {
+      BbItemCategory::Consumable => ItemCategory::Consumable,
+      BbItemCategory::Material => ItemCategory::Material,
+      BbItemCategory::Key => ItemCategory::Key,
+      BbItemCategory::Chalice => ItemCategory::Chalice,
+    }
+  }
+}
+
+impl From<ItemCategory> for BbItemCategory {
+  fn from(value: ItemCategory) -> Self {
+    match value {
+      ItemCategory::Consumable => BbItemCategory::Consumable,
+      ItemCategory::Material => BbItemCategory::Material,
+      ItemCategory::Key => BbItemCategory::Key,
+      ItemCategory::Chalice => BbItemCategory::Chalice,
+    }
+  }
+}
+
+/// A non-equipment item the player owns, decoded from a save.
+#[napi(object)]
+pub struct OwnedItem {
+  pub canonical_id: u32,
+  pub name: String,
+  pub category: ItemCategory,
+  pub amount: u32,
+  pub location: ItemLocation,
+}
+
+impl From<BbOwnedItem> for OwnedItem {
+  fn from(value: BbOwnedItem) -> Self {
+    OwnedItem {
+      canonical_id: value.canonical_id,
+      name: value.name,
+      category: value.category.into(),
+      amount: value.amount,
+      location: value.location.into(),
+    }
+  }
+}
+
+impl From<OwnedItem> for BbOwnedItem {
+  fn from(value: OwnedItem) -> Self {
+    BbOwnedItem {
+      canonical_id: value.canonical_id,
+      name: value.name,
+      category: value.category.into(),
+      amount: value.amount,
+      location: value.location.into(),
+    }
+  }
+}
+
+/// A Caryll rune the player owns, decoded from a save.
+#[napi(object)]
+pub struct OwnedRune {
+  pub id: String,
+  pub name: String,
+  pub rating: u8,
+  pub effects: Vec<String>,
+}
+
+impl From<BbOwnedRune> for OwnedRune {
+  fn from(value: BbOwnedRune) -> Self {
+    OwnedRune {
+      id: value.id,
+      name: value.name,
+      rating: value.rating,
+      effects: value.effects,
+    }
+  }
+}
+
+impl From<OwnedRune> for BbOwnedRune {
+  fn from(value: OwnedRune) -> Self {
+    BbOwnedRune {
+      id: value.id,
+      name: value.name,
+      rating: value.rating,
+      effects: value.effects,
+    }
+  }
+}
+
 #[napi(object)]
 pub struct Inventory {
-  pub character: String,
+  pub character: Character,
   pub stats: Stats,
   pub gems: Vec<InventoryGem>,
+  pub weapons: Vec<OwnedWeapon>,
+  pub armor: Vec<OwnedArmor>,
+  pub items: Vec<OwnedItem>,
+  pub runes: Vec<OwnedRune>,
 }
 
 impl From<Inventory> for bb_calc::Inventory {
   fn from(value: Inventory) -> Self {
     bb_calc::Inventory {
-      character: value.character,
+      character: value.character.into(),
       stats: value.stats.into(),
       gems: value.gems.into_iter().map(BbInventoryGem::from).collect(),
+      weapons: value.weapons.into_iter().map(BbOwnedWeapon::from).collect(),
+      armor: value.armor.into_iter().map(BbOwnedArmor::from).collect(),
+      items: value.items.into_iter().map(BbOwnedItem::from).collect(),
+      runes: value.runes.into_iter().map(BbOwnedRune::from).collect(),
     }
   }
 }
@@ -565,9 +935,13 @@ impl From<Inventory> for bb_calc::Inventory {
 impl From<bb_calc::Inventory> for Inventory {
   fn from(value: bb_calc::Inventory) -> Self {
     Inventory {
-      character: value.character,
+      character: value.character.into(),
       stats: value.stats.into(),
       gems: value.gems.into_iter().map(InventoryGem::from).collect(),
+      weapons: value.weapons.into_iter().map(OwnedWeapon::from).collect(),
+      armor: value.armor.into_iter().map(OwnedArmor::from).collect(),
+      items: value.items.into_iter().map(OwnedItem::from).collect(),
+      runes: value.runes.into_iter().map(OwnedRune::from).collect(),
     }
   }
 }

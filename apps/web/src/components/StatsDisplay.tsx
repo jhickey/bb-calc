@@ -1,20 +1,22 @@
-import type { Stats } from 'bb-calc-js';
+import type { Character } from 'bb-calc-js';
 
-/** The four scaling stats, in display order, with their icon + label. */
+/** The six leveling stats, in in-game order, with their icon + label. */
 const STATS = [
-  { key: 'str', label: 'Strength', icon: '/stats/strength.jpg' },
-  { key: 'skl', label: 'Skill', icon: '/stats/skill.jpg' },
-  { key: 'blt', label: 'Bloodtinge', icon: '/stats/bloodtinge.jpg' },
-  { key: 'arc', label: 'Arcane', icon: '/stats/arcane.jpg' },
+  { key: 'vitality', label: 'Vitality', icon: '/stats/vitality.jpg' },
+  { key: 'endurance', label: 'Endurance', icon: '/stats/endurance.jpg' },
+  { key: 'strength', label: 'Strength', icon: '/stats/strength.jpg' },
+  { key: 'skill', label: 'Skill', icon: '/stats/skill.jpg' },
+  { key: 'bloodtinge', label: 'Bloodtinge', icon: '/stats/bloodtinge.jpg' },
+  { key: 'arcane', label: 'Arcane', icon: '/stats/arcane.jpg' },
 ] as const;
 
 type StatsDisplayProps = {
-  stats: Stats;
+  character: Character;
   className?: string;
 };
 
-/** Shows a hunter's four scaling stats with their in-game icons. */
-export function StatsDisplay({ stats, className = '' }: StatsDisplayProps) {
+/** Shows a hunter's six leveling stats with their in-game icons. */
+export function StatsDisplay({ character, className = '' }: StatsDisplayProps) {
   return (
     <ul className={`flex flex-wrap gap-4 ${className}`}>
       {STATS.map(({ key, label, icon }) => (
@@ -25,7 +27,7 @@ export function StatsDisplay({ stats, className = '' }: StatsDisplayProps) {
           <img src={icon} alt={label} className="h-8 w-8 rounded-sm object-cover" />
           <div className="flex flex-col leading-tight">
             <span className="text-xs uppercase tracking-wide text-au-chico">{label}</span>
-            <span className="text-lg font-semibold text-pale-mocha">{stats[key]}</span>
+            <span className="text-lg font-semibold text-pale-mocha">{character[key]}</span>
           </div>
         </li>
       ))}

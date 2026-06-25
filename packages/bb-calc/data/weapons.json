@@ -1,6 +1,7 @@
 [
   {
     "id": "amygdalan_arm",
+    "canonicalId": 25000000,
     "name": "Amygdalan Arm",
     "type": "Dual",
     "phys": 160,
@@ -22,6 +23,7 @@
   },
   {
     "id": "amygdalan_arm_uncanny",
+    "canonicalId": 25010000,
     "name": "Uncanny Amygdalan Arm",
     "type": "Dual",
     "phys": 160,
@@ -43,6 +45,7 @@
   },
   {
     "id": "amygdalan_arm_lost",
+    "canonicalId": 25020000,
     "name": "Lost Amygdalan Arm",
     "type": "Dual",
     "phys": 160,
@@ -64,6 +67,7 @@
   },
   {
     "id": "beast_claw",
+    "canonicalId": 9000000,
     "name": "Beast Claw",
     "type": "Conv",
     "phys": 150,
@@ -85,6 +89,7 @@
   },
   {
     "id": "beast_claw_uncanny",
+    "canonicalId": 9010000,
     "name": "Uncanny Beast Claw",
     "type": "Conv",
     "phys": 150,
@@ -106,6 +111,7 @@
   },
   {
     "id": "beast_claw_lost",
+    "canonicalId": 9020000,
     "name": "Lost Beast Claw",
     "type": "Conv",
     "phys": 150,
@@ -127,6 +133,7 @@
   },
   {
     "id": "beast_claw_embrace",
+    "canonicalId": null,
     "name": "Beast Claw - Embrace",
     "type": "Conv",
     "phys": 150,
@@ -148,6 +155,7 @@
   },
   {
     "id": "beast_cutter",
+    "canonicalId": 24000000,
     "name": "Beast Cutter",
     "type": "Conv",
     "phys": 184,
@@ -169,6 +177,7 @@
   },
   {
     "id": "beast_cutter_uncanny",
+    "canonicalId": 24010000,
     "name": "Uncanny Beast Cutter",
     "type": "Conv",
     "phys": 184,
@@ -190,6 +199,7 @@
   },
   {
     "id": "beast_cutter_lost",
+    "canonicalId": 24020000,
     "name": "Lost Beast Cutter",
     "type": "Conv",
     "phys": 184,
@@ -211,6 +221,7 @@
   },
   {
     "id": "beasthunter_saif",
+    "canonicalId": 23000000,
     "name": "Beasthunter Saif",
     "type": "Conv",
     "phys": 180,
@@ -232,6 +243,7 @@
   },
   {
     "id": "beasthunter_saif_uncanny",
+    "canonicalId": 23010000,
     "name": "Uncanny Beasthunter Saif",
     "type": "Conv",
     "phys": 180,
@@ -253,6 +265,7 @@
   },
   {
     "id": "beasthunter_saif_lost",
+    "canonicalId": 23020000,
     "name": "Lost Beasthunter Saif",
     "type": "Conv",
     "phys": 180,
@@ -274,6 +287,7 @@
   },
   {
     "id": "blade_of_mercy",
+    "canonicalId": 4000000,
     "name": "Blade of Mercy",
     "type": "Dual",
     "phys": 120,
@@ -295,6 +309,7 @@
   },
   {
     "id": "blade_of_mercy_uncanny",
+    "canonicalId": 4010000,
     "name": "Uncanny Blade of Mercy",
     "type": "Dual",
     "phys": 120,
@@ -316,6 +331,7 @@
   },
   {
     "id": "blade_of_mercy_lost",
+    "canonicalId": 4020000,
     "name": "Lost Blade of Mercy",
     "type": "Dual",
     "phys": 120,
@@ -337,6 +353,7 @@
   },
   {
     "id": "bloodletter",
+    "canonicalId": 29000000,
     "name": "Bloodletter",
     "type": "Blood",
     "phys": 180,
@@ -358,6 +375,7 @@
   },
   {
     "id": "bloodletter_uncanny",
+    "canonicalId": 29010000,
     "name": "Uncanny Bloodletter",
     "type": "Blood",
     "phys": 180,
@@ -379,6 +397,7 @@
   },
   {
     "id": "bloodletter_lost",
+    "canonicalId": 29020000,
     "name": "Lost Bloodletter",
     "type": "Blood",
     "phys": 180,
@@ -400,6 +419,7 @@
   },
   {
     "id": "boom_hammer",
+    "canonicalId": 28000000,
     "name": "Boom Hammer",
     "type": "Dual",
     "phys": 180,
@@ -421,6 +441,7 @@
   },
   {
     "id": "boom_hammer_uncanny",
+    "canonicalId": 28010000,
     "name": "Uncanny Boom Hammer",
     "type": "Dual",
     "phys": 180,
@@ -442,6 +463,7 @@
   },
   {
     "id": "boom_hammer_lost",
+    "canonicalId": 28020000,
     "name": "Lost Boom Hammer",
     "type": "Dual",
     "phys": 180,
@@ -463,6 +485,7 @@
   },
   {
     "id": "burial_blade",
+    "canonicalId": 5100000,
     "name": "Burial Blade",
     "type": "Dual",
     "phys": 160,
@@ -484,6 +507,7 @@
   },
   {
     "id": "burial_blade_uncanny",
+    "canonicalId": 5110000,
     "name": "Uncanny Burial Blade",
     "type": "Dual",
     "phys": 160,
@@ -505,6 +529,7 @@
   },
   {
     "id": "burial_blade_lost",
+    "canonicalId": 5120000,
     "name": "Lost Burial Blade",
     "type": "Dual",
     "phys": 160,
@@ -526,6 +551,7 @@
   },
   {
     "id": "chikage",
+    "canonicalId": 2000000,
     "name": "Chikage",
     "type": "Blood",
     "phys": 184,
@@ -547,6 +573,7 @@
   },
   {
     "id": "chikage_uncanny",
+    "canonicalId": 2010000,
     "name": "Uncanny Chikage",
     "type": "Blood",
     "phys": 184,
@@ -568,6 +595,7 @@
   },
   {
     "id": "chikage_lost",
+    "canonicalId": 2020000,
     "name": "Lost Chikage",
     "type": "Blood",
     "phys": 184,
@@ -589,6 +617,7 @@
   },
   {
     "id": "church_pick",
+    "canonicalId": 30000000,
     "name": "Church Pick",
     "type": "Conv",
     "phys": 176,
@@ -610,6 +639,7 @@
   },
   {
     "id": "church_pick_uncanny",
+    "canonicalId": 30010000,
     "name": "Uncanny Church Pick",
     "type": "Conv",
     "phys": 176,
@@ -631,6 +661,7 @@
   },
   {
     "id": "church_pick_lost",
+    "canonicalId": 30020000,
     "name": "Lost Church Pick",
     "type": "Conv",
     "phys": 176,
@@ -652,6 +683,7 @@
   },
   {
     "id": "holy_moonlight_sword",
+    "canonicalId": 26000000,
     "name": "Holy Moonlight Sword",
     "type": "Dual",
     "phys": 180,
@@ -673,6 +705,7 @@
   },
   {
     "id": "holy_moonlight_sword_uncanny",
+    "canonicalId": 26010000,
     "name": "Uncanny Holy Moonlight Sword",
     "type": "Dual",
     "phys": 180,
@@ -694,6 +727,7 @@
   },
   {
     "id": "holy_moonlight_sword_lost",
+    "canonicalId": 26020000,
     "name": "Lost Holy Moonlight Sword",
     "type": "Dual",
     "phys": 180,
@@ -715,6 +749,7 @@
   },
   {
     "id": "hunter_axe",
+    "canonicalId": 5000000,
     "name": "Hunter Axe",
     "type": "Conv",
     "phys": 196,
@@ -736,6 +771,7 @@
   },
   {
     "id": "hunter_axe_uncanny",
+    "canonicalId": 5010000,
     "name": "Uncanny Hunter Axe",
     "type": "Conv",
     "phys": 196,
@@ -757,6 +793,7 @@
   },
   {
     "id": "hunter_axe_lost",
+    "canonicalId": 5020000,
     "name": "Lost Hunter Axe",
     "type": "Conv",
     "phys": 196,
@@ -778,6 +815,7 @@
   },
   {
     "id": "kirkhammer",
+    "canonicalId": 8000000,
     "name": "Kirkhammer",
     "type": "Conv",
     "phys": 210,
@@ -799,6 +837,7 @@
   },
   {
     "id": "kirkhammer_uncanny",
+    "canonicalId": 8010000,
     "name": "Uncanny Kirkhammer",
     "type": "Conv",
     "phys": 210,
@@ -820,6 +859,7 @@
   },
   {
     "id": "kirkhammer_lost",
+    "canonicalId": 8020000,
     "name": "Lost Kirkhammer",
     "type": "Conv",
     "phys": 210,
@@ -841,6 +881,7 @@
   },
   {
     "id": "kos_parasite",
+    "canonicalId": 38000000,
     "name": "Kos Parasite",
     "type": "Dual",
     "phys": 0,
@@ -862,6 +903,7 @@
   },
   {
     "id": "kos_parasite_uncanny",
+    "canonicalId": 38010000,
     "name": "Uncanny Kos Parasite",
     "type": "Dual",
     "phys": 0,
@@ -883,6 +925,7 @@
   },
   {
     "id": "kos_parasite_lost",
+    "canonicalId": 38020000,
     "name": "Lost Kos Parasite",
     "type": "Dual",
     "phys": 0,
@@ -904,6 +947,7 @@
   },
   {
     "id": "kos_parasite_milkweed",
+    "canonicalId": null,
     "name": "Kos Parasite - Milkweed",
     "type": "Dual",
     "phys": 0,
@@ -925,6 +969,7 @@
   },
   {
     "id": "logarius_wheel",
+    "canonicalId": 12000000,
     "name": "Logarius' Wheel",
     "type": "Dual",
     "phys": 200,
@@ -946,6 +991,7 @@
   },
   {
     "id": "logarius_wheel_uncanny",
+    "canonicalId": 12010000,
     "name": "Uncanny Logarius' Wheel",
     "type": "Dual",
     "phys": 200,
@@ -967,6 +1013,7 @@
   },
   {
     "id": "logarius_wheel_lost",
+    "canonicalId": 12020000,
     "name": "Lost Logarius' Wheel",
     "type": "Dual",
     "phys": 200,
@@ -988,6 +1035,7 @@
   },
   {
     "id": "logarius_wheel_tricked",
+    "canonicalId": null,
     "name": "Logarius' Wheel (Tricked)",
     "type": "Dual",
     "phys": 200,
@@ -1009,6 +1057,7 @@
   },
   {
     "id": "ludwig_s_holy_blade",
+    "canonicalId": 8100000,
     "name": "Ludwig's Holy Blade",
     "type": "Conv",
     "phys": 200,
@@ -1030,6 +1079,7 @@
   },
   {
     "id": "ludwig_s_holy_blade_uncanny",
+    "canonicalId": 8110000,
     "name": "Uncanny Ludwig's Holy Blade",
     "type": "Conv",
     "phys": 200,
@@ -1051,6 +1101,7 @@
   },
   {
     "id": "ludwig_s_holy_blade_lost",
+    "canonicalId": 8120000,
     "name": "Lost Ludwig's Holy Blade",
     "type": "Conv",
     "phys": 200,
@@ -1072,6 +1123,7 @@
   },
   {
     "id": "rakuyo",
+    "canonicalId": 27000000,
     "name": "Rakuyo",
     "type": "Conv",
     "phys": 164,
@@ -1093,6 +1145,7 @@
   },
   {
     "id": "rakuyo_uncanny",
+    "canonicalId": 27010000,
     "name": "Uncanny Rakuyo",
     "type": "Conv",
     "phys": 164,
@@ -1114,6 +1167,7 @@
   },
   {
     "id": "rakuyo_lost",
+    "canonicalId": 27020000,
     "name": "Lost Rakuyo",
     "type": "Conv",
     "phys": 164,
@@ -1135,6 +1189,7 @@
   },
   {
     "id": "reiterpallasch",
+    "canonicalId": 10100000,
     "name": "Reiterpallasch",
     "type": "Blood",
     "phys": 150,
@@ -1156,6 +1211,7 @@
   },
   {
     "id": "reiterpallasch_uncanny",
+    "canonicalId": 10110000,
     "name": "Uncanny Reiterpallasch",
     "type": "Blood",
     "phys": 150,
@@ -1177,6 +1233,7 @@
   },
   {
     "id": "reiterpallasch_lost",
+    "canonicalId": 10120000,
     "name": "Lost Reiterpallasch",
     "type": "Blood",
     "phys": 150,
@@ -1198,6 +1255,7 @@
   },
   {
     "id": "rifle_spear",
+    "canonicalId": 10000000,
     "name": "Rifle Spear",
     "type": "Blood",
     "phys": 170,
@@ -1219,6 +1277,7 @@
   },
   {
     "id": "rifle_spear_uncanny",
+    "canonicalId": 10010000,
     "name": "Uncanny Rifle Spear",
     "type": "Blood",
     "phys": 170,
@@ -1240,6 +1299,7 @@
   },
   {
     "id": "rifle_spear_lost",
+    "canonicalId": 10020000,
     "name": "Lost Rifle Spear",
     "type": "Blood",
     "phys": 170,
@@ -1261,6 +1321,7 @@
   },
   {
     "id": "saw_cleaver",
+    "canonicalId": 7000000,
     "name": "Saw Cleaver",
     "type": "Conv",
     "phys": 180,
@@ -1282,6 +1343,7 @@
   },
   {
     "id": "saw_cleaver_uncanny",
+    "canonicalId": 7010000,
     "name": "Uncanny Saw Cleaver",
     "type": "Conv",
     "phys": 180,
@@ -1303,6 +1365,7 @@
   },
   {
     "id": "saw_cleaver_lost",
+    "canonicalId": 7020000,
     "name": "Lost Saw Cleaver",
     "type": "Conv",
     "phys": 180,
@@ -1324,6 +1387,7 @@
   },
   {
     "id": "saw_spear",
+    "canonicalId": 7100000,
     "name": "Saw Spear",
     "type": "Conv",
     "phys": 170,
@@ -1345,6 +1409,7 @@
   },
   {
     "id": "saw_spear_uncanny",
+    "canonicalId": 7110000,
     "name": "Uncanny Saw Spear",
     "type": "Conv",
     "phys": 170,
@@ -1366,6 +1431,7 @@
   },
   {
     "id": "saw_spear_lost",
+    "canonicalId": 7120000,
     "name": "Lost Saw Spear",
     "type": "Conv",
     "phys": 170,
@@ -1387,6 +1453,7 @@
   },
   {
     "id": "simon_s_bowblade",
+    "canonicalId": 32000000,
     "name": "Simon's Bowblade",
     "type": "Blood",
     "phys": 160,
@@ -1408,6 +1475,7 @@
   },
   {
     "id": "simon_s_bowblade_uncanny",
+    "canonicalId": 32010000,
     "name": "Uncanny Simon's Bowblade",
     "type": "Blood",
     "phys": 160,
@@ -1429,6 +1497,7 @@
   },
   {
     "id": "simon_s_bowblade_lost",
+    "canonicalId": 32020000,
     "name": "Lost Simon's Bowblade",
     "type": "Blood",
     "phys": 160,
@@ -1450,6 +1519,7 @@
   },
   {
     "id": "stake_driver",
+    "canonicalId": 11000000,
     "name": "Stake Driver",
     "type": "Conv",
     "phys": 170,
@@ -1471,6 +1541,7 @@
   },
   {
     "id": "stake_driver_uncanny",
+    "canonicalId": 11010000,
     "name": "Uncanny Stake Driver",
     "type": "Conv",
     "phys": 170,
@@ -1492,6 +1563,7 @@
   },
   {
     "id": "stake_driver_lost",
+    "canonicalId": 11020000,
     "name": "Lost Stake Driver",
     "type": "Conv",
     "phys": 170,
@@ -1513,6 +1585,7 @@
   },
   {
     "id": "threaded_cane",
+    "canonicalId": 22000000,
     "name": "Threaded Cane",
     "type": "Conv",
     "phys": 156,
@@ -1534,6 +1607,7 @@
   },
   {
     "id": "threaded_cane_uncanny",
+    "canonicalId": 22010000,
     "name": "Uncanny Threaded Cane",
     "type": "Conv",
     "phys": 156,
@@ -1555,6 +1629,7 @@
   },
   {
     "id": "threaded_cane_lost",
+    "canonicalId": 22020000,
     "name": "Lost Threaded Cane",
     "type": "Conv",
     "phys": 156,
@@ -1576,6 +1651,7 @@
   },
   {
     "id": "threaded_cane_tricked",
+    "canonicalId": null,
     "name": "Threaded Cane (Tricked)",
     "type": "Conv",
     "phys": 156,
@@ -1597,6 +1673,7 @@
   },
   {
     "id": "tonitrus",
+    "canonicalId": 13000000,
     "name": "Tonitrus",
     "type": "Dual",
     "phys": 160,
@@ -1618,6 +1695,7 @@
   },
   {
     "id": "tonitrus_uncanny",
+    "canonicalId": 13010000,
     "name": "Uncanny Tonitrus",
     "type": "Dual",
     "phys": 160,
@@ -1639,6 +1717,7 @@
   },
   {
     "id": "tonitrus_lost",
+    "canonicalId": 13020000,
     "name": "Lost Tonitrus",
     "type": "Dual",
     "phys": 160,
@@ -1660,6 +1739,7 @@
   },
   {
     "id": "tonitrus_tricked",
+    "canonicalId": null,
     "name": "Tonitrus (Tricked)",
     "type": "Dual",
     "phys": 160,
@@ -1681,6 +1761,7 @@
   },
   {
     "id": "whirligig_saw",
+    "canonicalId": 31000000,
     "name": "Whirligig Saw",
     "type": "Conv",
     "phys": 190,
@@ -1702,6 +1783,7 @@
   },
   {
     "id": "whirligig_saw_uncanny",
+    "canonicalId": 31010000,
     "name": "Uncanny Whirligig Saw",
     "type": "Conv",
     "phys": 190,
@@ -1723,6 +1805,7 @@
   },
   {
     "id": "whirligig_saw_lost",
+    "canonicalId": 31020000,
     "name": "Lost Whirligig Saw",
     "type": "Conv",
     "phys": 190,

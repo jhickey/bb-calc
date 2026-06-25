@@ -57,12 +57,17 @@ const {
   },
 })
 export default __napiModule.exports
+export const ArmorKind = __napiModule.exports.ArmorKind
 export const computeAr = __napiModule.exports.computeAr
 export const ConvertedElement = __napiModule.exports.ConvertedElement
 export const DamageTarget = __napiModule.exports.DamageTarget
 export const GemShape = __napiModule.exports.GemShape
 export const getWeapons = __napiModule.exports.getWeapons
+export const ItemCategory = __napiModule.exports.ItemCategory
+export const ItemLocation = __napiModule.exports.ItemLocation
 export const Mode = __napiModule.exports.Mode
 export const optimize = __napiModule.exports.optimize
 export const parseSave = __napiModule.exports.parseSave
+export const WeaponHand = __napiModule.exports.WeaponHand
+export const WeaponImprint = __napiModule.exports.WeaponImprint
 export const WeaponType = __napiModule.exports.WeaponType

@@ -1,0 +1,910 @@
+{
+  "100": {
+    "name": "Hunter's Mark",
+    "category": "Consumable"
+  },
+  "111": {
+    "name": "Silencing Blank",
+    "category": "Consumable"
+  },
+  "120": {
+    "name": "Notebook",
+    "category": "Consumable"
+  },
+  "130": {
+    "name": "Vileblood Register",
+    "category": "Consumable"
+  },
+  "131": {
+    "name": "League Staff",
+    "category": "Consumable"
+  },
+  "200": {
+    "name": "Beckoning Bell",
+    "category": "Consumable"
+  },
+  "205": {
+    "name": "Small Resonant Bell",
+    "category": "Consumable"
+  },
+  "225": {
+    "name": "Sinister Resonant Bell",
+    "category": "Consumable"
+  },
+  "700": {
+    "name": "Tiny Music Box",
+    "category": "Consumable"
+  },
+  "701": {
+    "name": "Blood of Arianna",
+    "category": "Consumable"
+  },
+  "702": {
+    "name": "Blood of Adella",
+    "category": "Consumable"
+  },
+  "703": {
+    "name": "Iosefka's Blood Vial",
+    "category": "Consumable"
+  },
+  "704": {
+    "name": "Blood Dreg",
+    "category": "Consumable"
+  },
+  "705": {
+    "name": "Queenly Blood",
+    "category": "Consumable"
+  },
+  "706": {
+    "name": "Blood of Adeline",
+    "category": "Consumable"
+  },
+  "900": {
+    "name": "Quicksilver Bullets",
+    "category": "Consumable"
+  },
+  "1000": {
+    "name": "Blood Vial",
+    "category": "Consumable"
+  },
+  "1100": {
+    "name": "Antidote",
+    "category": "Consumable"
+  },
+  "1101": {
+    "name": "Sedatives",
+    "category": "Consumable"
+  },
+  "1110": {
+    "name": "Beast Blood Pellet",
+    "category": "Consumable"
+  },
+  "1120": {
+    "name": "Blue Elixir",
+    "category": "Consumable"
+  },
+  "1200": {
+    "name": "Molotov Cocktail",
+    "category": "Consumable"
+  },
+  "1201": {
+    "name": "Delayed Molotov",
+    "category": "Consumable"
+  },
+  "1210": {
+    "name": "Poison Knife",
+    "category": "Consumable"
+  },
+  "1220": {
+    "name": "Oil Urn",
+    "category": "Consumable"
+  },
+  "1230": {
+    "name": "Pebble",
+    "category": "Consumable"
+  },
+  "1240": {
+    "name": "Throwing Knife",
+    "category": "Consumable"
+  },
+  "1250": {
+    "name": "Rope Molotov Cocktail",
+    "category": "Consumable"
+  },
+  "1251": {
+    "name": "Delayed Rope Molotov",
+    "category": "Consumable"
+  },
+  "1260": {
+    "name": "Pungent Blood Cocktail",
+    "category": "Consumable"
+  },
+  "1270": {
+    "name": "Numbing Mist",
+    "category": "Consumable"
+  },
+  "1300": {
+    "name": "Fire Paper",
+    "category": "Consumable"
+  },
+  "1310": {
+    "name": "Empty Phantasm Shell",
+    "category": "Consumable"
+  },
+  "1320": {
+    "name": "Bolt Paper",
+    "category": "Consumable"
+  },
+  "1330": {
+    "name": "Bone Marrow Ash",
+    "category": "Consumable"
+  },
+  "1400": {
+    "name": "Bold Hunter's Mark",
+    "category": "Consumable"
+  },
+  "1410": {
+    "name": "Shining Coins",
+    "category": "Consumable"
+  },
+  "1411": {
+    "name": "Monocular",
+    "category": "Consumable"
+  },
+  "1412": {
+    "name": "Hand Lantern",
+    "category": "Consumable"
+  },
+  "1500": {
+    "name": "Madman's Knowledge",
+    "category": "Consumable"
+  },
+  "1501": {
+    "name": "Great One's Wisdom",
+    "category": "Consumable"
+  },
+  "1510": {
+    "name": "Coldblood Dew (1)",
+    "category": "Consumable"
+  },
+  "1511": {
+    "name": "Coldblood Dew (2)",
+    "category": "Consumable"
+  },
+  "1512": {
+    "name": "Coldblood Dew (3)",
+    "category": "Consumable"
+  },
+  "1513": {
+    "name": "Thick Coldblood (4)",
+    "category": "Consumable"
+  },
+  "1514": {
+    "name": "Thick Coldblood (5)",
+    "category": "Consumable"
+  },
+  "1515": {
+    "name": "Thick Coldblood (6)",
+    "category": "Consumable"
+  },
+  "1516": {
+    "name": "Frenzied Coldblood (7)",
+    "category": "Consumable"
+  },
+  "1517": {
+    "name": "Frenzied Coldblood (8)",
+    "category": "Consumable"
+  },
+  "1518": {
+    "name": "Frenzied Coldblood (9)",
+    "category": "Consumable"
+  },
+  "1519": {
+    "name": "Kin Coldblood (10)",
+    "category": "Consumable"
+  },
+  "1590": {
+    "name": "Kin Coldblood (11)",
+    "category": "Consumable"
+  },
+  "1591": {
+    "name": "Kin Coldblood (12)",
+    "category": "Consumable"
+  },
+  "1592": {
+    "name": "Great One Coldblood",
+    "category": "Consumable"
+  },
+  "1593": {
+    "name": "Old Great One Coldblood",
+    "category": "Consumable"
+  },
+  "1594": {
+    "name": "Revered Great One Coldblood",
+    "category": "Consumable"
+  },
+  "1600": {
+    "name": "[CUT] Clockwise Metamorphosis",
+    "category": "Consumable"
+  },
+  "1601": {
+    "name": "[CUT] Anti-Clockwise Metamorphosis",
+    "category": "Consumable"
+  },
+  "1602": {
+    "name": "[CUT] Communion",
+    "category": "Consumable"
+  },
+  "1603": {
+    "name": "[CUT] Oedon Liaison",
+    "category": "Consumable"
+  },
+  "1604": {
+    "name": "[CUT] Lake",
+    "category": "Consumable"
+  },
+  "1605": {
+    "name": "[CUT] Deep Sea",
+    "category": "Consumable"
+  },
+  "1606": {
+    "name": "[CUT] Destroyer",
+    "category": "Consumable"
+  },
+  "1607": {
+    "name": "[CUT] Reveller",
+    "category": "Consumable"
+  },
+  "1608": {
+    "name": "[CUT] Liaison",
+    "category": "Consumable"
+  },
+  "1609": {
+    "name": "[CUT] Heir",
+    "category": "Consumable"
+  },
+  "1610": {
+    "name": "[CUT] Beast",
+    "category": "Consumable"
+  },
+  "1611": {
+    "name": "[CUT] Moon",
+    "category": "Consumable"
+  },
+  "1612": {
+    "name": "[CUT] Eye",
+    "category": "Consumable"
+  },
+  "1650": {
+    "name": "[CUT] Petrified Blood Gem (1) Radial",
+    "category": "Consumable"
+  },
+  "1651": {
+    "name": "[CUT] Petrified Blood Gem (2) Radial",
+    "category": "Consumable"
+  },
+  "1652": {
+    "name": "[CUT] Petrified Blood Gem (3) Radial",
+    "category": "Consumable"
+  },
+  "1653": {
+    "name": "[CUT] Petrified Blood Gem (4) Radial",
+    "category": "Consumable"
+  },
+  "1654": {
+    "name": "[CUT] Petrified Blood Gem (5) Radial",
+    "category": "Consumable"
+  },
+  "1655": {
+    "name": "[CUT] Petrified Blood Gem (6) Radial",
+    "category": "Consumable"
+  },
+  "1656": {
+    "name": "[CUT] Petrified Abyssal Blood Gem Radial",
+    "category": "Consumable"
+  },
+  "1657": {
+    "name": "[CUT] Petrified Blood Gem (1) Triangle",
+    "category": "Consumable"
+  },
+  "1658": {
+    "name": "[CUT] Petrified Blood Gem (2) Triangle",
+    "category": "Consumable"
+  },
+  "1659": {
+    "name": "[CUT] Petrified Blood Gem (3) Triangle",
+    "category": "Consumable"
+  },
+  "1660": {
+    "name": "[CUT] Petrified Blood Gem (4) Triangle",
+    "category": "Consumable"
+  },
+  "1661": {
+    "name": "[CUT] Petrified Blood Gem (5) Triangle",
+    "category": "Consumable"
+  },
+  "1662": {
+    "name": "[CUT] Petrified Blood Gem (6) Triangle",
+    "category": "Consumable"
+  },
+  "1663": {
+    "name": "[CUT] Petrified Abyssal Blood Gem Triangle",
+    "category": "Consumable"
+  },
+  "1664": {
+    "name": "[CUT] Petrified Blood Gem (1) Waning",
+    "category": "Consumable"
+  },
+  "1665": {
+    "name": "[CUT] Petrified Blood Gem (2) Waning",
+    "category": "Consumable"
+  },
+  "1666": {
+    "name": "[CUT] Petrified Blood Gem (3) Waning",
+    "category": "Consumable"
+  },
+  "1667": {
+    "name": "[CUT] Petrified Blood Gem (4) Waning",
+    "category": "Consumable"
+  },
+  "1668": {
+    "name": "[CUT] Petrified Blood Gem (5) Waning",
+    "category": "Consumable"
+  },
+  "1669": {
+    "name": "[CUT] Petrified Blood Gem (6) Waning",
+    "category": "Consumable"
+  },
+  "1670": {
+    "name": "[CUT] Petrified Abyssal Blood Gem Waning",
+    "category": "Consumable"
+  },
+  "1671": {
+    "name": "[CUT] Petrified Blood Gem (1) Circle",
+    "category": "Consumable"
+  },
+  "1672": {
+    "name": "[CUT] Petrified Blood Gem (2) Circle",
+    "category": "Consumable"
+  },
+  "1673": {
+    "name": "[CUT] Petrified Blood Gem (3) Circle",
+    "category": "Consumable"
+  },
+  "1674": {
+    "name": "[CUT] Petrified Blood Gem (4) Circle",
+    "category": "Consumable"
+  },
+  "1675": {
+    "name": "[CUT] Petrified Blood Gem (5) Circle",
+    "category": "Consumable"
+  },
+  "1676": {
+    "name": "[CUT] Petrified Blood Gem (6) Circle",
+    "category": "Consumable"
+  },
+  "1677": {
+    "name": "[CUT] Petrified Abyssal Blood Gem Circle",
+    "category": "Consumable"
+  },
+  "1678": {
+    "name": "[CUT] Petrified Blood Gem (1) Droplet",
+    "category": "Consumable"
+  },
+  "1679": {
+    "name": "[CUT] Petrified Blood Gem (2) Droplet",
+    "category": "Consumable"
+  },
+  "1680": {
+    "name": "[CUT] Petrified Blood Gem (3) Droplet",
+    "category": "Consumable"
+  },
+  "1681": {
+    "name": "[CUT] Petrified Blood Gem (4) Droplet",
+    "category": "Consumable"
+  },
+  "1682": {
+    "name": "[CUT] Petrified Blood Gem (5) Droplet",
+    "category": "Consumable"
+  },
+  "1683": {
+    "name": "[CUT] Petrified Blood Gem (6) Droplet",
+    "category": "Consumable"
+  },
+  "1684": {
+    "name": "[CUT] Petrified Abyssal Blood Gem Droplet",
+    "category": "Consumable"
+  },
+  "1700": {
+    "name": "Vermin",
+    "category": "Consumable"
+  },
+  "2000": {
+    "name": "Augur of Ebrietas",
+    "category": "Consumable"
+  },
+  "2010": {
+    "name": "A Call Beyond",
+    "category": "Consumable"
+  },
+  "2020": {
+    "name": "Beast Roar",
+    "category": "Consumable"
+  },
+  "2030": {
+    "name": "Lead Elixir",
+    "category": "Consumable"
+  },
+  "2050": {
+    "name": "Choir Bell",
+    "category": "Consumable"
+  },
+  "2060": {
+    "name": "Old Hunter Bone",
+    "category": "Consumable"
+  },
+  "2070": {
+    "name": "Tiny Tonitrus",
+    "category": "Consumable"
+  },
+  "2080": {
+    "name": "Executioner's Gloves",
+    "category": "Consumable"
+  },
+  "2090": {
+    "name": "Shaman Bone Blade",
+    "category": "Consumable"
+  },
+  "2110": {
+    "name": "Messenger's Gift",
+    "category": "Consumable"
+  },
+  "2120": {
+    "name": "Blacksky Eye",
+    "category": "Consumable"
+  },
+  "2130": {
+    "name": "Accursed Brew",
+    "category": "Consumable"
+  },
+  "2140": {
+    "name": "Madaras Whistle",
+    "category": "Consumable"
+  },
+  "3000": {
+    "name": "Blood Stone Shard",
+    "category": "Material"
+  },
+  "3010": {
+    "name": "Twin Blood Stone Shards",
+    "category": "Material"
+  },
+  "3020": {
+    "name": "Blood Stone Chunk",
+    "category": "Material"
+  },
+  "3030": {
+    "name": "Blood Rock",
+    "category": "Material"
+  },
+  "4000": {
+    "name": "Oedon Tomb Key",
+    "category": "Key"
+  },
+  "4001": {
+    "name": "Gold Pendant",
+    "category": "Consumable"
+  },
+  "4003": {
+    "name": "Cainhurst Summons",
+    "category": "Key"
+  },
+  "4006": {
+    "name": "Orphanage Key",
+    "category": "Key"
+  },
+  "4009": {
+    "name": "Iron Door Key",
+    "category": "Key"
+  },
+  "4010": {
+    "name": "Upper Cathedral Key",
+    "category": "Key"
+  },
+  "4011": {
+    "name": "Hunter Chief Emblem",
+    "category": "Key"
+  },
+  "4012": {
+    "name": "Lecture Theatre Key",
+    "category": "Key"
+  },
+  "4013": {
+    "name": "Lunarium Key",
+    "category": "Key"
+  },
+  "4014": {
+    "name": "Laurence's Skull",
+    "category": "Key"
+  },
+  "4015": {
+    "name": "Undergound Cell Inner Chamber Key",
+    "category": "Key"
+  },
+  "4017": {
+    "name": "Eye Pendant",
+    "category": "Key"
+  },
+  "4018": {
+    "name": "Underground Cell Key",
+    "category": "Key"
+  },
+  "4019": {
+    "name": "Balcony Key",
+    "category": "Key"
+  },
+  "4020": {
+    "name": "Astral Clocktower Key",
+    "category": "Key"
+  },
+  "4021": {
+    "name": "Celestial Dial",
+    "category": "Key"
+  },
+  "4102": {
+    "name": "Workshop Haze Extractor",
+    "category": "Key"
+  },
+  "4103": {
+    "name": "Blood Gem Workshop Tool",
+    "category": "Key"
+  },
+  "4104": {
+    "name": "Rune Workshop Tool",
+    "category": "Key"
+  },
+  "4105": {
+    "name": "Short Ritual Root Chalice",
+    "category": "Key"
+  },
+  "4110": {
+    "name": "Saw Hunter Badge",
+    "category": "Key"
+  },
+  "4111": {
+    "name": "Crow Hunter Badge",
+    "category": "Key"
+  },
+  "4112": {
+    "name": "Powder Keg Hunter Badge",
+    "category": "Key"
+  },
+  "4113": {
+    "name": "Old Hunter Badge",
+    "category": "Key"
+  },
+  "4114": {
+    "name": "Sword Hunter Badge",
+    "category": "Key"
+  },
+  "4115": {
+    "name": "Radiant Sword Hunter Badge",
+    "category": "Key"
+  },
+  "4116": {
+    "name": "Wheel Hunter Badge",
+    "category": "Key"
+  },
+  "4117": {
+    "name": "Cainhurst Badge",
+    "category": "Key"
+  },
+  "4118": {
+    "name": "Spark Hunter Badge",
+    "category": "Key"
+  },
+  "4119": {
+    "name": "Cosmic Eye Watcher Badge",
+    "category": "Key"
+  },
+  "4120": {
+    "name": "Firing Hammer Badge",
+    "category": "Key"
+  },
+  "4300": {
+    "name": "Small Hair Ornament",
+    "category": "Key"
+  },
+  "4301": {
+    "name": "Tear Stone",
+    "category": "Consumable"
+  },
+  "4304": {
+    "name": "Ring of Betrothal",
+    "category": "Key"
+  },
+  "4305": {
+    "name": "Queenly Flesh",
+    "category": "Key"
+  },
+  "4306": {
+    "name": "Red Jeweled Brooch",
+    "category": "Consumable"
+  },
+  "4308": {
+    "name": "Unopened Summons",
+    "category": "Key"
+  },
+  "4310": {
+    "name": "Tonsil Stone",
+    "category": "Key"
+  },
+  "4311": {
+    "name": "Eye of a Blood-drunk Hunter",
+    "category": "Key"
+  },
+  "4312": {
+    "name": "Old Hunter Bell",
+    "category": "Key"
+  },
+  "4320": {
+    "name": "One Third of Umbilical Cord 1",
+    "category": "Consumable"
+  },
+  "4321": {
+    "name": "One Third of Umbilical Cord 2",
+    "category": "Consumable"
+  },
+  "4322": {
+    "name": "One Third of Umbilical Cord 3",
+    "category": "Consumable"
+  },
+  "4323": {
+    "name": "One Third of Umbilical Cord 4",
+    "category": "Consumable"
+  },
+  "4330": {
+    "name": "Yharnam Stone",
+    "category": "Key"
+  },
+  "4340": {
+    "name": "Brain Fluid 1",
+    "category": "Key"
+  },
+  "4341": {
+    "name": "Brain Fluid 2",
+    "category": "Key"
+  },
+  "4342": {
+    "name": "Brain Fluid 3",
+    "category": "Key"
+  },
+  "4900": {
+    "name": "Yharnam Messenger Hat",
+    "category": "Key"
+  },
+  "4901": {
+    "name": "Worn Messenger Top Hat",
+    "category": "Key"
+  },
+  "4902": {
+    "name": "Messenger Head Bandage",
+    "category": "Key"
+  },
+  "4903": {
+    "name": "White Messenger Ribbon",
+    "category": "Key"
+  },
+  "4904": {
+    "name": "Red Messenger Ribbon",
+    "category": "Key"
+  },
+  "4905": {
+    "name": "Messenger Top Hat",
+    "category": "Key"
+  },
+  "4906": {
+    "name": "Black Messenger Hat",
+    "category": "Key"
+  },
+  "4907": {
+    "name": "Bloody Messenger Head Bandage",
+    "category": "Key"
+  },
+  "4908": {
+    "name": "Messenger Urn Festival",
+    "category": "Key"
+  },
+  "6100": {
+    "name": "Pthumeru Root Chalice",
+    "category": "Chalice"
+  },
+  "6109": {
+    "name": "Pthumeru Chalice",
+    "category": "Chalice"
+  },
+  "6200": {
+    "name": "Central Pthumeru Root Chalice",
+    "category": "Chalice"
+  },
+  "6209": {
+    "name": "Central Pthumeru Chalice",
+    "category": "Chalice"
+  },
+  "6210": {
+    "name": "Hintertomb Root Chalice",
+    "category": "Chalice"
+  },
+  "6219": {
+    "name": "Hintertomb Chalice",
+    "category": "Chalice"
+  },
+  "6300": {
+    "name": "Lower Pthumeru Root Chalice",
+    "category": "Chalice"
+  },
+  "6302": {
+    "name": "Sinister Lower Pthumeru Root Chalice",
+    "category": "Chalice"
+  },
+  "6309": {
+    "name": "Lower Pthumeru Chalice",
+    "category": "Chalice"
+  },
+  "6310": {
+    "name": "Lower Hintertomb Root Chalice",
+    "category": "Chalice"
+  },
+  "6312": {
+    "name": "Sinister Hintertomb Root Chalice",
+    "category": "Chalice"
+  },
+  "6319": {
+    "name": "Lower Hintertomb Chalice",
+    "category": "Chalice"
+  },
+  "6401": {
+    "name": "Defiled Chalice",
+    "category": "Chalice"
+  },
+  "6409": {
+    "name": "Cursed and Defiled Root Chalice",
+    "category": "Chalice"
+  },
+  "6420": {
+    "name": "Ailing Loran Root Chalice",
+    "category": "Chalice"
+  },
+  "6429": {
+    "name": "Ailing Loran Chalice",
+    "category": "Chalice"
+  },
+  "6500": {
+    "name": "Pthumeru Ihyll Root Chalice",
+    "category": "Chalice"
+  },
+  "6502": {
+    "name": "Sinister Pthumeru Ihyll Root Chalice",
+    "category": "Chalice"
+  },
+  "6509": {
+    "name": "Great Pthumeru Ihyll Chalice",
+    "category": "Chalice"
+  },
+  "6520": {
+    "name": "Lower Ailing Loran Root Chalice",
+    "category": "Chalice"
+  },
+  "6522": {
+    "name": "Sinister Lower Loran Root Chalice",
+    "category": "Chalice"
+  },
+  "6529": {
+    "name": "Lower Loran Chalice",
+    "category": "Chalice"
+  },
+  "6530": {
+    "name": "Isz Root Chalice",
+    "category": "Chalice"
+  },
+  "6532": {
+    "name": "Sinister Isz Root Chalice",
+    "category": "Chalice"
+  },
+  "6539": {
+    "name": "Great Isz Chalice",
+    "category": "Chalice"
+  },
+  "7000": {
+    "name": "Ritual Blood (1)",
+    "category": "Material"
+  },
+  "7001": {
+    "name": "Ritual Blood (2)",
+    "category": "Material"
+  },
+  "7002": {
+    "name": "Ritual Blood (3)",
+    "category": "Material"
+  },
+  "7003": {
+    "name": "Ritual Blood (4)",
+    "category": "Material"
+  },
+  "7004": {
+    "name": "Ritual Blood (5)",
+    "category": "Material"
+  },
+  "7012": {
+    "name": "Coldblood Flowerbud",
+    "category": "Material"
+  },
+  "7013": {
+    "name": "Coldblood Flower Bulb",
+    "category": "Material"
+  },
+  "7014": {
+    "name": "Blooming Coldblood Flower",
+    "category": "Material"
+  },
+  "7020": {
+    "name": "Tomb Mold (1)",
+    "category": "Material"
+  },
+  "7021": {
+    "name": "Tomb Mold (2)",
+    "category": "Material"
+  },
+  "7022": {
+    "name": "Tomb Mold (3)",
+    "category": "Material"
+  },
+  "7023": {
+    "name": "Tomb Mold (4)",
+    "category": "Material"
+  },
+  "7024": {
+    "name": "Tomb Mold (5)",
+    "category": "Material"
+  },
+  "7050": {
+    "name": "Arcane Haze",
+    "category": "Material"
+  },
+  "7100": {
+    "name": "Pearl Slug",
+    "category": "Material"
+  },
+  "7110": {
+    "name": "Red Jelly",
+    "category": "Material"
+  },
+  "7120": {
+    "name": "Sage's Wrist",
+    "category": "Material"
+  },
+  "7121": {
+    "name": "Sage's Hair",
+    "category": "Material"
+  },
+  "7130": {
+    "name": "Inflicted Organ",
+    "category": "Material"
+  },
+  "7131": {
+    "name": "Yellow Backbone",
+    "category": "Material"
+  },
+  "7140": {
+    "name": "Bastard of Loran",
+    "category": "Material"
+  },
+  "7150": {
+    "name": "Bloodshot Eyeball",
+    "category": "Material"
+  },
+  "7200": {
+    "name": "Living String",
+    "category": "Material"
+  }
+}
