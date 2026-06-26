@@ -18,6 +18,8 @@ type GemPickerModalProps = {
   inventoryGems: Array<InventoryGem>;
   /** Ephemeral custom gems created this session, reusable across slots. */
   customGems: Array<Socket>;
+  /** Gem instance ids already used by other weapons (hidden in Loadout mode). */
+  unavailableGemIds?: ReadonlySet<string>;
   /** Socket the chosen gem. */
   onPick: (socket: Socket) => void;
   /** Register a newly created custom gem so it's reusable elsewhere. */
@@ -38,6 +40,7 @@ export function GemPickerModal({
   slotShape,
   inventoryGems,
   customGems,
+  unavailableGemIds,
   onPick,
   onCreateCustom,
   onClear,
@@ -55,6 +58,7 @@ export function GemPickerModal({
     const query = search.trim().toLowerCase();
     return inventoryGems
       .filter((gem) => shapeFits(gem.shape, slotShape))
+      .filter((gem) => !unavailableGemIds?.has(gem.id))
       .filter((gem) => {
         if (!query) return true;
         return (
@@ -62,7 +66,7 @@ export function GemPickerModal({
         );
       })
       .sort((a, b) => b.rating - a.rating);
-  }, [inventoryGems, slotShape, search]);
+  }, [inventoryGems, slotShape, search, unavailableGemIds]);
 
   return (
     <motion.div
@@ -133,7 +137,7 @@ export function GemPickerModal({
               gems={visibleInventory}
               customGems={fittingCustom}
               onPickInventory={(gem) => {
-                onPick({ gem: gemFromInventory(gem), effects: gem.effects });
+                onPick({ gem: gemFromInventory(gem), effects: gem.effects, gemId: gem.id });
                 onClose();
               }}
               onPickCustom={(socket) => {

@@ -27,6 +27,8 @@ type WeaponCardProps = {
   stats: Stats;
   inventoryGems: Array<InventoryGem>;
   customGems: Array<Socket>;
+  /** Gem instance ids used by other weapons (hidden in the picker in Loadout). */
+  unavailableGemIds?: ReadonlySet<string>;
   onSlotChange: (slotIndex: number, socket: Socket | null) => void;
   onCreateCustom: (socket: Socket) => void;
   onOptimize: () => void;
@@ -44,6 +46,7 @@ export function WeaponCard({
   stats,
   inventoryGems,
   customGems,
+  unavailableGemIds,
   onSlotChange,
   onCreateCustom,
   onOptimize,
@@ -164,6 +167,7 @@ export function WeaponCard({
             slotShape={slotShapes[openSlot]}
             inventoryGems={inventoryGems}
             customGems={customGems}
+            unavailableGemIds={unavailableGemIds}
             onPick={(socket) => onSlotChange(openSlot, socket)}
             onCreateCustom={onCreateCustom}
             onClear={() => onSlotChange(openSlot, null)}

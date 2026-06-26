@@ -9,6 +9,11 @@ import { GemShape } from 'bb-calc-js';
 export type Socket = {
   gem: Gem;
   effects: Array<string>;
+  /**
+   * The owned gem's instance id, when socketed from inventory. Lets Loadout mode
+   * see which physical gems are already in use elsewhere. Absent for custom gems.
+   */
+  gemId?: string;
 };
 
 /** Every gem shape, in display order. */
