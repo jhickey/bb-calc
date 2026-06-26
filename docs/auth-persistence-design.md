@@ -79,7 +79,7 @@ Shown in a dedicated section atop the Gems tab; editable/deletable.
 
 ### Short link
 
-`gen_short_link()` returns ~8 url-safe base62 chars from `gen_random_bytes`; used as the `short_link` default with a `unique` constraint (a `BEFORE INSERT` retry trigger covers the astronomically rare collision).
+`gen_short_link()` returns 8 url-safe base62 chars (from `random()`; not security-sensitive); a `BEFORE INSERT` trigger sets it and loops until unique, backed by a `unique` constraint.
 
 ### RLS summary
 
@@ -92,7 +92,7 @@ Shown in a dedicated section atop the Gems tab; editable/deletable.
 
 ### `infra/terraform/` — project + settings (what TF can manage)
 
-- `supabase_project` (org id + region + `database_password` via `TF_VAR_database_password`).
+- `supabase_project` (org id + region + `database_password` via `TF_VAR_bb_calc_supabase_db_password`).
 - `supabase_settings`: auth — `site_url`, `uri_allow_list` (magic-link redirects), enable email/OTP; API settings.
 - **Caveat:** the TF provider may not expose the passkey **beta** toggle or every auth knob; whatever TF can't set we apply via the Management API / dashboard and document here. ("Manage in TF whenever possible.")
 - No Storage bucket needed (inventory is jsonb).
@@ -109,7 +109,7 @@ Enums (if used), tables, RLS policies, `gen_short_link()`, `get_shared_build()`.
 ## Env / secrets
 
 - `SUPABASE_ACCESS_TOKEN` — admin, interactive shell only (TF + CLI). Never committed.
-- `TF_VAR_database_password` — project DB password at apply time.
+- `TF_VAR_bb_calc_supabase_db_password` — project DB password at apply time.
 - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — public client config (anon key is safe to ship with RLS on).
 
 ## Suggested build sequence (each its own PR)
@@ -124,5 +124,5 @@ Enums (if used), tables, RLS policies, `gen_short_link()`, `get_shared_build()`.
 ## Open inputs needed
 
 - Supabase **org id** and **region** for `supabase_project`.
-- DB password handling (supplied via `TF_VAR_database_password`).
+- DB password handling (supplied via `TF_VAR_bb_calc_supabase_db_password`).
 - Email sender for magic links (Supabase default mailer for dev; custom SMTP later?).
