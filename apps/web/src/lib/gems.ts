@@ -44,3 +44,37 @@ export const PLACEHOLDER_GEM_ICON = '/imprints/placeholder.png';
 export function gemShapeIcon(shape: GemShape): string {
   return SHAPE_ICON[shape] ?? PLACEHOLDER_GEM_ICON;
 }
+
+/**
+ * The five in-game "curse" effects. A gem carrying any of these is a Cursed gem
+ * (in-game its name is prefixed "Cursed …"). This set is exactly equivalent to
+ * the "Cursed"-prefixed effect entries in the gem data, so matching the effect
+ * string is enough to identify a curse — no extra save data is needed.
+ */
+const CURSE_PREFIXES = [
+  'ATK DOWN',
+  'ATK vs beasts DOWN',
+  'ATK vs the kin DOWN',
+  'WPN durability DOWN',
+  'HP gradually depletes',
+] as const;
+
+/** Whether an effect string is one of the five in-game curses. */
+export function isCurseEffect(effect: string): boolean {
+  return CURSE_PREFIXES.some((prefix) => effect.startsWith(prefix));
+}
+
+/**
+ * Whether an effect is a drawback worth flagging — the curses plus "Increases
+ * stamina costs" (a built-in downside, not a curse). The AR calc ignores the
+ * non-percentage ones, so they're invisible to the optimizer; surfacing them
+ * helps the player decide whether to exclude a gem.
+ */
+export function isDrawbackEffect(effect: string): boolean {
+  return isCurseEffect(effect) || effect.startsWith('Increases stamina costs');
+}
+
+/** Whether a gem carries a curse (drives the "Cursed" badge). */
+export function isCursed(gem: { effects: ReadonlyArray<string> }): boolean {
+  return gem.effects.some(isCurseEffect);
+}

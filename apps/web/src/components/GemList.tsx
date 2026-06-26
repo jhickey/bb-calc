@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import type { InventoryGem } from 'bb-calc-js';
 import { StorageIcon } from '#/components/StorageIcon';
-import { gemShapeIcon } from '#/lib/gems';
+import { gemShapeIcon, isCursed, isDrawbackEffect } from '#/lib/gems';
 
 type GemListProps = {
   gems: Array<InventoryGem>;
@@ -34,6 +34,14 @@ export function GemList({ gems, emptyMessage = 'No gems in inventory.', classNam
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="truncate font-semibold text-pale-mocha">{gem.name}</span>
                   {gem.inStorage && <StorageIcon />}
+                  {isCursed(gem) && (
+                    <span
+                      title="Cursed gem — carries a negative effect"
+                      className="shrink-0 rounded-sm bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-400"
+                    >
+                      Cursed
+                    </span>
+                  )}
                   {gem.inUse && (
                     <span
                       title="Currently socketed in a weapon"
@@ -47,7 +55,10 @@ export function GemList({ gems, emptyMessage = 'No gems in inventory.', classNam
               </div>
               <ul className="mt-1 space-y-0.5">
                 {gem.effects.map((effect, i) => (
-                  <li key={`${effect}-${i}`} className="text-xs text-pale-mocha/80">
+                  <li
+                    key={`${effect}-${i}`}
+                    className={`text-xs ${isDrawbackEffect(effect) ? 'text-red-400' : 'text-pale-mocha/80'}`}
+                  >
                     {effect}
                   </li>
                 ))}

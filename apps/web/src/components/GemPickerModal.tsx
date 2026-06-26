@@ -5,7 +5,7 @@ import { gemFromInventory, parseGemEffects } from 'bb-calc-js';
 
 import { StorageIcon } from '#/components/StorageIcon';
 import type { Socket } from '#/lib/gems';
-import { GEM_SHAPES, gemShapeIcon } from '#/lib/gems';
+import { GEM_SHAPES, gemShapeIcon, isCursed, isDrawbackEffect } from '#/lib/gems';
 
 /** A gem fits a slot when shapes match or the gem is the universal Droplet. */
 function shapeFits(gemShape: GemShape, slotShape: GemShape): boolean {
@@ -250,12 +250,23 @@ function GemButton({ name, rating, effects, inStorage = false, onClick }: GemBut
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate font-semibold text-pale-mocha">{name}</span>
           {inStorage && <StorageIcon />}
+          {isCursed({ effects }) && (
+            <span
+              title="Cursed gem — carries a negative effect"
+              className="shrink-0 rounded-sm bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-400"
+            >
+              Cursed
+            </span>
+          )}
         </span>
         {rating != null && <span className="shrink-0 text-xs text-au-chico">Rating {rating}</span>}
       </div>
       <ul className="mt-0.5 space-y-0.5">
         {effects.map((effect, i) => (
-          <li key={`${effect}-${i}`} className="text-xs text-pale-mocha/80">
+          <li
+            key={`${effect}-${i}`}
+            className={`text-xs ${isDrawbackEffect(effect) ? 'text-red-400' : 'text-pale-mocha/80'}`}
+          >
             {effect}
           </li>
         ))}
