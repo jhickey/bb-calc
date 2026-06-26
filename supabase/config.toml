@@ -1,0 +1,5 @@
+# Supabase CLI config. `project_id` is the local project name; the remote
+# project is linked separately with `supabase link --project-ref <ref>` (see
+# infra/terraform/README.md). Migrations live in supabase/migrations and are
+# applied with `supabase db push`.
+project_id = "bb-calc"
