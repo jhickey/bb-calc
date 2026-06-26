@@ -94,8 +94,11 @@ function Home() {
   async function autoOptimize(weaponId: string) {
     if (!inventory || !editStats) return;
     try {
+      // Mode.Plan honors `excluded` (Compare ignores it); for a single weapon it
+      // optimizes against the full pool minus the gems used by other weapons.
       const excluded = mode === 'loadout' ? gemsUsedByOtherWeapons(weaponId) : undefined;
-      const [result] = await optimize([weaponId], inventory.gems, editStats, target, Mode.Compare, excluded);
+      const optMode = mode === 'loadout' ? Mode.Plan : Mode.Compare;
+      const [result] = await optimize([weaponId], inventory.gems, editStats, target, optMode, excluded);
       if (result) setSlotsByWeapon((prev) => ({ ...prev, [weaponId]: slotsFromResult(result) }));
       setError(null);
     } catch (e) {
@@ -171,11 +174,18 @@ function Home() {
                         type="button"
                         aria-pressed={mode === value}
                         onClick={() => setMode(value)}
-                        className={`flex-1 cursor-pointer rounded px-3 py-1.5 text-sm font-semibold capitalize transition-colors ${
-                          mode === value ? 'bg-tamarillo text-pale-mocha' : 'text-au-chico hover:text-pale-mocha'
+                        className={`relative flex-1 cursor-pointer rounded px-3 py-1.5 text-sm font-semibold capitalize transition-colors ${
+                          mode === value ? 'text-pale-mocha' : 'text-au-chico hover:text-pale-mocha'
                         }`}
                       >
-                        {value}
+                        {mode === value && (
+                          <motion.span
+                            layoutId="mode-pill"
+                            className="absolute inset-0 rounded bg-tamarillo"
+                            transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                          />
+                        )}
+                        <span className="relative z-10">{value}</span>
                       </button>
                     ))}
                   </div>
