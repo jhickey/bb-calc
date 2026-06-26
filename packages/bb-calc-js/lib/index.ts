@@ -39,8 +39,9 @@ export function optimize(
   target: DamageTarget,
   mode: Mode,
   excludedGems?: Array<string> | undefined | null,
+  levels?: Array<number> | undefined | null,
 ): Promise<Array<OptimizeResult>> {
-  return optimizeNative(weaponIds, gems, stats, target, mode, excludedGems) as Promise<Array<OptimizeResult>>;
+  return optimizeNative(weaponIds, gems, stats, target, mode, excludedGems, levels) as Promise<Array<OptimizeResult>>;
 }
 
 export function parseSave(saveFile: Uint8Array): Promise<Inventory> {

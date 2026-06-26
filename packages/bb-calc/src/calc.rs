@@ -28,7 +28,17 @@ fn get_sat(stat: u16) -> f32 {
     NUMBERS[stat as usize]
 }
 
-pub fn compute_ar(weapon: &Weapon, gems: [Option<&Gem>; 3], stats: &Stats) -> ArBreakdown {
+/// Base-damage multiplier for a regular weapon at upgrade level `level`, relative
+/// to +10 (the level the `WEAPONS` table stores). All regular weapons share this
+/// curve: +0 is half of +10, rising linearly (e.g. Saw Cleaver 90 → 180). Stat
+/// scaling is not multiplied here — the calc derives scaling damage from the base
+/// (`base * coeff * saturation`), so scaling shrinks with the base automatically.
+fn upgrade_mult(level: u8) -> f32 {
+    0.5 + 0.05 * level.min(10) as f32
+}
+
+pub fn compute_ar(weapon: &Weapon, gems: [Option<&Gem>; 3], stats: &Stats, level: u8) -> ArBreakdown {
+    let lvl = upgrade_mult(level);
     let sum = |f: fn(&Gem) -> f32| gems.iter().flatten().copied().map(f).sum::<f32>();
     let prod = |f: fn(&Gem) -> f32| gems.iter().flatten().copied().map(f).product::<f32>();
 
@@ -92,7 +102,7 @@ pub fn compute_ar(weapon: &Weapon, gems: [Option<&Gem>; 3], stats: &Stats) -> Ar
     let phys_converted = is_conv && converted_element != ConvertedElement::Phys;
 
     // --- Physical / Blunt / Thrust
-    let phys_core = phys_base(weapon.phys as f32) * phys_mult * dmg * dh_phys;
+    let phys_core = phys_base(weapon.phys as f32 * lvl) * phys_mult * dmg * dh_phys;
     let physical = if phys_converted {
         flat_phys.floor()
     } else {
@@ -111,32 +121,32 @@ pub fn compute_ar(weapon: &Weapon, gems: [Option<&Gem>; 3], stats: &Stats) -> Ar
 
     // --- Arcane
     let arcane = if is_conv && converted_element == ConvertedElement::Arc {
-        (elem_base(weapon.phys as f32) * arc_mult * dmg * di_arc + flat_arc).floor()
+        (elem_base(weapon.phys as f32 * lvl) * arc_mult * dmg * di_arc + flat_arc).floor()
     } else if is_dual {
-        (elem_base(weapon.arcane as f32) * arc_mult * dmg * di_arc + flat_arc).floor()
+        (elem_base(weapon.arcane as f32 * lvl) * arc_mult * dmg * di_arc + flat_arc).floor()
     } else {
         flat_arc.floor()
     };
 
     // --- Fire
     let fire = if is_conv && converted_element == ConvertedElement::Fire {
-        (elem_base(weapon.phys as f32) * fire_mult * dmg + flat_fire).floor()
+        (elem_base(weapon.phys as f32 * lvl) * fire_mult * dmg + flat_fire).floor()
     } else if weapon.name == "Boom Hammer" {
-        (elem_base(weapon.fire as f32) * fire_mult * dmg + flat_fire).floor()
+        (elem_base(weapon.fire as f32 * lvl) * fire_mult * dmg + flat_fire).floor()
     } else {
         flat_fire.floor()
     };
 
     // --- Bolt (non-bolt weapons have bolt base 0 -> collapses to flat bolt; Tonitrus scales)
     let bolt = if is_conv && converted_element == ConvertedElement::Bolt {
-        (elem_base(weapon.phys as f32) * bolt_mult * dmg * dg_bolt + flat_bolt).floor()
+        (elem_base(weapon.phys as f32 * lvl) * bolt_mult * dmg * dg_bolt + flat_bolt).floor()
     } else {
-        (elem_base(weapon.bolt as f32) * bolt_mult * dmg * dg_bolt + flat_bolt).floor()
+        (elem_base(weapon.bolt as f32 * lvl) * bolt_mult * dmg * dg_bolt + flat_bolt).floor()
     };
 
     // --- Blood (adds flat-physical + flat-blood gem bonuses per the sheet)
-    let blood = ((weapon.blood as f32
-        + weapon.blood as f32 * (weapon.blt_scale + blt_scale_sum) * sat_blt)
+    let blood = ((weapon.blood as f32 * lvl
+        + weapon.blood as f32 * lvl * (weapon.blt_scale + blt_scale_sum) * sat_blt)
         * phys_mult
         * blood_mult
         * dmg
@@ -177,7 +187,7 @@ mod tests {
         w.phys = 100;
         w.arcane = 50;
 
-        let ar = compute_ar(&w, [None, None, None], &ZERO_STATS);
+        let ar = compute_ar(&w, [None, None, None], &ZERO_STATS, 10);
 
         // No scaling (stats 0), identity gems: phys=100, arcane=50, rest 0.
         assert_eq!(ar.physical, 100.0);
@@ -204,10 +214,22 @@ mod tests {
             arc: 0,
         };
 
-        let ar = compute_ar(&w, [None, None, None], &stats);
+        let ar = compute_ar(&w, [None, None, None], &stats, 10);
 
         // physBase = 100 + 100 * 0.2 * 0.5 = 110
         assert_eq!(ar.physical, 110.0);
+    }
+
+    #[test]
+    fn upgrade_level_halves_base_at_plus_zero() {
+        let mut w = weapon("Test Blade", WeaponType::Dual);
+        w.phys = 100;
+
+        // +10 (stored level): full base. +0: base damage is halved (0.5x curve).
+        assert_eq!(compute_ar(&w, [None, None, None], &ZERO_STATS, 10).physical, 100.0);
+        assert_eq!(compute_ar(&w, [None, None, None], &ZERO_STATS, 0).physical, 50.0);
+        // +5 sits halfway: 0.5 + 0.05*5 = 0.75 -> floor(100 * 0.75) = 75.
+        assert_eq!(compute_ar(&w, [None, None, None], &ZERO_STATS, 5).physical, 75.0);
     }
 
     #[test]
@@ -222,7 +244,7 @@ mod tests {
         g2.dmg_general = 1.5;
         g2.flat_phys = 5.0;
 
-        let ar = compute_ar(&w, [Some(&g1), Some(&g2), None], &ZERO_STATS);
+        let ar = compute_ar(&w, [Some(&g1), Some(&g2), None], &ZERO_STATS, 10);
 
         // gen = 2.0 * 1.5 = 3.0; flat_phys = 10 + 5 = 15
         // physCore = 100 * 3.0 = 300; physical = floor(300 + 15) = 315
@@ -237,7 +259,7 @@ mod tests {
         let mut g = gem();
         g.dmg_fire = 1.5;
 
-        let ar = compute_ar(&w, [Some(&g), None, None], &ZERO_STATS);
+        let ar = compute_ar(&w, [Some(&g), None, None], &ZERO_STATS, 10);
 
         assert_eq!(ar.converted_element, ConvertedElement::Fire);
         // Physical line collapses to flat physical (0) once converted.
@@ -257,7 +279,7 @@ mod tests {
         g.dmg_fire = 1.5;
         g.dmg_bolt = 1.5;
 
-        let ar = compute_ar(&w, [Some(&g), None, None], &ZERO_STATS);
+        let ar = compute_ar(&w, [Some(&g), None, None], &ZERO_STATS, 10);
 
         // All three flags set -> arcane wins.
         assert_eq!(ar.converted_element, ConvertedElement::Arc);
@@ -269,7 +291,7 @@ mod tests {
         w.phys = 100;
         w.arcane = 10;
 
-        let ar = compute_ar(&w, [None, None, None], &ZERO_STATS);
+        let ar = compute_ar(&w, [None, None, None], &ZERO_STATS, 10);
 
         // dhPhys = 0.7 -> physical = floor(100 * 0.7) = 70
         assert_eq!(ar.physical, 70.0);
@@ -283,7 +305,7 @@ mod tests {
         let mut w = weapon("Tonitrus (Tricked)", WeaponType::Dual);
         w.bolt = 100;
 
-        let ar = compute_ar(&w, [None, None, None], &ZERO_STATS);
+        let ar = compute_ar(&w, [None, None, None], &ZERO_STATS, 10);
 
         // dgBolt = 1.7 -> bolt = floor(100 * 1.7) = 170
         assert_eq!(ar.bolt, 170.0);
@@ -294,7 +316,7 @@ mod tests {
         let mut w = weapon("Boom Hammer", WeaponType::Dual);
         w.fire = 80;
 
-        let ar = compute_ar(&w, [None, None, None], &ZERO_STATS);
+        let ar = compute_ar(&w, [None, None, None], &ZERO_STATS, 10);
 
         // Boom Hammer routes weapon.fire through the elemental line.
         assert_eq!(ar.fire, 80.0);
@@ -309,7 +331,7 @@ mod tests {
         g.flat_phys = 10.0;
         g.flat_blood = 5.0;
 
-        let ar = compute_ar(&w, [Some(&g), None, None], &ZERO_STATS);
+        let ar = compute_ar(&w, [Some(&g), None, None], &ZERO_STATS, 10);
 
         // blood = floor(100 * 1 * 1 * 1 + flatPhys(10) + flatBlood(5)) = 115
         assert_eq!(ar.blood, 115.0);
@@ -323,7 +345,7 @@ mod tests {
         let mut g = gem();
         g.dmg_bolt = 2.0;
 
-        let ar = compute_ar(&w, [Some(&g), None, None], &ZERO_STATS);
+        let ar = compute_ar(&w, [Some(&g), None, None], &ZERO_STATS, 10);
 
         assert_eq!(ar.converted_element, ConvertedElement::Bolt);
         // bolt = floor(elemBase(100) * 2.0) = 200, which dominates the max.

@@ -7,6 +7,8 @@ import { PLACEHOLDER_WEAPON_ICON, weaponThumbnail } from '#/lib/weapons';
 type WeaponSelectProps = {
   selected: ReadonlyArray<string>;
   onChange: (ids: Array<string>) => void;
+  /** Weapon ids the player owns in the save; drives the "hide unacquired" filter. */
+  ownedWeaponIds: ReadonlySet<string>;
   className?: string;
 };
 
@@ -15,13 +17,20 @@ type WeaponSelectProps = {
  * from the calculator, so it must only render after the WASM module is ready
  * (i.e. once a save has been parsed).
  */
-export function WeaponSelect({ selected, onChange, className = '' }: WeaponSelectProps) {
+export function WeaponSelect({ selected, onChange, ownedWeaponIds, className = '' }: WeaponSelectProps) {
   const weapons = useMemo(() => getWeapons(), []);
   const [search, setSearch] = useState('');
+  const [hideUnacquired, setHideUnacquired] = useState(true);
   const selectedSet = new Set(selected);
 
   const query = search.trim().toLowerCase();
-  const visible = query ? weapons.filter((weapon) => weapon.name.toLowerCase().includes(query)) : weapons;
+  const visible = weapons.filter((weapon) => {
+    if (query && !weapon.name.toLowerCase().includes(query)) return false;
+    // Calc-only variants (tricked/transform forms) have no canonical id and can
+    // never be "owned" directly, so they're always shown rather than hidden.
+    if (hideUnacquired && weapon.canonicalId != null && !ownedWeaponIds.has(weapon.id)) return false;
+    return true;
+  });
 
   function toggle(id: string) {
     const next = new Set(selectedSet);
@@ -61,6 +70,15 @@ export function WeaponSelect({ selected, onChange, className = '' }: WeaponSelec
         placeholder="Search weapons…"
         className="mt-2 w-full rounded-md border border-black-wool bg-black-wool px-3 py-2 text-sm text-pale-mocha placeholder:text-au-chico"
       />
+      <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-au-chico">
+        <input
+          type="checkbox"
+          checked={hideUnacquired}
+          onChange={(event) => setHideUnacquired(event.target.checked)}
+          className="accent-tamarillo"
+        />
+        Hide unacquired weapons
+      </label>
       <ul className="mt-2 max-h-72 overflow-y-auto rounded-md border border-black-wool bg-black-wool/40 p-2">
         {visible.length === 0 && <li className="px-2 py-1 text-sm text-au-chico">No weapons match.</li>}
         <AnimatePresence initial={false}>

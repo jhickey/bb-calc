@@ -57,8 +57,9 @@ export interface Character {
 /**
  * Computes the Attack Rating for the weapon with `weapon_id`, fitted with up
  * to three `gems` at the given hunter `stats`. Gem slot order does not matter.
+ * `level` is the weapon's upgrade level (+0..=10); omit it to use +10 (max).
  */
-export declare function computeAr(weaponId: string, gems: Array<Gem>, stats: Stats): ArBreakdown
+export declare function computeAr(weaponId: string, gems: Array<Gem>, stats: Stats, level?: number | undefined | null): ArBreakdown
 
 /** The element a "Conv" weapon's physical damage is converted to. */
 export declare const enum ConvertedElement {
@@ -192,8 +193,10 @@ export declare const enum Mode {
  * Returns a `Promise`: the search runs on a worker thread so it never blocks
  * the caller (required in the browser, where the optimizer's threaded
  * `Mode::Compare` would otherwise call `Atomics.wait` on the main thread).
+ * `levels` holds each weapon's upgrade level (+0..=10), aligned to `weapon_ids`;
+ * omit it (or individual entries) to score at +10 (max).
  */
-export declare function optimize(weaponIds: Array<string>, gems: Array<InventoryGem>, stats: Stats, target: DamageTarget, mode: Mode, excludedGems?: Array<string> | undefined | null): Promise<unknown>
+export declare function optimize(weaponIds: Array<string>, gems: Array<InventoryGem>, stats: Stats, target: DamageTarget, mode: Mode, excludedGems?: Array<string> | undefined | null, levels?: Array<number> | undefined | null): Promise<unknown>
 
 /** The winning socketing found by {@link optimizeForSlots}. */
 export interface OptimizeResult {

@@ -35,6 +35,9 @@ type WeaponCardProps = {
   /** This card's position in the list, and the list length, for the reorder controls. */
   index: number;
   total: number;
+  /** Upgrade level (+0..=10); folded into the AR calc. */
+  level: number;
+  onLevelChange: (level: number) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onSlotChange: (slotIndex: number, socket: Socket | null) => void;
@@ -62,6 +65,8 @@ export function WeaponCard({
   unavailableGemIds,
   index,
   total,
+  level,
+  onLevelChange,
   onMoveUp,
   onMoveDown,
   onSlotChange,
@@ -83,8 +88,9 @@ export function WeaponCard({
         weaponId,
         slots.filter((socket): socket is Socket => socket != null).map((socket) => socket.gem),
         stats,
+        level,
       ),
-    [weaponId, slots, stats],
+    [weaponId, slots, stats, level],
   );
 
   const name = weaponName(weaponId);
@@ -140,6 +146,30 @@ export function WeaponCard({
             className="h-12 w-12 shrink-0 object-contain"
           />
           <h3 className="min-w-0 flex-1 truncate text-lg font-semibold text-pale-mocha">{name}</h3>
+          <div className="shrink-0 text-center">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => onLevelChange(level - 1)}
+                disabled={level <= 0}
+                aria-label={`Lower ${name} upgrade level`}
+                className="cursor-pointer rounded border border-black-wool px-1.5 text-base leading-none text-au-chico transition-colors hover:border-tamarillo hover:text-pale-mocha disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:border-black-wool disabled:hover:text-au-chico"
+              >
+                −
+              </button>
+              <span className="w-8 text-center text-lg font-bold tabular-nums text-pale-mocha">+{level}</span>
+              <button
+                type="button"
+                onClick={() => onLevelChange(level + 1)}
+                disabled={level >= 10}
+                aria-label={`Raise ${name} upgrade level`}
+                className="cursor-pointer rounded border border-black-wool px-1.5 text-base leading-none text-au-chico transition-colors hover:border-tamarillo hover:text-pale-mocha disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:border-black-wool disabled:hover:text-au-chico"
+              >
+                +
+              </button>
+            </div>
+            <div className="text-xs uppercase tracking-wide text-au-chico">Level</div>
+          </div>
           <div className="shrink-0 text-right">
             <ArValue value={breakdown.total} className="text-2xl font-bold text-tamarillo" />
             <div className="text-xs uppercase tracking-wide text-au-chico">Attack Rating</div>
