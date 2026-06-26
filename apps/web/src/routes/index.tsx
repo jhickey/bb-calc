@@ -1,6 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import type { Inventory, OptimizeResult, Stats } from 'bb-calc-js';
 import { DamageTarget, Mode, gemFromInventory, optimize, parseSave } from 'bb-calc-js';
 
@@ -65,6 +73,34 @@ function Home() {
 
   function removeWeapon(weaponId: string) {
     setWeaponIds((prev) => prev.filter((id) => id !== weaponId));
+  }
+
+  // Weapon order is Loadout priority, so it's reorderable: drag (dnd-kit) or the
+  // per-card up/down buttons. A small pointer threshold keeps clicks on the
+  // card's buttons from starting a drag.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function moveWeapon(weaponId: string, delta: number) {
+    setWeaponIds((prev) => {
+      const from = prev.indexOf(weaponId);
+      const to = from + delta;
+      if (from < 0 || to < 0 || to >= prev.length) return prev;
+      return arrayMove(prev, from, to);
+    });
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setWeaponIds((prev) => {
+      const from = prev.indexOf(String(active.id));
+      const to = prev.indexOf(String(over.id));
+      if (from < 0 || to < 0) return prev;
+      return arrayMove(prev, from, to);
+    });
   }
 
   // Build a weapon's three slots from an optimizer result, resolving each chosen
@@ -207,25 +243,35 @@ function Home() {
                     Select weapons to build. Click a gem slot to socket a gem, or auto-optimize.
                   </p>
                 ) : (
-                  <ul className="space-y-4">
-                    <AnimatePresence mode="popLayout">
-                      {weaponIds.map((weaponId) => (
-                        <WeaponCard
-                          key={weaponId}
-                          weaponId={weaponId}
-                          slots={slotsByWeapon[weaponId] ?? EMPTY_SLOTS}
-                          stats={editStats}
-                          inventoryGems={inventory.gems}
-                          customGems={customGems}
-                          unavailableGemIds={mode === 'loadout' ? new Set(gemsUsedByOtherWeapons(weaponId)) : undefined}
-                          onSlotChange={(slotIndex, socket) => setSlot(weaponId, slotIndex, socket)}
-                          onCreateCustom={(socket) => setCustomGems((prev) => [...prev, socket])}
-                          onOptimize={() => autoOptimize(weaponId)}
-                          onRemove={() => removeWeapon(weaponId)}
-                        />
-                      ))}
-                    </AnimatePresence>
-                  </ul>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={weaponIds} strategy={verticalListSortingStrategy}>
+                      <ul className="space-y-4">
+                        <AnimatePresence>
+                          {weaponIds.map((weaponId, index) => (
+                            <WeaponCard
+                              key={weaponId}
+                              weaponId={weaponId}
+                              index={index}
+                              total={weaponIds.length}
+                              slots={slotsByWeapon[weaponId] ?? EMPTY_SLOTS}
+                              stats={editStats}
+                              inventoryGems={inventory.gems}
+                              customGems={customGems}
+                              unavailableGemIds={
+                                mode === 'loadout' ? new Set(gemsUsedByOtherWeapons(weaponId)) : undefined
+                              }
+                              onMoveUp={() => moveWeapon(weaponId, -1)}
+                              onMoveDown={() => moveWeapon(weaponId, 1)}
+                              onSlotChange={(slotIndex, socket) => setSlot(weaponId, slotIndex, socket)}
+                              onCreateCustom={(socket) => setCustomGems((prev) => [...prev, socket])}
+                              onOptimize={() => autoOptimize(weaponId)}
+                              onRemove={() => removeWeapon(weaponId)}
+                            />
+                          ))}
+                        </AnimatePresence>
+                      </ul>
+                    </SortableContext>
+                  </DndContext>
                 )}
               </div>
             </div>
