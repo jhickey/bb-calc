@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import type { InventoryGem } from 'bb-calc-js';
+import { StorageIcon } from '#/components/StorageIcon';
 import { gemShapeIcon } from '#/lib/gems';
 
 type GemListProps = {
@@ -30,8 +31,9 @@ export function GemList({ gems, emptyMessage = 'No gems in inventory.', classNam
             <img src={gemShapeIcon(gem.shape)} alt={gem.shape} className="h-10 w-10 shrink-0 object-contain" />
             <div className="min-w-0">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="flex min-w-0 items-baseline gap-2">
+                <span className="flex min-w-0 items-center gap-2">
                   <span className="truncate font-semibold text-pale-mocha">{gem.name}</span>
+                  {gem.inStorage && <StorageIcon />}
                   {gem.inUse && (
                     <span
                       title="Currently socketed in a weapon"

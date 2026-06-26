@@ -103,6 +103,8 @@ pub struct InventoryGem {
   pub effects: Vec<String>,
   /// Whether this gem is currently socketed in a weapon.
   pub in_use: bool,
+  /// Whether this gem lives in the Hunter's Dream storage (vs carried).
+  pub in_storage: bool,
 }
 
 impl From<&InventoryGem> for BbInventoryGem {
@@ -114,6 +116,7 @@ impl From<&InventoryGem> for BbInventoryGem {
       rating: value.rating,
       effects: value.effects.clone(),
       in_use: value.in_use,
+      in_storage: value.in_storage,
     }
   }
 }
@@ -127,6 +130,7 @@ impl From<InventoryGem> for BbInventoryGem {
       rating: value.rating,
       effects: value.effects.clone(),
       in_use: value.in_use,
+      in_storage: value.in_storage,
     }
   }
 }
@@ -140,6 +144,7 @@ impl From<BbInventoryGem> for InventoryGem {
       rating: value.rating,
       effects: value.effects.clone(),
       in_use: value.in_use,
+      in_storage: value.in_storage,
     }
   }
 }

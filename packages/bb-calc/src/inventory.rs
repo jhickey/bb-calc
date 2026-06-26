@@ -2,7 +2,7 @@
 
 use crate::save::{
     lookup_effect, lookup_rune_effect, parse_owned_items, parse_save_character, parse_save_gems,
-    parse_save_name, parse_save_runes, OwnedArmor, OwnedItem, OwnedWeapon,
+    parse_save_name, parse_save_runes, parse_storage_upgrade_ids, OwnedArmor, OwnedItem, OwnedWeapon,
 };
 use crate::types::{GemShape, Stats};
 use serde::{Deserialize, Serialize};
@@ -27,6 +27,8 @@ pub struct InventoryGem {
     pub effects: Vec<String>,
     /// Whether this gem is currently socketed in a weapon.
     pub in_use: bool,
+    /// Whether this gem lives in the Hunter's Dream storage (vs carried).
+    pub in_storage: bool,
 }
 
 /// A Caryll rune the player owns, captured from a decrypted save.
@@ -100,6 +102,9 @@ pub fn build_inventory_from_save(bytes: &[u8]) -> WithWarnings<Inventory> {
         .map(|o| o.socketed_gem_ids.iter().map(String::as_str).collect())
         .unwrap_or_default();
 
+    // Gem instance ids referenced from the Hunter's Dream storage region.
+    let storage_ids: HashSet<String> = parse_storage_upgrade_ids(bytes).into_iter().collect();
+
     let gems: Vec<InventoryGem> = parse_save_gems(bytes)
         .into_iter()
         .map(|raw| {
@@ -133,6 +138,7 @@ pub fn build_inventory_from_save(bytes: &[u8]) -> WithWarnings<Inventory> {
             }
 
             let in_use = socketed.contains(raw.id.as_str());
+            let in_storage = storage_ids.contains(&raw.id);
             InventoryGem {
                 id: raw.id,
                 name,
@@ -140,6 +146,7 @@ pub fn build_inventory_from_save(bytes: &[u8]) -> WithWarnings<Inventory> {
                 rating,
                 effects,
                 in_use,
+                in_storage,
             }
         })
         .collect();
