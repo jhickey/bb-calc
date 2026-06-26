@@ -196,7 +196,7 @@ function Home() {
   // Optimize every selected weapon against the pool minus `excluded`. Loadout
   // (Mode.Plan) walks them in list order, removing each weapon's chosen gems from
   // the pool for the weapons after it; Compare gives every weapon the full pool.
-  async function runOptimizeAll(excluded: Set<string>) {
+  async function runOptimizeAll(excluded: Set<string>, useMode: 'compare' | 'loadout' = mode) {
     if (!inventory || !editStats || weaponIds.length === 0) return;
     try {
       const levels = weaponIds.map((id) => levelByWeapon[id] ?? 10);
@@ -205,7 +205,7 @@ function Home() {
         availablePool(excluded),
         editStats,
         target,
-        mode === 'loadout' ? Mode.Plan : Mode.Compare,
+        useMode === 'loadout' ? Mode.Plan : Mode.Compare,
         undefined,
         levels,
       );
@@ -220,6 +220,15 @@ function Home() {
 
   function optimizeAll() {
     return runOptimizeAll(excludedGemIds);
+  }
+
+  // Switching mode re-optimizes so the shown slots always match the active mode
+  // (otherwise Loadout's shared-pool picks would linger after switching to
+  // Compare, and vice versa). The new mode is passed through since state is async.
+  function changeMode(value: 'compare' | 'loadout') {
+    if (value === mode) return;
+    setMode(value);
+    void runOptimizeAll(excludedGemIds, value);
   }
 
   // Exclude/restore a gem, then re-optimize the whole set with the new pool.
@@ -281,7 +290,7 @@ function Home() {
                         key={value}
                         type="button"
                         aria-pressed={mode === value}
-                        onClick={() => setMode(value)}
+                        onClick={() => changeMode(value)}
                         className={`relative flex-1 cursor-pointer rounded px-3 py-1.5 text-sm font-semibold capitalize transition-colors ${
                           mode === value ? 'text-pale-mocha' : 'text-au-chico hover:text-pale-mocha'
                         }`}
