@@ -20,6 +20,7 @@ import { TargetSelect } from '#/components/TargetSelect';
 import { WeaponCard } from '#/components/WeaponCard';
 import { WeaponSelect } from '#/components/WeaponSelect';
 import type { Socket } from '#/lib/gems';
+import { isDrawbackEffect } from '#/lib/gems';
 
 export const Route = createFileRoute('/')({ component: Home });
 
@@ -182,15 +183,9 @@ function Home() {
       const excluded = mode === 'loadout' ? gemsUsedByOtherWeapons(weaponId) : undefined;
       const optMode = mode === 'loadout' ? Mode.Plan : Mode.Compare;
       const level = levelByWeapon[weaponId] ?? 10;
-      const [result] = await optimize(
-        [weaponId],
-        availablePool(excludedGemIds),
-        editStats,
-        target,
-        optMode,
-        excluded,
-        [level],
-      );
+      const [result] = await optimize([weaponId], availablePool(excludedGemIds), editStats, target, optMode, excluded, [
+        level,
+      ]);
       if (result) setSlotsByWeapon((prev) => ({ ...prev, [weaponId]: slotsFromResult(result) }));
       setError(null);
     } catch (e) {
@@ -331,12 +326,21 @@ function Home() {
                               key={id}
                               className="flex items-start justify-between gap-2 rounded border border-black-wool px-2 py-1.5 text-xs"
                             >
-                              <span className="min-w-0 flex-1 truncate text-pale-mocha">
-                                {gem ? gem.name : id}
-                                {gem && gem.effects.length > 0 && (
-                                  <span className="block truncate text-pale-mocha/60">{gem.effects[0]}</span>
+                              <div className="min-w-0 flex-1">
+                                <span className="block truncate text-pale-mocha">{gem ? gem.name : id}</span>
+                                {gem && (
+                                  <ul className="mt-0.5 space-y-0.5">
+                                    {gem.effects.map((effect, i) => (
+                                      <li
+                                        key={`${effect}-${i}`}
+                                        className={isDrawbackEffect(effect) ? 'text-red-400' : 'text-pale-mocha/60'}
+                                      >
+                                        {effect}
+                                      </li>
+                                    ))}
+                                  </ul>
                                 )}
-                              </span>
+                              </div>
                               <button
                                 type="button"
                                 onClick={() => unexcludeGem(id)}

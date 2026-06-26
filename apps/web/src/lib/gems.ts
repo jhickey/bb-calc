@@ -65,16 +65,16 @@ export function isCurseEffect(effect: string): boolean {
 }
 
 /**
- * Whether an effect is a drawback worth flagging — the curses plus "Increases
- * stamina costs" (a built-in downside, not a curse). The AR calc ignores the
- * non-percentage ones, so they're invisible to the optimizer; surfacing them
- * helps the player decide whether to exclude a gem.
+ * Whether an effect is a drawback — the five curses plus "Increases stamina
+ * costs". In-game all of these mark a gem "Cursed", so they're treated alike
+ * here. The AR calc ignores the non-percentage ones, so they're invisible to the
+ * optimizer; surfacing them helps the player decide whether to exclude a gem.
  */
 export function isDrawbackEffect(effect: string): boolean {
   return isCurseEffect(effect) || effect.startsWith('Increases stamina costs');
 }
 
-/** Whether a gem carries a curse (drives the "Cursed" badge). */
+/** Whether a gem carries a drawback (drives the "Cursed" badge). */
 export function isCursed(gem: { effects: ReadonlyArray<string> }): boolean {
-  return gem.effects.some(isCurseEffect);
+  return gem.effects.some(isDrawbackEffect);
 }
