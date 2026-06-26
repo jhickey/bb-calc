@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import type { Inventory, Stats } from 'bb-calc-js';
 
+import { AuthControl } from '#/components/AuthControl';
 import { SaveUpload } from '#/components/SaveUpload';
 import { StatsDisplay } from '#/components/StatsDisplay';
 
@@ -106,7 +107,10 @@ export function CharacterHeader({
           <p className="text-au-chico">Import a save to begin.</p>
         )}
       </div>
-      <SaveUpload onFile={onFile} />
+      <div className="flex shrink-0 flex-col items-end gap-3">
+        <AuthControl />
+        <SaveUpload onFile={onFile} />
+      </div>
     </header>
   );
 }

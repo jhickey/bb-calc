@@ -21,6 +21,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@napi-rs/wasm-runtime": "^1.1.5",
+    "@supabase/supabase-js": "^2.108.2",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "^0.10.7",
     "@tanstack/react-router": "^1.170.16",
