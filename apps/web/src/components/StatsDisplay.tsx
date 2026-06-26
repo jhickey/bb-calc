@@ -29,8 +29,12 @@ function clampStat(raw: string): number {
 }
 
 type StatsDisplayProps = {
-  /** The save's character, the read-only baseline for each stat. */
-  character: Character;
+  /**
+   * The save's character — the read-only baseline for each stat. `null` when no
+   * save is loaded (logged-out building): only the four editable scaling stats
+   * show, with no baseline/revert.
+   */
+  character: Character | null;
   /** The current (possibly edited) scaling stats fed to the optimizer. */
   stats: Stats;
   onEditStat: (key: keyof Stats, value: number) => void;
@@ -39,16 +43,20 @@ type StatsDisplayProps = {
 };
 
 /**
- * A hunter's six leveling stats with their in-game icons. Scaling stats are
- * editable number inputs; each shows a revert control when changed from the save.
+ * A hunter's leveling stats with their in-game icons. Scaling stats are editable
+ * number inputs; with a save loaded each shows a revert control when changed,
+ * plus the read-only Vitality/Endurance. Without a save, only the four scaling
+ * stats render.
  */
 export function StatsDisplay({ character, stats, onEditStat, onRevertStat, className = '' }: StatsDisplayProps) {
+  // Vitality/Endurance are read-only save values; drop them when there's no save.
+  const rows = character ? STATS : STATS.filter((s) => s.statKey != null);
   return (
     <ul className={`flex flex-wrap gap-4 ${className}`}>
-      {STATS.map(({ charKey, statKey, label, icon }) => {
-        const baseline = character[charKey] as number;
-        const value = statKey ? stats[statKey] : baseline;
-        const changed = statKey != null && value !== baseline;
+      {rows.map(({ charKey, statKey, label, icon }) => {
+        const baseline = character ? (character[charKey] as number) : null;
+        const value = statKey ? stats[statKey] : (baseline ?? 0);
+        const changed = statKey != null && baseline != null && value !== baseline;
         return (
           <li
             key={charKey}

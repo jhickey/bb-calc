@@ -7,8 +7,8 @@ import { StatsDisplay } from '#/components/StatsDisplay';
 
 type CharacterHeaderProps = {
   inventory: Inventory | null;
-  /** The current (possibly edited) scaling stats; null until a save is imported. */
-  stats: Stats | null;
+  /** The current (possibly edited) scaling stats fed to the optimizer. */
+  stats: Stats;
   onEditStat: (key: keyof Stats, value: number) => void;
   onRevertStat: (key: keyof Stats) => void;
   onResetStats: () => void;
@@ -54,7 +54,6 @@ export function CharacterHeader({
   const newGameLabel = character ? (character.newGame === 0 ? 'NG' : `NG+${character.newGame}`) : '';
   const statsChanged =
     character != null &&
-    stats != null &&
     (stats.str !== character.strength ||
       stats.skl !== character.skill ||
       stats.blt !== character.bloodtinge ||
@@ -63,7 +62,7 @@ export function CharacterHeader({
   return (
     <header className={`flex flex-wrap items-start justify-between gap-4 ${className}`}>
       <div className="min-w-0">
-        {character && stats ? (
+        {character ? (
           <motion.div
             key={character.name}
             initial={{ opacity: 0, y: 8 }}
@@ -104,7 +103,18 @@ export function CharacterHeader({
             </div>
           </motion.div>
         ) : (
-          <p className="text-au-chico">Import a save to begin.</p>
+          <div>
+            <p className="text-au-chico">
+              No save loaded — set your stats and build below, or log in to upload a save.
+            </p>
+            <StatsDisplay
+              className="mt-3"
+              character={null}
+              stats={stats}
+              onEditStat={onEditStat}
+              onRevertStat={onRevertStat}
+            />
+          </div>
         )}
       </div>
       <div className="flex shrink-0 flex-col items-end gap-3">
