@@ -1,0 +1,11 @@
+# Local Terraform state and provider cache
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Variable files may hold secrets; keep the example only
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
