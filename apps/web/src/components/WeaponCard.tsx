@@ -2,14 +2,14 @@ import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { Ban, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import type { GemShape, InventoryGem, Stats } from 'bb-calc-js';
 import { computeAr } from 'bb-calc-js';
 
 import { GemPickerModal } from '#/components/GemPickerModal';
 import { ArValue } from '#/components/ArValue';
 import type { Socket } from '#/lib/gems';
-import { gemShapeIcon } from '#/lib/gems';
+import { gemShapeIcon, isCursed, isDrawbackEffect } from '#/lib/gems';
 import { PLACEHOLDER_WEAPON_ICON, weaponById, weaponName, weaponThumbnail } from '#/lib/weapons';
 
 /** Damage lines shown in the breakdown, in display order. */
@@ -42,6 +42,8 @@ type WeaponCardProps = {
   onMoveDown: () => void;
   onSlotChange: (slotIndex: number, socket: Socket | null) => void;
   onCreateCustom: (socket: Socket) => void;
+  /** Drop an owned gem from auto-optimization (re-optimizes the whole set). */
+  onExcludeGem: (gemId: string) => void;
   onOptimize: () => void;
   onRemove: () => void;
   className?: string;
@@ -71,6 +73,7 @@ export function WeaponCard({
   onMoveDown,
   onSlotChange,
   onCreateCustom,
+  onExcludeGem,
   onOptimize,
   onRemove,
   className = '',
@@ -197,19 +200,32 @@ export function WeaponCard({
           {slotShapes.map((shape, slotIndex) => {
             const socket = slots[slotIndex] ?? null;
             return (
-              <li key={slotIndex}>
+              <li key={slotIndex} className="flex items-stretch gap-1">
                 <button
                   type="button"
                   onClick={() => setOpenSlot(slotIndex)}
-                  className="flex w-full items-start gap-2 rounded border border-black-wool px-2 py-1.5 text-left text-xs transition-colors hover:border-tamarillo"
+                  className="flex min-w-0 flex-1 items-start gap-2 rounded border border-black-wool px-2 py-1.5 text-left text-xs transition-colors hover:border-tamarillo"
                 >
                   <img src={gemShapeIcon(shape)} alt={shape} className="mt-0.5 h-5 w-5 shrink-0 object-contain" />
                   {socket ? (
                     <div className="min-w-0 flex-1">
-                      <span className="text-pale-mocha">{socket.gem.name}</span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-pale-mocha">{socket.gem.name}</span>
+                        {isCursed(socket) && (
+                          <span
+                            title="Cursed gem — carries a negative effect"
+                            className="shrink-0 rounded-sm bg-red-500/20 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-400"
+                          >
+                            Cursed
+                          </span>
+                        )}
+                      </span>
                       <ul className="mt-0.5 space-y-0.5">
                         {socket.effects.map((effect, i) => (
-                          <li key={`${effect}-${i}`} className="text-pale-mocha/70">
+                          <li
+                            key={`${effect}-${i}`}
+                            className={isDrawbackEffect(effect) ? 'text-red-400' : 'text-pale-mocha/70'}
+                          >
                             {effect}
                           </li>
                         ))}
@@ -219,6 +235,17 @@ export function WeaponCard({
                     <span className="flex-1 italic text-au-chico">Empty {shape} slot — click to socket</span>
                   )}
                 </button>
+                {socket?.gemId && (
+                  <button
+                    type="button"
+                    onClick={() => onExcludeGem(socket.gemId!)}
+                    aria-label={`Exclude ${socket.gem.name} from optimization`}
+                    title="Exclude this gem from auto-optimization"
+                    className="flex shrink-0 items-center rounded border border-black-wool px-2 text-au-chico transition-colors hover:border-old-red hover:text-red-400"
+                  >
+                    <Ban className="h-4 w-4" />
+                  </button>
+                )}
               </li>
             );
           })}

@@ -20,6 +20,7 @@ import { TargetSelect } from '#/components/TargetSelect';
 import { WeaponCard } from '#/components/WeaponCard';
 import { WeaponSelect } from '#/components/WeaponSelect';
 import type { Socket } from '#/lib/gems';
+import { isDrawbackEffect } from '#/lib/gems';
 
 export const Route = createFileRoute('/')({ component: Home });
 
@@ -43,6 +44,10 @@ function Home() {
   // 'compare' = every weapon may use any gem; 'loadout' = gems are a shared pool
   // consumed down the weapon list (Mode.Plan).
   const [mode, setMode] = useState<'compare' | 'loadout'>('compare');
+  // Gem instance ids the player has excluded from auto-optimization (e.g. a
+  // high-AR gem whose curse the calc can't see). Re-optimizes when it changes.
+  const [excludedGemIds, setExcludedGemIds] = useState<Set<string>>(new Set());
+  const [showExcluded, setShowExcluded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>(TAB_WEAPONS);
 
@@ -54,6 +59,8 @@ function Home() {
     setSlotsByWeapon({});
     setLevelByWeapon({});
     setCustomGems([]);
+    setExcludedGemIds(new Set());
+    setShowExcluded(false);
   }
 
   // Right-hand owned weapons, keyed by their AR-table slug: the set acquired in
@@ -159,6 +166,13 @@ function Home() {
       .filter((id): id is string => id != null);
   }
 
+  // The gem pool fed to the optimizer: every owned gem minus the excluded ones.
+  // Pre-filtering here applies exclusion in both Compare and Loadout (Compare
+  // ignores the optimizer's own `excludedGems` arg, so this is the robust path).
+  function availablePool(excluded: Set<string>) {
+    return inventory ? inventory.gems.filter((gem) => !excluded.has(gem.id)) : [];
+  }
+
   // Optimize one weapon. In Loadout, gems already used by other weapons are off
   // the table.
   async function autoOptimize(weaponId: string) {
@@ -169,7 +183,9 @@ function Home() {
       const excluded = mode === 'loadout' ? gemsUsedByOtherWeapons(weaponId) : undefined;
       const optMode = mode === 'loadout' ? Mode.Plan : Mode.Compare;
       const level = levelByWeapon[weaponId] ?? 10;
-      const [result] = await optimize([weaponId], inventory.gems, editStats, target, optMode, excluded, [level]);
+      const [result] = await optimize([weaponId], availablePool(excludedGemIds), editStats, target, optMode, excluded, [
+        level,
+      ]);
       if (result) setSlotsByWeapon((prev) => ({ ...prev, [weaponId]: slotsFromResult(result) }));
       setError(null);
     } catch (e) {
@@ -177,19 +193,19 @@ function Home() {
     }
   }
 
-  // Optimize every selected weapon. Loadout (Mode.Plan) walks them in list order,
-  // removing each weapon's chosen gems from the pool for the weapons after it;
-  // Compare gives every weapon the full pool.
-  async function optimizeAll() {
+  // Optimize every selected weapon against the pool minus `excluded`. Loadout
+  // (Mode.Plan) walks them in list order, removing each weapon's chosen gems from
+  // the pool for the weapons after it; Compare gives every weapon the full pool.
+  async function runOptimizeAll(excluded: Set<string>, useMode: 'compare' | 'loadout' = mode) {
     if (!inventory || !editStats || weaponIds.length === 0) return;
     try {
       const levels = weaponIds.map((id) => levelByWeapon[id] ?? 10);
       const results = await optimize(
         weaponIds,
-        inventory.gems,
+        availablePool(excluded),
         editStats,
         target,
-        mode === 'loadout' ? Mode.Plan : Mode.Compare,
+        useMode === 'loadout' ? Mode.Plan : Mode.Compare,
         undefined,
         levels,
       );
@@ -200,6 +216,33 @@ function Home() {
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
+  }
+
+  function optimizeAll() {
+    return runOptimizeAll(excludedGemIds);
+  }
+
+  // Switching mode re-optimizes so the shown slots always match the active mode
+  // (otherwise Loadout's shared-pool picks would linger after switching to
+  // Compare, and vice versa). The new mode is passed through since state is async.
+  function changeMode(value: 'compare' | 'loadout') {
+    if (value === mode) return;
+    setMode(value);
+    void runOptimizeAll(excludedGemIds, value);
+  }
+
+  // Exclude/restore a gem, then re-optimize the whole set with the new pool.
+  // The next set is passed straight through since state updates are async.
+  function excludeGem(gemId: string) {
+    const next = new Set(excludedGemIds).add(gemId);
+    setExcludedGemIds(next);
+    void runOptimizeAll(next);
+  }
+  function unexcludeGem(gemId: string) {
+    const next = new Set(excludedGemIds);
+    next.delete(gemId);
+    setExcludedGemIds(next);
+    void runOptimizeAll(next);
   }
 
   return (
@@ -247,7 +290,7 @@ function Home() {
                         key={value}
                         type="button"
                         aria-pressed={mode === value}
-                        onClick={() => setMode(value)}
+                        onClick={() => changeMode(value)}
                         className={`relative flex-1 cursor-pointer rounded px-3 py-1.5 text-sm font-semibold capitalize transition-colors ${
                           mode === value ? 'text-pale-mocha' : 'text-au-chico hover:text-pale-mocha'
                         }`}
@@ -273,6 +316,56 @@ function Home() {
                 <Button className="mt-4" onClick={optimizeAll} disabled={weaponIds.length === 0}>
                   Auto-optimize all
                 </Button>
+
+                {excludedGemIds.size > 0 && (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowExcluded((prev) => !prev)}
+                      className="cursor-pointer text-xs text-au-chico underline transition-colors hover:text-pale-mocha"
+                    >
+                      {excludedGemIds.size} excluded
+                    </button>
+                    {showExcluded && (
+                      <ul className="mt-2 space-y-1">
+                        {[...excludedGemIds].map((id) => {
+                          const gem = inventory.gems.find((g) => g.id === id);
+                          return (
+                            <li
+                              key={id}
+                              className="flex items-start justify-between gap-2 rounded border border-black-wool px-2 py-1.5 text-xs"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <span className="block truncate text-pale-mocha">{gem ? gem.name : id}</span>
+                                {gem && (
+                                  <ul className="mt-0.5 space-y-0.5">
+                                    {gem.effects.map((effect, i) => (
+                                      <li
+                                        key={`${effect}-${i}`}
+                                        className={isDrawbackEffect(effect) ? 'text-red-400' : 'text-pale-mocha/60'}
+                                      >
+                                        {effect}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => unexcludeGem(id)}
+                                aria-label={`Restore ${gem ? gem.name : id} to optimization`}
+                                title="Restore to optimization"
+                                className="shrink-0 cursor-pointer text-base leading-none text-au-chico hover:text-pale-mocha"
+                              >
+                                ×
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="lg:col-span-2 lg:pt-6">
@@ -304,6 +397,7 @@ function Home() {
                               onMoveDown={() => moveWeapon(weaponId, 1)}
                               onSlotChange={(slotIndex, socket) => setSlot(weaponId, slotIndex, socket)}
                               onCreateCustom={(socket) => setCustomGems((prev) => [...prev, socket])}
+                              onExcludeGem={excludeGem}
                               onOptimize={() => autoOptimize(weaponId)}
                               onRemove={() => removeWeapon(weaponId)}
                             />
