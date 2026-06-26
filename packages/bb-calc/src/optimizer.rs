@@ -142,6 +142,8 @@ struct GemType {
 /// Immutable search context plus the running best, threaded through `fill`.
 struct Search<'a> {
     weapon: &'a Weapon,
+    /// Upgrade level (+0..=10) the weapon is scored at; constant for the search.
+    level: u8,
     stats: &'a Stats,
     target: DamageTarget,
     slot_shapes: &'a [GemShape],
@@ -171,7 +173,7 @@ impl Search<'_> {
     /// Try every legal way to fill slot `slot` onward, recording the best score.
     fn fill(&mut self, slot: usize, chosen: &mut Vec<Option<usize>>) {
         if slot == self.slot_shapes.len() {
-            let breakdown = compute_ar(self.weapon, self.gems_for(chosen), self.stats);
+            let breakdown = compute_ar(self.weapon, self.gems_for(chosen), self.stats, self.level);
             let s = self.target.score(&breakdown);
             if s > self.best_score {
                 self.best_score = s;
@@ -202,8 +204,9 @@ fn optimize_gems_for_weapon<'a>(
     candidates: &[Candidate],
     stats: &Stats,
     target: DamageTarget,
+    level: u8,
 ) -> OptimizeResult {
-    let zero = compute_ar(weapon, [None, None, None], stats);
+    let zero = compute_ar(weapon, [None, None, None], stats, level);
     let zero_score = target.score(&zero);
 
     // Keep gems that can help — either the targeted line or the overall total —
@@ -214,7 +217,7 @@ fn optimize_gems_for_weapon<'a>(
     // neither (a pure curse, or one the AR calc ignores) can never improve the
     // bundle, since gems combine by summing flats/scaling and multiplying mults.
     let helpful = candidates.iter().filter(|c| {
-        let solo = compute_ar(weapon, [Some(&c.gem), None, None], stats);
+        let solo = compute_ar(weapon, [Some(&c.gem), None, None], stats, level);
         target.score(&solo) > zero_score || solo.total > zero.total
     });
 
@@ -240,6 +243,7 @@ fn optimize_gems_for_weapon<'a>(
 
     let mut search = Search {
         weapon,
+        level,
         stats,
         target,
         slot_shapes: &slot_shapes,
@@ -270,7 +274,7 @@ fn optimize_gems_for_weapon<'a>(
         .collect();
 
     let gems = search.gems_for(&search.best_chosen);
-    let breakdown = compute_ar(weapon, gems, stats);
+    let breakdown = compute_ar(weapon, gems, stats, level);
     OptimizeResult {
         weapon_id: weapon.id.clone().to_string(),
         score: search.best_score,
@@ -318,7 +322,7 @@ mod tests {
         let strong = candidate("strong", GemShape::Radial, |g| g.dmg_general = 2.0);
 
         let result =
-            optimize_gems_for_weapon(&w, &[weak, strong], &ZERO_STATS, DamageTarget::Total);
+            optimize_gems_for_weapon(&w, &[weak, strong], &ZERO_STATS, DamageTarget::Total, 10);
 
         // Only the one Radial slot is fillable -> the 2.0x gem wins: floor(100 * 2.0) = 200.
         assert_eq!(result.score, 200.0);
@@ -343,7 +347,7 @@ mod tests {
         let droplet = candidate("droplet", GemShape::Droplet, |g| g.dmg_general = 1.5);
 
         let result =
-            optimize_gems_for_weapon(&w, &[mismatched, droplet], &ZERO_STATS, DamageTarget::Total);
+            optimize_gems_for_weapon(&w, &[mismatched, droplet], &ZERO_STATS, DamageTarget::Total, 10);
 
         // Only the single Droplet instance can be slotted: floor(100 * 1.5) = 150.
         assert_eq!(result.total, 150.0);
@@ -366,7 +370,7 @@ mod tests {
         let filler = candidate("filler", GemShape::Radial, |g| g.flat_phys = 10.0);
 
         let result =
-            optimize_gems_for_weapon(&w, &[strong, filler], &ZERO_STATS, DamageTarget::Total);
+            optimize_gems_for_weapon(&w, &[strong, filler], &ZERO_STATS, DamageTarget::Total, 10);
 
         // physical = floor(100 * 3.0 + flat_phys 10) = 310; on a Dual weapon the
         // filler's flat_phys also feeds the blood line (floor(0 + 10) = 10), so
@@ -390,7 +394,7 @@ mod tests {
         let a = candidate("a", GemShape::Radial, |g| g.dmg_general = 1.5);
         let b = candidate("b", GemShape::Radial, |g| g.dmg_general = 1.5);
 
-        let result = optimize_gems_for_weapon(&w, &[a, b], &ZERO_STATS, DamageTarget::Total);
+        let result = optimize_gems_for_weapon(&w, &[a, b], &ZERO_STATS, DamageTarget::Total, 10);
 
         // gen = 1.5 * 1.5 = 2.25 -> floor(100 * 2.25) = 225, using both instances.
         assert_eq!(result.total, 225.0);
@@ -422,6 +426,7 @@ mod tests {
             &[radial, radial2, triangle],
             &ZERO_STATS,
             DamageTarget::Total,
+            10,
         );
 
         // All three slots fill: 1.5^3 = 3.375 -> floor(100 * 3.375) = 337.
@@ -445,7 +450,7 @@ mod tests {
         let fire = candidate("fire", GemShape::Radial, |g| g.dmg_fire = 2.0);
         let bolt = candidate("bolt", GemShape::Radial, |g| g.dmg_bolt = 3.0);
 
-        let result = optimize_gems_for_weapon(&w, &[fire, bolt], &ZERO_STATS, DamageTarget::Fire);
+        let result = optimize_gems_for_weapon(&w, &[fire, bolt], &ZERO_STATS, DamageTarget::Fire, 10);
 
         // With one slot and a Fire target, the fire gem wins over the (higher
         // total) bolt gem: floor(elemBase(100) * 2.0) = 200.
@@ -491,7 +496,7 @@ pub enum Mode {
 }
 
 pub fn optimize(
-    weapons: Vec<&'static Weapon>,
+    weapons: Vec<(&'static Weapon, u8)>,
     gems: Vec<InventoryGem>,
     stats: &Stats,
     target: DamageTarget,
@@ -504,12 +509,12 @@ pub fn optimize(
 
     match mode {
         Mode::Compare => {
-            for w in weapons {
+            for (w, level) in weapons {
                 let tx = tx.clone();
                 let candidates = candidates.clone();
                 let stats = stats.clone();
                 thread::spawn(move || {
-                    let result = optimize_gems_for_weapon(w, &candidates, &stats, target);
+                    let result = optimize_gems_for_weapon(w, &candidates, &stats, target, level);
                     tx.send(result).unwrap();
                 });
             }
@@ -521,9 +526,9 @@ pub fn optimize(
         Mode::Plan => {
             let mut results: Vec<OptimizeResult> = Vec::new();
             let mut excluded: Vec<String> = excluded_gems.clone().unwrap_or_default();
-            for weapon in weapons {
+            for (weapon, level) in weapons {
                 let (candidates, _) = get_gem_candidates(&gems, Some(&excluded));
-                let result = optimize_gems_for_weapon(weapon, &candidates, &stats, target);
+                let result = optimize_gems_for_weapon(weapon, &candidates, &stats, target, level);
                 result.slots.iter().for_each(|slot| {
                     if let Some(gem) = &slot.gem {
                         excluded.push(gem.id.clone());

@@ -420,8 +420,14 @@ impl From<ArBreakdown> for BbArBreakdown {
 
 /// Computes the Attack Rating for the weapon with `weapon_id`, fitted with up
 /// to three `gems` at the given hunter `stats`. Gem slot order does not matter.
+/// `level` is the weapon's upgrade level (+0..=10); omit it to use +10 (max).
 #[napi]
-pub fn compute_ar(weapon_id: String, gems: Vec<Gem>, stats: Stats) -> Result<ArBreakdown> {
+pub fn compute_ar(
+  weapon_id: String,
+  gems: Vec<Gem>,
+  stats: Stats,
+  level: Option<u8>,
+) -> Result<ArBreakdown> {
   let weapon = BbWeapon::by_id(&weapon_id).ok_or_else(|| {
     Error::new(
       Status::InvalidArg,
@@ -442,7 +448,7 @@ pub fn compute_ar(weapon_id: String, gems: Vec<Gem>, stats: Stats) -> Result<ArB
     *slot = Some(gem);
   }
 
-  let breakdown = bb_compute_ar(weapon, slots, &BbStats::from(&stats));
+  let breakdown = bb_compute_ar(weapon, slots, &BbStats::from(&stats), level.unwrap_or(10));
   Ok(breakdown.into())
 }
 

@@ -22,6 +22,7 @@ pub struct OptimizeTask {
   target: DamageTarget,
   mode: Mode,
   excluded_gems: Option<Vec<String>>,
+  levels: Option<Vec<u8>>,
 }
 
 impl Task for OptimizeTask {
@@ -29,15 +30,17 @@ impl Task for OptimizeTask {
   type JsValue = Vec<OptimizeResult>;
 
   fn compute(&mut self) -> napi::Result<Self::Output> {
-    let mut weapons: Vec<&BbWeapon> = Vec::new();
-    for weapon_id in &self.weapon_ids {
+    let levels = self.levels.take().unwrap_or_default();
+    let mut weapons: Vec<(&BbWeapon, u8)> = Vec::new();
+    for (i, weapon_id) in self.weapon_ids.iter().enumerate() {
       let weapon = BbWeapon::by_id(weapon_id).ok_or_else(|| {
         Error::new(
           Status::InvalidArg,
           format!("unknown weapon id: {weapon_id}"),
         )
       })?;
-      weapons.push(weapon);
+      // Default to +10 (max) when no level is supplied for this weapon.
+      weapons.push((weapon, levels.get(i).copied().unwrap_or(10)));
     }
 
     let bb_gems = self.gems.iter().map(BbInventoryGem::from).collect();
@@ -65,6 +68,8 @@ impl Task for OptimizeTask {
 /// Returns a `Promise`: the search runs on a worker thread so it never blocks
 /// the caller (required in the browser, where the optimizer's threaded
 /// `Mode::Compare` would otherwise call `Atomics.wait` on the main thread).
+/// `levels` holds each weapon's upgrade level (+0..=10), aligned to `weapon_ids`;
+/// omit it (or individual entries) to score at +10 (max).
 #[napi]
 pub fn optimize(
   weapon_ids: Vec<String>,
@@ -73,6 +78,7 @@ pub fn optimize(
   target: DamageTarget,
   mode: Mode,
   excluded_gems: Option<Vec<String>>,
+  levels: Option<Vec<u8>>,
 ) -> AsyncTask<OptimizeTask> {
   AsyncTask::new(OptimizeTask {
     weapon_ids,
@@ -81,5 +87,6 @@ pub fn optimize(
     target,
     mode,
     excluded_gems,
+    levels,
   })
 }

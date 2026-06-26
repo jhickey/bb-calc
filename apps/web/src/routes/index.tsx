@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -35,6 +35,8 @@ function Home() {
   const [weaponIds, setWeaponIds] = useState<Array<string>>([]);
   // Per-weapon gem socketing (3 slots each); the source of truth for each card.
   const [slotsByWeapon, setSlotsByWeapon] = useState<Record<string, Array<Socket | null>>>({});
+  // Per-weapon upgrade level (+0..=10); seeded from the save, then editable.
+  const [levelByWeapon, setLevelByWeapon] = useState<Record<string, number>>({});
   // Custom gems created this session — ephemeral, reusable across slots.
   const [customGems, setCustomGems] = useState<Array<Socket>>([]);
   const [target, setTarget] = useState<DamageTarget>(DamageTarget.Total);
@@ -50,7 +52,39 @@ function Home() {
     setInventory(inv);
     setEditStats({ ...inv.stats });
     setSlotsByWeapon({});
+    setLevelByWeapon({});
     setCustomGems([]);
+  }
+
+  // Right-hand owned weapons, keyed by their AR-table slug: the set acquired in
+  // the save, and the highest level owned (the default for that weapon's card).
+  const ownedWeaponIds = useMemo(
+    () => new Set((inventory?.weapons ?? []).map((w) => w.weaponId).filter((id): id is string => !!id)),
+    [inventory],
+  );
+  const ownedLevels = useMemo(() => {
+    const levels = new Map<string, number>();
+    for (const w of inventory?.weapons ?? []) {
+      if (!w.weaponId) continue;
+      const prev = levels.get(w.weaponId);
+      if (prev == null || w.level > prev) levels.set(w.weaponId, w.level);
+    }
+    return levels;
+  }, [inventory]);
+
+  // Selecting weapons: seed a level for each newly-added id — the save level when
+  // owned, otherwise +10 (max) so an unacquired weapon shows its full potential.
+  function selectWeapons(ids: Array<string>) {
+    setLevelByWeapon((prev) => {
+      const next = { ...prev };
+      for (const id of ids) if (next[id] == null) next[id] = ownedLevels.get(id) ?? 10;
+      return next;
+    });
+    setWeaponIds(ids);
+  }
+
+  function setLevel(weaponId: string, level: number) {
+    setLevelByWeapon((prev) => ({ ...prev, [weaponId]: Math.max(0, Math.min(10, level)) }));
   }
 
   function editStat(key: keyof Stats, value: number) {
@@ -134,7 +168,8 @@ function Home() {
       // optimizes against the full pool minus the gems used by other weapons.
       const excluded = mode === 'loadout' ? gemsUsedByOtherWeapons(weaponId) : undefined;
       const optMode = mode === 'loadout' ? Mode.Plan : Mode.Compare;
-      const [result] = await optimize([weaponId], inventory.gems, editStats, target, optMode, excluded);
+      const level = levelByWeapon[weaponId] ?? 10;
+      const [result] = await optimize([weaponId], inventory.gems, editStats, target, optMode, excluded, [level]);
       if (result) setSlotsByWeapon((prev) => ({ ...prev, [weaponId]: slotsFromResult(result) }));
       setError(null);
     } catch (e) {
@@ -148,12 +183,15 @@ function Home() {
   async function optimizeAll() {
     if (!inventory || !editStats || weaponIds.length === 0) return;
     try {
+      const levels = weaponIds.map((id) => levelByWeapon[id] ?? 10);
       const results = await optimize(
         weaponIds,
         inventory.gems,
         editStats,
         target,
         mode === 'loadout' ? Mode.Plan : Mode.Compare,
+        undefined,
+        levels,
       );
       const next: Record<string, Array<Socket | null>> = {};
       for (const result of results) next[result.weaponId] = slotsFromResult(result);
@@ -198,7 +236,7 @@ function Home() {
           {activeTab === TAB_WEAPONS && (
             <div className="mt-6 grid gap-6 lg:grid-cols-3">
               <div className="lg:col-span-1">
-                <WeaponSelect selected={weaponIds} onChange={setWeaponIds} />
+                <WeaponSelect selected={weaponIds} onChange={selectWeapons} ownedWeaponIds={ownedWeaponIds} />
                 <TargetSelect className="mt-4" value={target} onChange={setTarget} />
 
                 <div className="mt-4">
@@ -253,6 +291,8 @@ function Home() {
                               weaponId={weaponId}
                               index={index}
                               total={weaponIds.length}
+                              level={levelByWeapon[weaponId] ?? 10}
+                              onLevelChange={(level) => setLevel(weaponId, level)}
                               slots={slotsByWeapon[weaponId] ?? EMPTY_SLOTS}
                               stats={editStats}
                               inventoryGems={inventory.gems}
