@@ -203,7 +203,8 @@ fn main() {
                 arc: arc.unwrap_or(50),
             };
 
-            let result = compute_ar(weapon, [None, None, None], &stats);
+            // The CLI doesn't model upgrade level yet; score at +10 (max).
+            let result = compute_ar(weapon, [None, None, None], &stats, 10);
             println!("{:?}", result);
         }
         Some(Commands::Init {}) => match env::home_dir() {
@@ -261,10 +262,11 @@ fn main() {
                 arc: arc.unwrap_or(inventory.stats.arc),
             };
 
-            let weapons = if weapons.is_empty() {
-                Weapon::all().iter().map(|w| w).collect()
+            // Pair each weapon with an upgrade level; the CLI scores at +10 (max).
+            let weapons: Vec<(&Weapon, u8)> = if weapons.is_empty() {
+                Weapon::all().iter().map(|w| (w, 10)).collect()
             } else {
-                weapons.iter().map(|w| Weapon::by_id(w).unwrap()).collect()
+                weapons.iter().map(|w| (Weapon::by_id(w).unwrap(), 10)).collect()
             };
 
             let results = optimizer::optimize(
