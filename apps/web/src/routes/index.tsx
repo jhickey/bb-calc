@@ -12,6 +12,7 @@ import {
 import type { Inventory, OptimizeResult, Stats } from 'bb-calc-js';
 import { DamageTarget, Mode, gemFromInventory, optimize, parseSave } from 'bb-calc-js';
 
+import { AuthControl } from '#/components/AuthControl';
 import { Button } from '#/components/Button';
 import { CharacterHeader } from '#/components/CharacterHeader';
 import { GemsPanel } from '#/components/GemsPanel';
@@ -279,7 +280,10 @@ function Home() {
 
   return (
     <div className="p-8">
-      <h1 className="text-4xl font-bold">Bloodborne Optimizer</h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-4xl font-bold">Bloodborne Optimizer</h1>
+        <AuthControl />
+      </div>
       {error && <p className="mt-4 text-red-400">Error: {error}</p>}
 
       <CharacterHeader
