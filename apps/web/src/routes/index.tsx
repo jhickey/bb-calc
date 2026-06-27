@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -12,6 +12,7 @@ import {
 import type { Inventory, OptimizeResult, Stats } from 'bb-calc-js';
 import { DamageTarget, Mode, gemFromInventory, optimize, parseSave } from 'bb-calc-js';
 
+import { AuthControl } from '#/components/AuthControl';
 import { Button } from '#/components/Button';
 import { CharacterHeader } from '#/components/CharacterHeader';
 import { GemsPanel } from '#/components/GemsPanel';
@@ -21,6 +22,7 @@ import { WeaponCard } from '#/components/WeaponCard';
 import { WeaponSelect } from '#/components/WeaponSelect';
 import type { Socket } from '#/lib/gems';
 import { isDrawbackEffect } from '#/lib/gems';
+import { loadLocalBuild, saveLocalBuild } from '#/lib/buildStorage';
 
 export const Route = createFileRoute('/')({ component: Home });
 
@@ -29,10 +31,14 @@ const TAB_GEMS = 'gems';
 
 const EMPTY_SLOTS: Array<Socket | null> = [null, null, null];
 
+// Stats to start from when no save is loaded (logged-out building); fully editable.
+const DEFAULT_STATS: Stats = { str: 10, skl: 10, blt: 10, arc: 10 };
+
 function Home() {
   const [inventory, setInventory] = useState<Inventory | null>(null);
-  // The scaling stats fed to the calc: seeded from the save, then editable.
-  const [editStats, setEditStats] = useState<Stats | null>(null);
+  // The scaling stats fed to the calc: a neutral default until a save seeds them,
+  // then editable.
+  const [editStats, setEditStats] = useState<Stats>(DEFAULT_STATS);
   const [weaponIds, setWeaponIds] = useState<Array<string>>([]);
   // Per-weapon gem socketing (3 slots each); the source of truth for each card.
   const [slotsByWeapon, setSlotsByWeapon] = useState<Record<string, Array<Socket | null>>>({});
@@ -50,6 +56,33 @@ function Home() {
   const [showExcluded, setShowExcluded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>(TAB_WEAPONS);
+
+  // Rehydrate the working build from localStorage on first load so a refresh (or
+  // a logged-out session) doesn't lose it. The inventory isn't stored, so this
+  // restores the build config only.
+  const hydrated = useRef(false);
+  useEffect(() => {
+    const stored = loadLocalBuild();
+    if (stored) {
+      setEditStats(stored.editStats);
+      setWeaponIds(stored.weaponIds);
+      setSlotsByWeapon(stored.slotsByWeapon);
+      setLevelByWeapon(stored.levelByWeapon);
+      setCustomGems(stored.customGems);
+      setTarget(stored.target);
+      setMode(stored.mode);
+    }
+  }, []);
+
+  // Persist the working build on change. Skip the first run so the initial
+  // defaults don't clobber stored data before the rehydrate above applies.
+  useEffect(() => {
+    if (!hydrated.current) {
+      hydrated.current = true;
+      return;
+    }
+    saveLocalBuild({ editStats, weaponIds, slotsByWeapon, levelByWeapon, customGems, target, mode });
+  }, [editStats, weaponIds, slotsByWeapon, levelByWeapon, customGems, target, mode]);
 
   async function handleFile(file: File) {
     const arrayBuffer = await file.arrayBuffer();
@@ -95,10 +128,10 @@ function Home() {
   }
 
   function editStat(key: keyof Stats, value: number) {
-    setEditStats((prev) => (prev ? { ...prev, [key]: value } : prev));
+    setEditStats((prev) => ({ ...prev, [key]: value }));
   }
   function revertStat(key: keyof Stats) {
-    setEditStats((prev) => (prev && inventory ? { ...prev, [key]: inventory.stats[key] } : prev));
+    if (inventory) setEditStats((prev) => ({ ...prev, [key]: inventory.stats[key] }));
   }
   function resetStats() {
     if (inventory) setEditStats({ ...inventory.stats });
@@ -247,7 +280,10 @@ function Home() {
 
   return (
     <div className="p-8">
-      <h1 className="text-4xl font-bold">Bloodborne Optimizer</h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-4xl font-bold">Bloodborne Optimizer</h1>
+        <AuthControl />
+      </div>
       {error && <p className="mt-4 text-red-400">Error: {error}</p>}
 
       <CharacterHeader
@@ -260,7 +296,8 @@ function Home() {
         onFile={handleFile}
       />
 
-      {inventory && editStats && (
+      {/* Tabs are always available — a logged-out user can build without a save. */}
+      {editStats && (
         <motion.div
           className="mt-8"
           initial={{ opacity: 0, y: 12 }}
@@ -270,7 +307,7 @@ function Home() {
           <Tabs
             tabs={[
               { id: TAB_WEAPONS, label: 'Weapons' },
-              { id: TAB_GEMS, label: `Gems (${inventory.gems.length})` },
+              { id: TAB_GEMS, label: `Gems (${inventory?.gems.length ?? 0})` },
             ]}
             active={activeTab}
             onChange={setActiveTab}
@@ -329,7 +366,7 @@ function Home() {
                     {showExcluded && (
                       <ul className="mt-2 space-y-1">
                         {[...excludedGemIds].map((id) => {
-                          const gem = inventory.gems.find((g) => g.id === id);
+                          const gem = inventory?.gems.find((g) => g.id === id);
                           return (
                             <li
                               key={id}
@@ -388,7 +425,7 @@ function Home() {
                               onLevelChange={(level) => setLevel(weaponId, level)}
                               slots={slotsByWeapon[weaponId] ?? EMPTY_SLOTS}
                               stats={editStats}
-                              inventoryGems={inventory.gems}
+                              inventoryGems={inventory?.gems ?? []}
                               customGems={customGems}
                               unavailableGemIds={
                                 mode === 'loadout' ? new Set(gemsUsedByOtherWeapons(weaponId)) : undefined
@@ -411,7 +448,7 @@ function Home() {
             </div>
           )}
 
-          {activeTab === TAB_GEMS && <GemsPanel className="mt-6" gems={inventory.gems} />}
+          {activeTab === TAB_GEMS && <GemsPanel className="mt-6" gems={inventory?.gems ?? []} />}
         </motion.div>
       )}
     </div>
