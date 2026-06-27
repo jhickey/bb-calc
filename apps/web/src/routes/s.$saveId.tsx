@@ -1,43 +1,29 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
-import type { Inventory } from 'bb-calc-js';
+import { useEffect } from 'react';
 
 import { OptimizerApp } from '#/components/OptimizerApp';
 import { useAuth } from '#/lib/auth';
-import { loadSaveInventory } from '#/lib/saves';
+import { useAppDispatch, useAppSelector } from '#/store';
+import { loadSave } from '#/store/buildSlice';
 
 export const Route = createFileRoute('/s/$saveId')({ component: SaveRoute });
 
-type State =
-  | { status: 'loading' }
-  | { status: 'ready'; inventory: Inventory }
-  | { status: 'unauth' }
-  | { status: 'notfound' };
-
-/** A save's editor: loads the owner's inventory by id (refresh re-fetches it). */
+/** A save's editor: loads the owner's inventory by id into the build slice. */
 function SaveRoute() {
   const { saveId } = Route.useParams();
   const { user, loading: authLoading } = useAuth();
-  const [state, setState] = useState<State>({ status: 'loading' });
+  const dispatch = useAppDispatch();
+  const status = useAppSelector((s) => s.build.status);
+  const activeSaveId = useAppSelector((s) => s.build.activeSaveId);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      setState({ status: 'unauth' });
-      return;
-    }
-    let active = true;
-    setState({ status: 'loading' });
-    loadSaveInventory(saveId)
-      .then((inventory) => active && setState({ status: 'ready', inventory }))
-      .catch(() => active && setState({ status: 'notfound' }));
-    return () => {
-      active = false;
-    };
-  }, [saveId, user, authLoading]);
+    if (authLoading || !user) return;
+    void dispatch(loadSave(saveId));
+  }, [dispatch, saveId, user, authLoading]);
 
-  if (state.status === 'ready') {
-    return <OptimizerApp key={saveId} inventory={state.inventory} initialBuild={null} activeSaveId={saveId} />;
+  // Render the editor only once the slice reflects this save.
+  if (user && status === 'ready' && activeSaveId === saveId) {
+    return <OptimizerApp key={saveId} />;
   }
 
   return (
@@ -46,9 +32,10 @@ function SaveRoute() {
         ← Bloodborne Optimizer
       </Link>
       <p className="mt-6 text-au-chico">
-        {state.status === 'loading' && 'Loading save…'}
-        {state.status === 'unauth' && 'Log in to view this save.'}
-        {state.status === 'notfound' && 'Save not found.'}
+        {authLoading && 'Loading…'}
+        {!authLoading && !user && 'Log in to view this save.'}
+        {!authLoading && user && status === 'notfound' && 'Save not found.'}
+        {!authLoading && user && status !== 'notfound' && 'Loading save…'}
       </p>
     </div>
   );

@@ -21,6 +21,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@napi-rs/wasm-runtime": "^1.1.5",
+    "@reduxjs/toolkit": "^2.12.0",
     "@supabase/supabase-js": "^2.108.2",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "^0.10.7",
@@ -34,6 +35,7 @@
     "motion": "^12.41.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-redux": "^9.3.0",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {

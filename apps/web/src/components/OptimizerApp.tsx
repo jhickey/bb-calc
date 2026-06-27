@@ -1,16 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
-import {
-  SortableContext,
-  arrayMove,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import type { Inventory, OptimizeResult, Stats } from 'bb-calc-js';
-import { DamageTarget, Mode, gemFromInventory, optimize, parseSave } from 'bb-calc-js';
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { parseSave } from 'bb-calc-js';
 
 import { AuthControl } from '#/components/AuthControl';
 import { BuildsPanel } from '#/components/BuildsPanel';
@@ -24,91 +18,56 @@ import { TargetSelect } from '#/components/TargetSelect';
 import { WeaponCard } from '#/components/WeaponCard';
 import { WeaponSelect } from '#/components/WeaponSelect';
 import { useAuth } from '#/lib/auth';
-import type { Socket } from '#/lib/gems';
 import { isDrawbackEffect } from '#/lib/gems';
-import type { BuildConfig, BuildSummary } from '#/lib/builds';
-import { BUILD_CONFIG_VERSION, deleteBuild, listBuilds, renameBuild } from '#/lib/builds';
-import type { SaveSummary } from '#/lib/saves';
-import { createSave, deleteSave, listSaves } from '#/lib/saves';
+import { useAppDispatch, useAppSelector } from '#/store';
+import {
+  useCreateSaveMutation,
+  useDeleteBuildMutation,
+  useDeleteSaveMutation,
+  useListBuildsQuery,
+  useListSavesQuery,
+  useRenameBuildMutation,
+} from '#/store/api';
+import { autoOptimizeWeapon, buildActions, optimizeAll, selectIsDirty, selectOwnedWeaponIds } from '#/store/buildSlice';
 
 const TAB_WEAPONS = 'weapons';
 const TAB_GEMS = 'gems';
 const TAB_SAVES = 'saves';
 const TAB_BUILDS = 'builds';
 
-const EMPTY_SLOTS: Array<Socket | null> = [null, null, null];
-
-// Stats to start from when there's no save (free building); fully editable.
-const DEFAULT_STATS: Stats = { str: 10, skl: 10, blt: 10, arc: 10 };
-
-type OptimizerAppProps = {
-  /** The save's inventory when this view is bound to a save (`/s/<id>` or a
-   * save-backed build); null for a free build. */
-  inventory: Inventory | null;
-  /** The build to seed the editor with (from `/builds/<id>`); null otherwise. */
-  initialBuild: BuildConfig | null;
-  /** The save id this session is bound to; stamped onto builds saved here. */
-  activeSaveId: string | null;
-  /** True when a loaded build referenced a save that no longer exists. */
-  orphanedSave?: boolean;
-};
-
 /**
- * The optimizer editor. Its starting state comes entirely from the route (a
- * save's inventory and/or a build's config) — there is no localStorage; refresh
- * re-derives everything from the URL. Routes should key this by their identity
- * so navigating between saves/builds remounts it fresh.
+ * The optimizer editor. All build state lives in the Redux `build` slice (seeded
+ * by the routes via loadSave/loadBuild/resetToFree); this component reads it with
+ * selectors and dispatches actions, rather than holding state and prop-drilling.
  */
-export function OptimizerApp({ inventory, initialBuild, activeSaveId, orphanedSave = false }: OptimizerAppProps) {
+export function OptimizerApp() {
   const { user } = useAuth();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const [editStats, setEditStats] = useState<Stats>(
-    () => initialBuild?.editStats ?? (inventory ? { ...inventory.stats } : DEFAULT_STATS),
-  );
-  const [weaponIds, setWeaponIds] = useState<Array<string>>(() => initialBuild?.weaponIds ?? []);
-  const [slotsByWeapon, setSlotsByWeapon] = useState<Record<string, Array<Socket | null>>>(
-    () => initialBuild?.slotsByWeapon ?? {},
-  );
-  const [levelByWeapon, setLevelByWeapon] = useState<Record<string, number>>(() => initialBuild?.levelByWeapon ?? {});
-  const [customGems, setCustomGems] = useState<Array<Socket>>(() => initialBuild?.customGems ?? []);
-  const [target, setTarget] = useState<DamageTarget>(() => initialBuild?.target ?? DamageTarget.Total);
-  const [mode, setMode] = useState<'compare' | 'loadout'>(() => initialBuild?.mode ?? 'compare');
-  const [excludedGemIds, setExcludedGemIds] = useState<Set<string>>(() => new Set(initialBuild?.excludedGemIds ?? []));
-  const [showExcluded, setShowExcluded] = useState(false);
-  const [showSaveBuild, setShowSaveBuild] = useState(false);
-  const [savedBuildId, setSavedBuildId] = useState<string | null>(null);
-  const [saves, setSaves] = useState<Array<SaveSummary>>([]);
-  const [builds, setBuilds] = useState<Array<BuildSummary>>([]);
-  const [error, setError] = useState<string | null>(null);
+  const inventory = useAppSelector((s) => s.build.inventory);
+  const editStats = useAppSelector((s) => s.build.editStats);
+  const weaponIds = useAppSelector((s) => s.build.weaponIds);
+  const target = useAppSelector((s) => s.build.target);
+  const mode = useAppSelector((s) => s.build.mode);
+  const excludedGemIds = useAppSelector((s) => s.build.excludedGemIds);
+  const orphanedSave = useAppSelector((s) => s.build.orphanedSave);
+  const ownedWeaponIds = useAppSelector(selectOwnedWeaponIds);
+  const dirty = useAppSelector(selectIsDirty);
+
+  const { data: saves = [] } = useListSavesQuery(undefined, { skip: !user });
+  const { data: builds = [] } = useListBuildsQuery(undefined, { skip: !user });
+  const [createSaveMut] = useCreateSaveMutation();
+  const [deleteSaveMut] = useDeleteSaveMutation();
+  const [renameBuildMut] = useRenameBuildMutation();
+  const [deleteBuildMut] = useDeleteBuildMutation();
+
   const [activeTab, setActiveTab] = useState<string>(TAB_WEAPONS);
+  const [showSaveBuild, setShowSaveBuild] = useState(false);
+  const [showExcluded, setShowExcluded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Snapshot the current build into a self-contained, shareable config.
-  const captureBuild = useCallback(
-    (): BuildConfig => ({
-      version: BUILD_CONFIG_VERSION,
-      editStats,
-      weaponIds,
-      slotsByWeapon,
-      levelByWeapon,
-      customGems,
-      target,
-      mode,
-      excludedGemIds: [...excludedGemIds],
-    }),
-    [editStats, weaponIds, slotsByWeapon, levelByWeapon, customGems, target, mode, excludedGemIds],
-  );
-
-  // Warn before unloading with unsaved changes (replaces localStorage). Baseline
-  // is the state this view loaded with; a build is "dirty" once it differs and is
-  // non-empty.
-  const baselineRef = useRef('');
-  useEffect(() => {
-    baselineRef.current = JSON.stringify(captureBuild());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  const dirty =
-    baselineRef.current !== '' && weaponIds.length > 0 && JSON.stringify(captureBuild()) !== baselineRef.current;
+  // Warn before unloading with unsaved changes (no localStorage).
   useEffect(() => {
     if (!dirty) return;
     const handler = (event: BeforeUnloadEvent) => {
@@ -119,251 +78,47 @@ export function OptimizerApp({ inventory, initialBuild, activeSaveId, orphanedSa
     return () => window.removeEventListener('beforeunload', handler);
   }, [dirty]);
 
-  const refreshSaves = useCallback(async () => {
-    if (!user) {
-      setSaves([]);
-      return;
-    }
-    try {
-      setSaves(await listSaves());
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }, [user]);
-
-  const refreshBuilds = useCallback(async () => {
-    if (!user) {
-      setBuilds([]);
-      return;
-    }
-    try {
-      setBuilds(await listBuilds());
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }, [user]);
-
-  useEffect(() => {
-    void refreshSaves();
-    void refreshBuilds();
-  }, [refreshSaves, refreshBuilds]);
-
+  // Drop the logged-in-only tabs on logout so we don't render empty, gated panels.
   useEffect(() => {
     if (!user && (activeTab === TAB_SAVES || activeTab === TAB_BUILDS)) setActiveTab(TAB_WEAPONS);
   }, [user, activeTab]);
-
-  // Import a save (logged-in only): parse, persist, then route to its page.
-  async function handleFile(file: File) {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const inv = await parseSave(new Uint8Array(arrayBuffer));
-      const id = await createSave(inv);
-      await refreshSaves();
-      navigate({ to: '/s/$saveId', params: { saveId: id } });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  async function removeSave(id: string) {
-    try {
-      await deleteSave(id);
-      await refreshSaves();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  async function renameBuildById(id: string, name: string) {
-    try {
-      await renameBuild(id, name);
-      await refreshBuilds();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  async function removeBuild(id: string) {
-    try {
-      await deleteBuild(id);
-      await refreshBuilds();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  function onBuildSaved(build: BuildSummary) {
-    void refreshBuilds();
-    baselineRef.current = JSON.stringify(captureBuild()); // mark clean so unload won't warn
-    setSavedBuildId(build.id);
-  }
-
-  // On closing the Save Build modal, route to the saved build so its URL is
-  // bookmarkable and refresh-stable.
-  function closeSaveBuild() {
-    setShowSaveBuild(false);
-    if (savedBuildId) {
-      const id = savedBuildId;
-      setSavedBuildId(null);
-      navigate({ to: '/builds/$buildId', params: { buildId: id } });
-    }
-  }
-
-  const ownedWeaponIds = useMemo(
-    () => new Set((inventory?.weapons ?? []).map((w) => w.weaponId).filter((id): id is string => !!id)),
-    [inventory],
-  );
-  const ownedLevels = useMemo(() => {
-    const levels = new Map<string, number>();
-    for (const w of inventory?.weapons ?? []) {
-      if (!w.weaponId) continue;
-      const prev = levels.get(w.weaponId);
-      if (prev == null || w.level > prev) levels.set(w.weaponId, w.level);
-    }
-    return levels;
-  }, [inventory]);
-
-  function selectWeapons(ids: Array<string>) {
-    setLevelByWeapon((prev) => {
-      const next = { ...prev };
-      for (const id of ids) if (next[id] == null) next[id] = ownedLevels.get(id) ?? 10;
-      return next;
-    });
-    setWeaponIds(ids);
-  }
-
-  function setLevel(weaponId: string, level: number) {
-    setLevelByWeapon((prev) => ({ ...prev, [weaponId]: Math.max(0, Math.min(10, level)) }));
-  }
-
-  function editStat(key: keyof Stats, value: number) {
-    setEditStats((prev) => ({ ...prev, [key]: value }));
-  }
-  function revertStat(key: keyof Stats) {
-    if (inventory) setEditStats((prev) => ({ ...prev, [key]: inventory.stats[key] }));
-  }
-  function resetStats() {
-    if (inventory) setEditStats({ ...inventory.stats });
-  }
-
-  function setSlot(weaponId: string, slotIndex: number, socket: Socket | null) {
-    setSlotsByWeapon((prev) => {
-      const slots = (prev[weaponId] ?? EMPTY_SLOTS).slice();
-      slots[slotIndex] = socket;
-      return { ...prev, [weaponId]: slots };
-    });
-  }
-
-  function removeWeapon(weaponId: string) {
-    setWeaponIds((prev) => prev.filter((id) => id !== weaponId));
-  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  function moveWeapon(weaponId: string, delta: number) {
-    setWeaponIds((prev) => {
-      const from = prev.indexOf(weaponId);
-      const to = from + delta;
-      if (from < 0 || to < 0 || to >= prev.length) return prev;
-      return arrayMove(prev, from, to);
-    });
-  }
-
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    setWeaponIds((prev) => {
-      const from = prev.indexOf(String(active.id));
-      const to = prev.indexOf(String(over.id));
-      if (from < 0 || to < 0) return prev;
-      return arrayMove(prev, from, to);
-    });
+    const from = weaponIds.indexOf(String(active.id));
+    const to = weaponIds.indexOf(String(over.id));
+    if (from >= 0 && to >= 0) dispatch(buildActions.moveWeapon({ from, to }));
   }
 
-  function slotsFromResult(result: OptimizeResult): Array<Socket | null> {
-    const slots: Array<Socket | null> = [null, null, null];
-    for (const slot of result.slots) {
-      const ref = slot.gem;
-      if (!ref) continue;
-      const owned = inventory?.gems.find((gem) => gem.id === ref.id);
-      if (owned) slots[slot.slot] = { gem: gemFromInventory(owned), effects: owned.effects, gemId: owned.id };
-    }
-    return slots;
-  }
-
-  function gemsUsedByOtherWeapons(weaponId: string): Array<string> {
-    return Object.entries(slotsByWeapon)
-      .filter(([id]) => id !== weaponId)
-      .flatMap(([, slots]) => slots)
-      .map((socket) => socket?.gemId)
-      .filter((id): id is string => id != null);
-  }
-
-  function availablePool(excluded: Set<string>) {
-    return inventory ? inventory.gems.filter((gem) => !excluded.has(gem.id)) : [];
-  }
-
-  async function autoOptimize(weaponId: string) {
-    if (!inventory) return;
+  async function handleFile(file: File) {
     try {
-      const excluded = mode === 'loadout' ? gemsUsedByOtherWeapons(weaponId) : undefined;
-      const optMode = mode === 'loadout' ? Mode.Plan : Mode.Compare;
-      const level = levelByWeapon[weaponId] ?? 10;
-      const [result] = await optimize([weaponId], availablePool(excludedGemIds), editStats, target, optMode, excluded, [
-        level,
-      ]);
-      if (result) setSlotsByWeapon((prev) => ({ ...prev, [weaponId]: slotsFromResult(result) }));
-      setError(null);
+      const inv = await parseSave(new Uint8Array(await file.arrayBuffer()));
+      const id = await createSaveMut(inv).unwrap();
+      navigate({ to: '/s/$saveId', params: { saveId: id } });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
-  }
-
-  async function runOptimizeAll(excluded: Set<string>, useMode: 'compare' | 'loadout' = mode) {
-    if (!inventory || weaponIds.length === 0) return;
-    try {
-      const levels = weaponIds.map((id) => levelByWeapon[id] ?? 10);
-      const results = await optimize(
-        weaponIds,
-        availablePool(excluded),
-        editStats,
-        target,
-        useMode === 'loadout' ? Mode.Plan : Mode.Compare,
-        undefined,
-        levels,
-      );
-      const next: Record<string, Array<Socket | null>> = {};
-      for (const result of results) next[result.weaponId] = slotsFromResult(result);
-      setSlotsByWeapon((prev) => ({ ...prev, ...next }));
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  function optimizeAll() {
-    return runOptimizeAll(excludedGemIds);
   }
 
   function changeMode(value: 'compare' | 'loadout') {
     if (value === mode) return;
-    setMode(value);
-    void runOptimizeAll(excludedGemIds, value);
+    dispatch(buildActions.setMode(value));
+    void dispatch(optimizeAll());
   }
 
   function excludeGem(gemId: string) {
-    const next = new Set(excludedGemIds).add(gemId);
-    setExcludedGemIds(next);
-    void runOptimizeAll(next);
+    dispatch(buildActions.excludeGem(gemId));
+    void dispatch(optimizeAll());
   }
   function unexcludeGem(gemId: string) {
-    const next = new Set(excludedGemIds);
-    next.delete(gemId);
-    setExcludedGemIds(next);
-    void runOptimizeAll(next);
+    dispatch(buildActions.unexcludeGem(gemId));
+    void dispatch(optimizeAll());
   }
 
   return (
@@ -384,9 +139,9 @@ export function OptimizerApp({ inventory, initialBuild, activeSaveId, orphanedSa
         inventory={inventory}
         stats={editStats}
         canUpload={!!user}
-        onEditStat={editStat}
-        onRevertStat={revertStat}
-        onResetStats={resetStats}
+        onEditStat={(key, value) => dispatch(buildActions.setStat({ key, value }))}
+        onRevertStat={(key) => dispatch(buildActions.revertStat(key))}
+        onResetStats={() => dispatch(buildActions.resetStats())}
         onFile={handleFile}
       />
 
@@ -414,8 +169,12 @@ export function OptimizerApp({ inventory, initialBuild, activeSaveId, orphanedSa
         {activeTab === TAB_WEAPONS && (
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-1">
-              <WeaponSelect selected={weaponIds} onChange={selectWeapons} ownedWeaponIds={ownedWeaponIds} />
-              <TargetSelect className="mt-4" value={target} onChange={setTarget} />
+              <WeaponSelect
+                selected={weaponIds}
+                onChange={(ids) => dispatch(buildActions.selectWeapons(ids))}
+                ownedWeaponIds={ownedWeaponIds}
+              />
+              <TargetSelect className="mt-4" value={target} onChange={(t) => dispatch(buildActions.setTarget(t))} />
 
               <div className="mt-4">
                 <span className="text-xs uppercase tracking-wide text-au-chico">Mode</span>
@@ -448,7 +207,7 @@ export function OptimizerApp({ inventory, initialBuild, activeSaveId, orphanedSa
                 </p>
               </div>
 
-              <Button className="mt-4" onClick={optimizeAll} disabled={weaponIds.length === 0}>
+              <Button className="mt-4" onClick={() => dispatch(optimizeAll())} disabled={weaponIds.length === 0}>
                 Auto-optimize all
               </Button>
 
@@ -462,18 +221,18 @@ export function OptimizerApp({ inventory, initialBuild, activeSaveId, orphanedSa
                 </button>
               )}
 
-              {excludedGemIds.size > 0 && (
+              {excludedGemIds.length > 0 && (
                 <div className="mt-2">
                   <button
                     type="button"
                     onClick={() => setShowExcluded((prev) => !prev)}
                     className="cursor-pointer text-xs text-au-chico underline transition-colors hover:text-pale-mocha"
                   >
-                    {excludedGemIds.size} excluded
+                    {excludedGemIds.length} excluded
                   </button>
                   {showExcluded && (
                     <ul className="mt-2 space-y-1">
-                      {[...excludedGemIds].map((id) => {
+                      {excludedGemIds.map((id) => {
                         const gem = inventory?.gems.find((g) => g.id === id);
                         return (
                           <li
@@ -529,22 +288,8 @@ export function OptimizerApp({ inventory, initialBuild, activeSaveId, orphanedSa
                             weaponId={weaponId}
                             index={index}
                             total={weaponIds.length}
-                            level={levelByWeapon[weaponId] ?? 10}
-                            onLevelChange={(level) => setLevel(weaponId, level)}
-                            slots={slotsByWeapon[weaponId] ?? EMPTY_SLOTS}
-                            stats={editStats}
-                            inventoryGems={inventory?.gems ?? []}
-                            customGems={customGems}
-                            unavailableGemIds={
-                              mode === 'loadout' ? new Set(gemsUsedByOtherWeapons(weaponId)) : undefined
-                            }
-                            onMoveUp={() => moveWeapon(weaponId, -1)}
-                            onMoveDown={() => moveWeapon(weaponId, 1)}
-                            onSlotChange={(slotIndex, socket) => setSlot(weaponId, slotIndex, socket)}
-                            onCreateCustom={(socket) => setCustomGems((prev) => [...prev, socket])}
                             onExcludeGem={excludeGem}
-                            onOptimize={() => autoOptimize(weaponId)}
-                            onRemove={() => removeWeapon(weaponId)}
+                            onOptimize={() => dispatch(autoOptimizeWeapon(weaponId))}
                           />
                         ))}
                       </AnimatePresence>
@@ -563,7 +308,7 @@ export function OptimizerApp({ inventory, initialBuild, activeSaveId, orphanedSa
             className="mt-6"
             saves={saves}
             onLoad={(id) => navigate({ to: '/s/$saveId', params: { saveId: id } })}
-            onDelete={removeSave}
+            onDelete={(id) => void deleteSaveMut(id)}
           />
         )}
 
@@ -572,22 +317,13 @@ export function OptimizerApp({ inventory, initialBuild, activeSaveId, orphanedSa
             className="mt-6"
             builds={builds}
             onLoad={(id) => navigate({ to: '/builds/$buildId', params: { buildId: id } })}
-            onRename={renameBuildById}
-            onDelete={removeBuild}
+            onRename={(id, name) => void renameBuildMut({ id, name })}
+            onDelete={(id) => void deleteBuildMut(id)}
           />
         )}
       </motion.div>
 
-      <AnimatePresence>
-        {showSaveBuild && (
-          <SaveBuildModal
-            getConfig={captureBuild}
-            saveId={activeSaveId}
-            onSaved={onBuildSaved}
-            onClose={closeSaveBuild}
-          />
-        )}
-      </AnimatePresence>
+      <AnimatePresence>{showSaveBuild && <SaveBuildModal onClose={() => setShowSaveBuild(false)} />}</AnimatePresence>
     </div>
   );
 }
