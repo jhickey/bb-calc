@@ -13,9 +13,11 @@ import type { Inventory, OptimizeResult, Stats } from 'bb-calc-js';
 import { DamageTarget, Mode, gemFromInventory, optimize, parseSave } from 'bb-calc-js';
 
 import { AuthControl } from '#/components/AuthControl';
+import { BuildsPanel } from '#/components/BuildsPanel';
 import { Button } from '#/components/Button';
 import { CharacterHeader } from '#/components/CharacterHeader';
 import { GemsPanel } from '#/components/GemsPanel';
+import { SaveBuildModal } from '#/components/SaveBuildModal';
 import { SavesPanel } from '#/components/SavesPanel';
 import { Tabs } from '#/components/Tabs';
 import { TargetSelect } from '#/components/TargetSelect';
@@ -27,12 +29,15 @@ import { isDrawbackEffect } from '#/lib/gems';
 import { loadLocalBuild, saveLocalBuild } from '#/lib/buildStorage';
 import type { SaveSummary } from '#/lib/saves';
 import { createSave, deleteSave, listSaves, loadSaveInventory } from '#/lib/saves';
+import type { BuildConfig, BuildSummary } from '#/lib/builds';
+import { BUILD_CONFIG_VERSION, deleteBuild, getBuildConfig, listBuilds, renameBuild } from '#/lib/builds';
 
 export const Route = createFileRoute('/')({ component: Home });
 
 const TAB_WEAPONS = 'weapons';
 const TAB_GEMS = 'gems';
 const TAB_SAVES = 'saves';
+const TAB_BUILDS = 'builds';
 
 const EMPTY_SLOTS: Array<Socket | null> = [null, null, null];
 
@@ -44,6 +49,9 @@ function Home() {
   const [inventory, setInventory] = useState<Inventory | null>(null);
   // The current user's uploaded saves (metadata only); empty when logged out.
   const [saves, setSaves] = useState<Array<SaveSummary>>([]);
+  // The current user's saved builds (metadata only); empty when logged out.
+  const [builds, setBuilds] = useState<Array<BuildSummary>>([]);
+  const [showSaveBuild, setShowSaveBuild] = useState(false);
   // The scaling stats fed to the calc: a neutral default until a save seeds them,
   // then editable.
   const [editStats, setEditStats] = useState<Stats>(DEFAULT_STATS);
@@ -116,14 +124,82 @@ function Home() {
     }
   }, [user]);
 
+  const refreshBuilds = useCallback(async () => {
+    if (!user) {
+      setBuilds([]);
+      return;
+    }
+    try {
+      setBuilds(await listBuilds());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }, [user]);
+
   useEffect(() => {
     void refreshSaves();
-  }, [refreshSaves]);
+    void refreshBuilds();
+  }, [refreshSaves, refreshBuilds]);
 
-  // Drop the Saves tab on logout so we don't render an empty, gated panel.
+  // Drop the logged-in-only tabs on logout so we don't render empty, gated panels.
   useEffect(() => {
-    if (!user && activeTab === TAB_SAVES) setActiveTab(TAB_WEAPONS);
+    if (!user && (activeTab === TAB_SAVES || activeTab === TAB_BUILDS)) setActiveTab(TAB_WEAPONS);
   }, [user, activeTab]);
+
+  // Snapshot the current build into a self-contained, shareable config.
+  function captureBuild(): BuildConfig {
+    return {
+      version: BUILD_CONFIG_VERSION,
+      editStats,
+      weaponIds,
+      slotsByWeapon,
+      levelByWeapon,
+      customGems,
+      target,
+      mode,
+      excludedGemIds: [...excludedGemIds],
+    };
+  }
+
+  // Load a build config into the editor (own build or a shared one).
+  function applyBuildConfig(config: BuildConfig) {
+    setEditStats(config.editStats);
+    setWeaponIds(config.weaponIds);
+    setSlotsByWeapon(config.slotsByWeapon);
+    setLevelByWeapon(config.levelByWeapon);
+    setCustomGems(config.customGems);
+    setTarget(config.target);
+    setMode(config.mode);
+    setExcludedGemIds(new Set(config.excludedGemIds));
+    setActiveTab(TAB_WEAPONS);
+  }
+
+  async function loadBuild(id: string) {
+    try {
+      applyBuildConfig(await getBuildConfig(id));
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function renameBuildById(id: string, name: string) {
+    try {
+      await renameBuild(id, name);
+      await refreshBuilds();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function removeBuild(id: string) {
+    try {
+      await deleteBuild(id);
+      await refreshBuilds();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
 
   // Importing a save (logged-in only): parse, load it, and persist it to Supabase.
   async function handleFile(file: File) {
@@ -374,7 +450,12 @@ function Home() {
             tabs={[
               { id: TAB_WEAPONS, label: 'Weapons' },
               { id: TAB_GEMS, label: `Gems (${inventory?.gems.length ?? 0})` },
-              ...(user ? [{ id: TAB_SAVES, label: `Saves (${saves.length})` }] : []),
+              ...(user
+                ? [
+                    { id: TAB_SAVES, label: `Saves (${saves.length})` },
+                    { id: TAB_BUILDS, label: `Builds (${builds.length})` },
+                  ]
+                : []),
             ]}
             active={activeTab}
             onChange={setActiveTab}
@@ -420,6 +501,16 @@ function Home() {
                 <Button className="mt-4" onClick={optimizeAll} disabled={weaponIds.length === 0}>
                   Auto-optimize all
                 </Button>
+
+                {weaponIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowSaveBuild(true)}
+                    className="mt-2 block cursor-pointer text-sm text-au-chico underline transition-colors hover:text-pale-mocha"
+                  >
+                    Save build
+                  </button>
+                )}
 
                 {excludedGemIds.size > 0 && (
                   <div className="mt-2">
@@ -520,8 +611,24 @@ function Home() {
           {activeTab === TAB_SAVES && user && (
             <SavesPanel className="mt-6" saves={saves} onLoad={loadSave} onDelete={removeSave} />
           )}
+
+          {activeTab === TAB_BUILDS && user && (
+            <BuildsPanel
+              className="mt-6"
+              builds={builds}
+              onLoad={loadBuild}
+              onRename={renameBuildById}
+              onDelete={removeBuild}
+            />
+          )}
         </motion.div>
       )}
+
+      <AnimatePresence>
+        {showSaveBuild && (
+          <SaveBuildModal getConfig={captureBuild} onSaved={refreshBuilds} onClose={() => setShowSaveBuild(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
