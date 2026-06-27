@@ -17,7 +17,11 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        name: 'description',
+        content: 'Attack Rating calculator and gem optimizer for Bloodborne.',
+      },
+      {
+        title: 'Bloodborne Optimizer',
       },
     ],
     links: [
@@ -41,17 +45,19 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <MotionConfig reducedMotion="user">
           <AuthProvider>{children}</AuthProvider>
         </MotionConfig>
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
-            {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
+        {import.meta.env.DEV && (
+          <TanStackDevtools
+            config={{
+              position: 'bottom-right',
+            }}
+            plugins={[
+              {
+                name: 'Tanstack Router',
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+            ]}
+          />
+        )}
         <Scripts />
       </body>
     </html>
