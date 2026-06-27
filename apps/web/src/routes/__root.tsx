@@ -2,8 +2,10 @@ import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import { MotionConfig } from 'motion/react';
+import { Provider } from 'react-redux';
 
 import { AuthProvider } from '#/lib/auth';
+import { store } from '#/store';
 import appCss from '../styles.css?url';
 
 export const Route = createRootRoute({
@@ -42,9 +44,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {/* reducedMotion="user" makes every animation honor prefers-reduced-motion. */}
-        <MotionConfig reducedMotion="user">
-          <AuthProvider>{children}</AuthProvider>
-        </MotionConfig>
+        <Provider store={store}>
+          <MotionConfig reducedMotion="user">
+            <AuthProvider>{children}</AuthProvider>
+          </MotionConfig>
+        </Provider>
         {import.meta.env.DEV && (
           <TanStackDevtools
             config={{

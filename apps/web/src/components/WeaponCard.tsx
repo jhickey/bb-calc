@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Ban, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
-import type { GemShape, InventoryGem, Stats } from 'bb-calc-js';
+import type { GemShape, InventoryGem } from 'bb-calc-js';
 import { computeAr } from 'bb-calc-js';
 
 import { GemPickerModal } from '#/components/GemPickerModal';
@@ -11,6 +11,8 @@ import { ArValue } from '#/components/ArValue';
 import type { Socket } from '#/lib/gems';
 import { gemShapeIcon, isCursed, isDrawbackEffect } from '#/lib/gems';
 import { PLACEHOLDER_WEAPON_ICON, weaponById, weaponName, weaponThumbnail } from '#/lib/weapons';
+import { useAppDispatch, useAppSelector } from '#/store';
+import { buildActions } from '#/store/buildSlice';
 
 /** Damage lines shown in the breakdown, in display order. */
 const ELEMENTS = [
@@ -23,64 +25,53 @@ const ELEMENTS = [
   ['Blood', 'blood'],
 ] as const;
 
+const EMPTY_SLOTS: ReadonlyArray<Socket | null> = [null, null, null];
+const EMPTY_GEMS: Array<InventoryGem> = [];
+
 type WeaponCardProps = {
   weaponId: string;
-  /** Three slots, in imprint order; `null` is empty. */
-  slots: Array<Socket | null>;
-  stats: Stats;
-  inventoryGems: Array<InventoryGem>;
-  customGems: Array<Socket>;
-  /** Gem instance ids used by other weapons (hidden in the picker in Loadout). */
-  unavailableGemIds?: ReadonlySet<string>;
   /** This card's position in the list, and the list length, for the reorder controls. */
   index: number;
   total: number;
-  /** Upgrade level (+0..=10); folded into the AR calc. */
-  level: number;
-  onLevelChange: (level: number) => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  onSlotChange: (slotIndex: number, socket: Socket | null) => void;
-  onCreateCustom: (socket: Socket) => void;
   /** Drop an owned gem from auto-optimization (re-optimizes the whole set). */
   onExcludeGem: (gemId: string) => void;
+  /** Auto-optimize just this weapon. */
   onOptimize: () => void;
-  onRemove: () => void;
-  className?: string;
 };
 
 /**
  * A weapon as an interactive build component: three gem slots you socket by
- * hand (or auto-fill via Optimize), with its Attack Rating recomputed live.
+ * hand (or auto-fill via Optimize), with its Attack Rating recomputed live. All
+ * build state is read from / written to the Redux `build` slice.
  *
  * The list is sortable (the order is Loadout priority): drag the grip handle or
  * use the up/down buttons. dnd-kit owns the drag transform on the outer `<li>`,
- * while the inner `motion.div` only fades/slides on enter/exit so the two never
- * fight over the element's transform.
+ * while the inner `motion.div` only fades/slides on enter/exit.
  */
-export function WeaponCard({
-  weaponId,
-  slots,
-  stats,
-  inventoryGems,
-  customGems,
-  unavailableGemIds,
-  index,
-  total,
-  level,
-  onLevelChange,
-  onMoveUp,
-  onMoveDown,
-  onSlotChange,
-  onCreateCustom,
-  onExcludeGem,
-  onOptimize,
-  onRemove,
-  className = '',
-}: WeaponCardProps) {
+export function WeaponCard({ weaponId, index, total, onExcludeGem, onOptimize }: WeaponCardProps) {
+  const dispatch = useAppDispatch();
+  const slots = useAppSelector((s) => s.build.slotsByWeapon[weaponId]) ?? EMPTY_SLOTS;
+  const level = useAppSelector((s) => s.build.levelByWeapon[weaponId] ?? 10);
+  const stats = useAppSelector((s) => s.build.editStats);
+  const inventoryGems = useAppSelector((s) => s.build.inventory?.gems) ?? EMPTY_GEMS;
+  const customGems = useAppSelector((s) => s.build.customGems);
+  const mode = useAppSelector((s) => s.build.mode);
+  const slotsByWeapon = useAppSelector((s) => s.build.slotsByWeapon);
+
   const [openSlot, setOpenSlot] = useState<number | null>(null);
   const weapon = weaponById(weaponId);
   const slotShapes: Array<GemShape> = weapon ? [weapon.gemSlot1, weapon.gemSlot2, weapon.gemSlot3] : [];
+
+  // In Loadout, gems socketed in other weapons are unavailable to this one.
+  const unavailableGemIds = useMemo(() => {
+    if (mode !== 'loadout') return undefined;
+    const ids = new Set<string>();
+    for (const [id, otherSlots] of Object.entries(slotsByWeapon)) {
+      if (id === weaponId) continue;
+      for (const socket of otherSlots) if (socket?.gemId) ids.add(socket.gemId);
+    }
+    return ids;
+  }, [slotsByWeapon, mode, weaponId]);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: weaponId });
   const style = { transform: CSS.Transform.toString(transform), transition };
@@ -97,9 +88,11 @@ export function WeaponCard({
   );
 
   const name = weaponName(weaponId);
+  const setSlot = (slotIndex: number, socket: Socket | null) =>
+    dispatch(buildActions.setSlot({ weaponId, slotIndex, socket }));
 
   return (
-    <li ref={setNodeRef} style={style} className={`relative ${isDragging ? 'z-10' : ''} ${className}`}>
+    <li ref={setNodeRef} style={style} className={`relative ${isDragging ? 'z-10' : ''}`}>
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -113,7 +106,7 @@ export function WeaponCard({
           <div className="flex shrink-0 flex-col items-center gap-0.5">
             <button
               type="button"
-              onClick={onMoveUp}
+              onClick={() => dispatch(buildActions.moveWeapon({ from: index, to: index - 1 }))}
               disabled={index === 0}
               aria-label={`Move ${name} up`}
               className="cursor-pointer rounded text-au-chico transition-colors hover:text-pale-mocha disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:text-au-chico"
@@ -131,7 +124,7 @@ export function WeaponCard({
             </button>
             <button
               type="button"
-              onClick={onMoveDown}
+              onClick={() => dispatch(buildActions.moveWeapon({ from: index, to: index + 1 }))}
               disabled={index === total - 1}
               aria-label={`Move ${name} down`}
               className="cursor-pointer rounded text-au-chico transition-colors hover:text-pale-mocha disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:text-au-chico"
@@ -153,7 +146,7 @@ export function WeaponCard({
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => onLevelChange(level - 1)}
+                onClick={() => dispatch(buildActions.setLevel({ weaponId, level: level - 1 }))}
                 disabled={level <= 0}
                 aria-label={`Lower ${name} upgrade level`}
                 className="cursor-pointer rounded border border-black-wool px-1.5 text-base leading-none text-au-chico transition-colors hover:border-tamarillo hover:text-pale-mocha disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:border-black-wool disabled:hover:text-au-chico"
@@ -163,7 +156,7 @@ export function WeaponCard({
               <span className="w-8 text-center text-lg font-bold tabular-nums text-pale-mocha">+{level}</span>
               <button
                 type="button"
-                onClick={() => onLevelChange(level + 1)}
+                onClick={() => dispatch(buildActions.setLevel({ weaponId, level: level + 1 }))}
                 disabled={level >= 10}
                 aria-label={`Raise ${name} upgrade level`}
                 className="cursor-pointer rounded border border-black-wool px-1.5 text-base leading-none text-au-chico transition-colors hover:border-tamarillo hover:text-pale-mocha disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:border-black-wool disabled:hover:text-au-chico"
@@ -179,7 +172,7 @@ export function WeaponCard({
           </div>
           <button
             type="button"
-            onClick={onRemove}
+            onClick={() => dispatch(buildActions.removeWeapon(weaponId))}
             aria-label={`Remove ${name}`}
             className="shrink-0 cursor-pointer text-xl leading-none text-au-chico hover:text-pale-mocha"
           >
@@ -262,7 +255,7 @@ export function WeaponCard({
           {slots.some((socket) => socket != null) && (
             <button
               type="button"
-              onClick={() => slots.forEach((_, slotIndex) => onSlotChange(slotIndex, null))}
+              onClick={() => slots.forEach((_, slotIndex) => setSlot(slotIndex, null))}
               className="cursor-pointer text-sm text-au-chico underline transition-colors hover:text-pale-mocha"
             >
               Clear gems
@@ -278,9 +271,9 @@ export function WeaponCard({
               inventoryGems={inventoryGems}
               customGems={customGems}
               unavailableGemIds={unavailableGemIds}
-              onPick={(socket) => onSlotChange(openSlot, socket)}
-              onCreateCustom={onCreateCustom}
-              onClear={() => onSlotChange(openSlot, null)}
+              onPick={(socket) => setSlot(openSlot, socket)}
+              onCreateCustom={(socket) => dispatch(buildActions.addCustomGem(socket))}
+              onClear={() => setSlot(openSlot, null)}
               onClose={() => setOpenSlot(null)}
             />
           )}
