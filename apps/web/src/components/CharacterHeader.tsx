@@ -3,27 +3,20 @@ import type { Inventory, Stats } from 'bb-calc-js';
 
 import { SaveUpload } from '#/components/SaveUpload';
 import { StatsDisplay } from '#/components/StatsDisplay';
+import { formatPlaytime } from '#/lib/format';
 
 type CharacterHeaderProps = {
   inventory: Inventory | null;
   /** The current (possibly edited) scaling stats fed to the optimizer. */
   stats: Stats;
+  /** Whether to offer the Import Save button (logged-in only). */
+  canUpload: boolean;
   onEditStat: (key: keyof Stats, value: number) => void;
   onRevertStat: (key: keyof Stats) => void;
   onResetStats: () => void;
   onFile: (file: File) => void;
   className?: string;
 };
-
-/** Format a millisecond playtime as `H:MM:SS`, matching the in-game display. */
-function formatPlaytime(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${hours}:${pad(minutes)}:${pad(seconds)}`;
-}
 
 /** A labeled secondary figure (HP, Insight, Echoes, …) rendered as plain text. */
 function Figure({ label, value }: { label: string; value: string | number }) {
@@ -43,6 +36,7 @@ function Figure({ label, value }: { label: string; value: string | number }) {
 export function CharacterHeader({
   inventory,
   stats,
+  canUpload,
   onEditStat,
   onRevertStat,
   onResetStats,
@@ -104,7 +98,9 @@ export function CharacterHeader({
         ) : (
           <div>
             <p className="text-au-chico">
-              No save loaded — set your stats and build below, or log in to upload a save.
+              {canUpload
+                ? 'No save loaded — import a save, or set your stats and build below.'
+                : 'No save loaded — set your stats and build below, or log in to upload a save.'}
             </p>
             <StatsDisplay
               className="mt-3"
@@ -116,7 +112,7 @@ export function CharacterHeader({
           </div>
         )}
       </div>
-      <SaveUpload onFile={onFile} />
+      {canUpload && <SaveUpload onFile={onFile} />}
     </header>
   );
 }
