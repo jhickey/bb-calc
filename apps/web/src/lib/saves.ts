@@ -46,15 +46,21 @@ export async function loadSaveInventory(id: string): Promise<Inventory> {
   return (data as { inventory: Inventory }).inventory;
 }
 
-/** Persist a freshly-parsed inventory. `user_id` is filled by the DB default. */
-export async function createSave(inventory: Inventory): Promise<void> {
-  const { error } = await supabase.from('save').insert({
-    character_name: inventory.character.name,
-    character_level: inventory.character.level,
-    playtime_ms: inventory.character.playtimeMs,
-    inventory,
-  });
+/** Persist a freshly-parsed inventory; returns the new save id. `user_id` is
+ * filled by the DB default. */
+export async function createSave(inventory: Inventory): Promise<string> {
+  const { data, error } = await supabase
+    .from('save')
+    .insert({
+      character_name: inventory.character.name,
+      character_level: inventory.character.level,
+      playtime_ms: inventory.character.playtimeMs,
+      inventory,
+    })
+    .select('id')
+    .single();
   if (error) throw new Error(error.message);
+  return (data as { id: string }).id;
 }
 
 export async function deleteSave(id: string): Promise<void> {
