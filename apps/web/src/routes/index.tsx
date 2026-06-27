@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -16,18 +16,23 @@ import { AuthControl } from '#/components/AuthControl';
 import { Button } from '#/components/Button';
 import { CharacterHeader } from '#/components/CharacterHeader';
 import { GemsPanel } from '#/components/GemsPanel';
+import { SavesPanel } from '#/components/SavesPanel';
 import { Tabs } from '#/components/Tabs';
 import { TargetSelect } from '#/components/TargetSelect';
 import { WeaponCard } from '#/components/WeaponCard';
 import { WeaponSelect } from '#/components/WeaponSelect';
+import { useAuth } from '#/lib/auth';
 import type { Socket } from '#/lib/gems';
 import { isDrawbackEffect } from '#/lib/gems';
 import { loadLocalBuild, saveLocalBuild } from '#/lib/buildStorage';
+import type { SaveSummary } from '#/lib/saves';
+import { createSave, deleteSave, listSaves, loadSaveInventory } from '#/lib/saves';
 
 export const Route = createFileRoute('/')({ component: Home });
 
 const TAB_WEAPONS = 'weapons';
 const TAB_GEMS = 'gems';
+const TAB_SAVES = 'saves';
 
 const EMPTY_SLOTS: Array<Socket | null> = [null, null, null];
 
@@ -35,7 +40,10 @@ const EMPTY_SLOTS: Array<Socket | null> = [null, null, null];
 const DEFAULT_STATS: Stats = { str: 10, skl: 10, blt: 10, arc: 10 };
 
 function Home() {
+  const { user } = useAuth();
   const [inventory, setInventory] = useState<Inventory | null>(null);
+  // The current user's uploaded saves (metadata only); empty when logged out.
+  const [saves, setSaves] = useState<Array<SaveSummary>>([]);
   // The scaling stats fed to the calc: a neutral default until a save seeds them,
   // then editable.
   const [editStats, setEditStats] = useState<Stats>(DEFAULT_STATS);
@@ -84,9 +92,8 @@ function Home() {
     saveLocalBuild({ editStats, weaponIds, slotsByWeapon, levelByWeapon, customGems, target, mode });
   }, [editStats, weaponIds, slotsByWeapon, levelByWeapon, customGems, target, mode]);
 
-  async function handleFile(file: File) {
-    const arrayBuffer = await file.arrayBuffer();
-    const inv = await parseSave(new Uint8Array(arrayBuffer));
+  // Load an inventory into the app: seed stats from it and clear the build.
+  function applyInventory(inv: Inventory) {
     setInventory(inv);
     setEditStats({ ...inv.stats });
     setSlotsByWeapon({});
@@ -94,6 +101,64 @@ function Home() {
     setCustomGems([]);
     setExcludedGemIds(new Set());
     setShowExcluded(false);
+  }
+
+  // The current user's saves (newest first); empty/cleared when logged out.
+  const refreshSaves = useCallback(async () => {
+    if (!user) {
+      setSaves([]);
+      return;
+    }
+    try {
+      setSaves(await listSaves());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    void refreshSaves();
+  }, [refreshSaves]);
+
+  // Drop the Saves tab on logout so we don't render an empty, gated panel.
+  useEffect(() => {
+    if (!user && activeTab === TAB_SAVES) setActiveTab(TAB_WEAPONS);
+  }, [user, activeTab]);
+
+  // Importing a save (logged-in only): parse, load it, and persist it to Supabase.
+  async function handleFile(file: File) {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const inv = await parseSave(new Uint8Array(arrayBuffer));
+      applyInventory(inv);
+      if (user) {
+        await createSave(inv);
+        await refreshSaves();
+      }
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  // Load a stored save: fetch its inventory, apply it, and show the Weapons tab.
+  async function loadSave(id: string) {
+    try {
+      applyInventory(await loadSaveInventory(id));
+      setActiveTab(TAB_WEAPONS);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function removeSave(id: string) {
+    try {
+      await deleteSave(id);
+      await refreshSaves();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
   }
 
   // Right-hand owned weapons, keyed by their AR-table slug: the set acquired in
@@ -290,6 +355,7 @@ function Home() {
         className="mt-6"
         inventory={inventory}
         stats={editStats}
+        canUpload={!!user}
         onEditStat={editStat}
         onRevertStat={revertStat}
         onResetStats={resetStats}
@@ -308,6 +374,7 @@ function Home() {
             tabs={[
               { id: TAB_WEAPONS, label: 'Weapons' },
               { id: TAB_GEMS, label: `Gems (${inventory?.gems.length ?? 0})` },
+              ...(user ? [{ id: TAB_SAVES, label: `Saves (${saves.length})` }] : []),
             ]}
             active={activeTab}
             onChange={setActiveTab}
@@ -449,6 +516,10 @@ function Home() {
           )}
 
           {activeTab === TAB_GEMS && <GemsPanel className="mt-6" gems={inventory?.gems ?? []} />}
+
+          {activeTab === TAB_SAVES && user && (
+            <SavesPanel className="mt-6" saves={saves} onLoad={loadSave} onDelete={removeSave} />
+          )}
         </motion.div>
       )}
     </div>
