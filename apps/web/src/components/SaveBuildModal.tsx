@@ -3,23 +3,25 @@ import { AnimatePresence, motion } from 'motion/react';
 
 import { LoginModal } from '#/components/LoginModal';
 import { useAuth } from '#/lib/auth';
-import type { BuildConfig } from '#/lib/builds';
+import type { BuildConfig, BuildSummary } from '#/lib/builds';
 import { buildShareUrl, createBuild } from '#/lib/builds';
 
 type SaveBuildModalProps = {
   /** Snapshot the current build at save time. */
   getConfig: () => BuildConfig;
-  /** Refresh the Builds list after a successful save. */
-  onSaved: () => void;
+  /** The save this build was built on (sets build.save_id); null for free builds. */
+  saveId: string | null;
+  /** Called with the new build after a successful save. */
+  onSaved: (build: BuildSummary) => void;
   onClose: () => void;
 };
 
 /**
- * Save the current build. Logged out, it prompts to log in (the build stays in
- * localStorage meanwhile); logged in, it takes a name, saves to Supabase, and
- * shows the shareable link.
+ * Save the current build. Logged out, it prompts to log in (the build is not
+ * lost meanwhile); logged in, it takes a name, saves to Supabase, and shows the
+ * shareable link.
  */
-export function SaveBuildModal({ getConfig, onSaved, onClose }: SaveBuildModalProps) {
+export function SaveBuildModal({ getConfig, saveId, onSaved, onClose }: SaveBuildModalProps) {
   const { user } = useAuth();
   const [name, setName] = useState('My First Build');
   const [saving, setSaving] = useState(false);
@@ -32,9 +34,9 @@ export function SaveBuildModal({ getConfig, onSaved, onClose }: SaveBuildModalPr
     setSaving(true);
     setError(null);
     try {
-      const build = await createBuild(name.trim() || 'My Build', getConfig());
+      const build = await createBuild(name.trim() || 'My Build', getConfig(), saveId);
       setShareUrl(buildShareUrl(build.shortLink));
-      onSaved();
+      onSaved(build);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {

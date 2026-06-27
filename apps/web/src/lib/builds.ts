@@ -58,18 +58,27 @@ export async function listBuilds(): Promise<Array<BuildSummary>> {
   }));
 }
 
-/** Fetch one of the user's own builds' config (RLS-scoped to the owner). */
-export async function getBuildConfig(id: string): Promise<BuildConfig> {
-  const { data, error } = await supabase.from('build').select('config').eq('id', id).single();
+/** A build to edit: its config plus the save it references (if any). */
+export type BuildForEdit = {
+  name: string;
+  config: BuildConfig;
+  saveId: string | null;
+};
+
+/** Fetch one of the user's own builds for editing (RLS-scoped to the owner). */
+export async function getBuildForEdit(id: string): Promise<BuildForEdit> {
+  const { data, error } = await supabase.from('build').select('name, config, save_id').eq('id', id).single();
   if (error) throw new Error(error.message);
-  return (data as { config: BuildConfig }).config;
+  const row = data as { name: string; config: BuildConfig; save_id: string | null };
+  return { name: row.name, config: row.config, saveId: row.save_id };
 }
 
-/** Save a new build; returns its short link for the share UI. */
-export async function createBuild(name: string, config: BuildConfig): Promise<BuildSummary> {
+/** Save a new build; returns its summary (incl. short link) for the share UI.
+ * `saveId` links the build to the save it was built on (null for free builds). */
+export async function createBuild(name: string, config: BuildConfig, saveId: string | null): Promise<BuildSummary> {
   const { data, error } = await supabase
     .from('build')
-    .insert({ name, config })
+    .insert({ name, config, save_id: saveId })
     .select('id, name, short_link, updated_at')
     .single();
   if (error) throw new Error(error.message);

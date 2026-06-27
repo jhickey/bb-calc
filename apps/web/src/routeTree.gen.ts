@@ -10,11 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SSaveIdRouteImport } from './routes/s.$saveId'
+import { Route as BuildsBuildIdRouteImport } from './routes/builds.$buildId'
 import { Route as BShortLinkRouteImport } from './routes/b.$shortLink'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SSaveIdRoute = SSaveIdRouteImport.update({
+  id: '/s/$saveId',
+  path: '/s/$saveId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuildsBuildIdRoute = BuildsBuildIdRouteImport.update({
+  id: '/builds/$buildId',
+  path: '/builds/$buildId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BShortLinkRoute = BShortLinkRouteImport.update({
@@ -26,27 +38,35 @@ const BShortLinkRoute = BShortLinkRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/b/$shortLink': typeof BShortLinkRoute
+  '/builds/$buildId': typeof BuildsBuildIdRoute
+  '/s/$saveId': typeof SSaveIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/b/$shortLink': typeof BShortLinkRoute
+  '/builds/$buildId': typeof BuildsBuildIdRoute
+  '/s/$saveId': typeof SSaveIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/b/$shortLink': typeof BShortLinkRoute
+  '/builds/$buildId': typeof BuildsBuildIdRoute
+  '/s/$saveId': typeof SSaveIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/b/$shortLink'
+  fullPaths: '/' | '/b/$shortLink' | '/builds/$buildId' | '/s/$saveId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/b/$shortLink'
-  id: '__root__' | '/' | '/b/$shortLink'
+  to: '/' | '/b/$shortLink' | '/builds/$buildId' | '/s/$saveId'
+  id: '__root__' | '/' | '/b/$shortLink' | '/builds/$buildId' | '/s/$saveId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BShortLinkRoute: typeof BShortLinkRoute
+  BuildsBuildIdRoute: typeof BuildsBuildIdRoute
+  SSaveIdRoute: typeof SSaveIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -56,6 +76,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/s/$saveId': {
+      id: '/s/$saveId'
+      path: '/s/$saveId'
+      fullPath: '/s/$saveId'
+      preLoaderRoute: typeof SSaveIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/builds/$buildId': {
+      id: '/builds/$buildId'
+      path: '/builds/$buildId'
+      fullPath: '/builds/$buildId'
+      preLoaderRoute: typeof BuildsBuildIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/b/$shortLink': {
@@ -71,6 +105,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BShortLinkRoute: BShortLinkRoute,
+  BuildsBuildIdRoute: BuildsBuildIdRoute,
+  SSaveIdRoute: SSaveIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

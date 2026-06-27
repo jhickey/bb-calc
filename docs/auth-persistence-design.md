@@ -7,10 +7,29 @@ Status: **agreed model, pre-implementation.** Source: roadmap "Auth and persiste
 The web app is a client-only SPA (no backend). Persistence is **Supabase accessed directly from the browser** with the anon key; **Row-Level Security** is the enforcement layer. No `apps/api` is introduced.
 
 - **Auth methods:** magic link (one-time email) + passkey (`signInWithPasskey`, Supabase beta as of 2026-05-28; requires `@supabase/supabase-js` ≥ 2.105 and is experimental).
-- **Logged out:** stats panel + Weapons + Gems tabs work against **localStorage** (one rehydrating "current build"); no save upload, so the user builds with custom gems + manual stats. "Import Save" is replaced by "Login".
-- **Logged in:** save upload enabled; on parse, the inventory is stored in `save`. Two extra tabs appear: **Saves** and **Builds**. Custom gems persist to `gem`.
+- **Logged out:** stats panel + Weapons + Gems tabs work without a save (custom gems + manual stats). "Import Save" is hidden; only the top-right Login shows.
+- **Logged in:** save upload enabled; on parse, the inventory is stored in `save`. Two extra tabs appear: **Saves** and **Builds**. Custom gems persist to `gem` (slice 6).
 
 Decisions locked: **save = parsed inventory as jsonb**; **Terraform creates the project**; **shared builds are read-only snapshots**.
+
+## Session model: URL is the source of truth (no localStorage)
+
+The active save/build lives in the route, not localStorage — refresh re-derives
+everything from the URL, which matches "refresh reverts to a clean state" and
+removes rehydration complexity. The editor is one shared `OptimizerApp` seeded by
+each route (keyed by route identity so it remounts fresh on navigation):
+
+| Route               | State                               | Refresh restores                    |
+| ------------------- | ----------------------------------- | ----------------------------------- |
+| `/`                 | free build, no save                 | empty default                       |
+| `/s/<saveId>`       | a save loaded, building fresh       | the save (empty build) — owner-only |
+| `/builds/<buildId>` | a saved build + its referenced save | the saved build                     |
+| `/b/<short_link>`   | read-only shared snapshot           | the snapshot                        |
+
+- **Import** a save → insert `save` → navigate to `/s/<id>`. **Saves/Builds tabs** navigate to `/s/<id>` / `/builds/<id>`. **Save build** stamps `save_id` (the active save) and, on close, routes to `/builds/<id>`.
+- **No clean save/not-save ambiguity:** a free build only has custom gems; a save-backed build always reloads its inventory. The old "socketed inventory gem but empty picker" state can't occur (except an **orphaned build** whose save was deleted → `save_id` is null, surfaced with a notice).
+- **Unsaved-work safety net:** a `beforeunload` prompt fires only when a non-empty build differs from what the route loaded. No persistence — just prevents accidental-refresh loss. In-app navigation (picking another save/build) is an explicit action and discards silently.
+- Private routes (`/s`, `/builds`) handle logged-out / non-owner / missing as a clean message, not a blank screen.
 
 ## Data model
 
