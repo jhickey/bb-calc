@@ -1,47 +1,54 @@
 import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'motion/react';
 
 import { LoginModal } from '#/components/LoginModal';
 import { useAuth } from '#/lib/auth';
-import type { BuildConfig, BuildSummary } from '#/lib/builds';
-import { buildShareUrl, createBuild } from '#/lib/builds';
+import { buildShareUrl } from '#/lib/builds';
+import { useAppDispatch, useAppSelector } from '#/store';
+import { useCreateBuildMutation } from '#/store/api';
+import { buildActions, selectBuildConfig } from '#/store/buildSlice';
 
 type SaveBuildModalProps = {
-  /** Snapshot the current build at save time. */
-  getConfig: () => BuildConfig;
-  /** The save this build was built on (sets build.save_id); null for free builds. */
-  saveId: string | null;
-  /** Called with the new build after a successful save. */
-  onSaved: (build: BuildSummary) => void;
   onClose: () => void;
 };
 
 /**
- * Save the current build. Logged out, it prompts to log in (the build is not
- * lost meanwhile); logged in, it takes a name, saves to Supabase, and shows the
- * shareable link.
+ * Save the current build. Logged out, it prompts to log in (the build isn't lost
+ * meanwhile); logged in, it takes a name, saves to Supabase (stamping the active
+ * save), shows the shareable link, and on close routes to the new build.
  */
-export function SaveBuildModal({ getConfig, saveId, onSaved, onClose }: SaveBuildModalProps) {
+export function SaveBuildModal({ onClose }: SaveBuildModalProps) {
   const { user } = useAuth();
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const config = useAppSelector(selectBuildConfig);
+  const activeSaveId = useAppSelector((s) => s.build.activeSaveId);
+  const [createBuild, { isLoading: saving }] = useCreateBuildMutation();
+
   const [name, setName] = useState('My First Build');
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [savedBuildId, setSavedBuildId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
 
   async function save() {
-    setSaving(true);
     setError(null);
     try {
-      const build = await createBuild(name.trim() || 'My Build', getConfig(), saveId);
+      const build = await createBuild({ name: name.trim() || 'My Build', config, saveId: activeSaveId }).unwrap();
       setShareUrl(buildShareUrl(build.shortLink));
-      onSaved(build);
+      setSavedBuildId(build.id);
+      dispatch(buildActions.markClean());
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSaving(false);
+      setError(e instanceof Error ? e.message : ((e as { message?: string })?.message ?? String(e)));
     }
+  }
+
+  // After saving, closing routes to the new build so its URL is refresh-stable.
+  function close() {
+    onClose();
+    if (savedBuildId) navigate({ to: '/builds/$buildId', params: { buildId: savedBuildId } });
   }
 
   async function copy() {
@@ -65,7 +72,7 @@ export function SaveBuildModal({ getConfig, saveId, onSaved, onClose }: SaveBuil
       <button
         type="button"
         aria-label="Close"
-        onClick={onClose}
+        onClick={close}
         className="absolute inset-0 cursor-default bg-black/60"
       />
       <motion.div
@@ -98,7 +105,7 @@ export function SaveBuildModal({ getConfig, saveId, onSaved, onClose }: SaveBuil
               </button>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={close}
                 className="cursor-pointer text-sm text-au-chico underline transition-colors hover:text-pale-mocha"
               >
                 Done
