@@ -274,7 +274,9 @@ const slice = createSlice({
         state.orphanedSave =
           inventory == null && Object.values(config.slotsByWeapon).some((s) => s.some((x) => x?.gemId));
         state.status = 'ready';
-        state.baseline = JSON.stringify(config);
+        // Serialize from state (not the raw jsonb config) so the baseline matches
+        // the dirty check's canonical key order — jsonb doesn't preserve key order.
+        state.baseline = JSON.stringify(buildConfig(state));
       })
       .addCase(loadBuild.rejected, (state) => {
         state.status = 'notfound';
