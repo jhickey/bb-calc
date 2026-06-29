@@ -45,8 +45,8 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-black/60"
       />
-      <motion.div
-        role="dialog"
+      <motion.dialog
+        open
         aria-modal="true"
         className="relative z-10 w-full max-w-sm rounded-lg border border-black-wool bg-superhard p-6 shadow-xl"
         initial={{ opacity: 0, scale: 0.96, y: 8 }}
@@ -98,7 +98,7 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
         </button>
 
         {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
-      </motion.div>
+      </motion.dialog>
     </motion.div>
   );
 }

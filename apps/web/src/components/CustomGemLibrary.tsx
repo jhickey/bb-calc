@@ -140,8 +140,8 @@ export function CustomGemLibrary({ className = '' }: { className?: string }) {
               onClick={() => setEditor({ open: false })}
               className="absolute inset-0 cursor-default bg-black/60"
             />
-            <motion.div
-              role="dialog"
+            <motion.dialog
+              open
               aria-modal="true"
               className="relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col rounded-lg border border-black-wool bg-superhard shadow-xl"
               initial={{ opacity: 0, scale: 0.96, y: 8 }}
@@ -171,7 +171,7 @@ export function CustomGemLibrary({ className = '' }: { className?: string }) {
                   onSubmit={handleSubmit}
                 />
               </div>
-            </motion.div>
+            </motion.dialog>
           </motion.div>
         )}
       </AnimatePresence>
