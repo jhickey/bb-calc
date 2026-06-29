@@ -84,8 +84,8 @@ export function GemPickerModal({
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-black/60"
       />
-      <motion.div
-        role="dialog"
+      <motion.dialog
+        open
         aria-modal="true"
         className="relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col rounded-lg border border-black-wool bg-superhard shadow-xl"
         initial={{ opacity: 0, scale: 0.96, y: 8 }}
@@ -170,7 +170,7 @@ export function GemPickerModal({
             Empty this slot
           </button>
         </footer>
-      </motion.div>
+      </motion.dialog>
     </motion.div>
   );
 }
