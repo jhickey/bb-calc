@@ -4,14 +4,16 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Ban, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import type { GemShape, InventoryGem } from 'bb-calc-js';
-import { computeAr } from 'bb-calc-js';
+import { computeAr, parseGemEffects } from 'bb-calc-js';
 
 import { GemPickerModal } from '#/components/GemPickerModal';
 import { ArValue } from '#/components/ArValue';
+import { useAuth } from '#/lib/auth';
 import type { Socket } from '#/lib/gems';
 import { gemShapeIcon, isCursed, isDrawbackEffect } from '#/lib/gems';
 import { PLACEHOLDER_WEAPON_ICON, weaponById, weaponName, weaponThumbnail } from '#/lib/weapons';
 import { useAppDispatch, useAppSelector } from '#/store';
+import { useCreateCustomGemMutation, useListCustomGemsQuery } from '#/store/api';
 import { buildActions } from '#/store/buildSlice';
 
 /** Damage lines shown in the breakdown, in display order. */
@@ -50,13 +52,28 @@ type WeaponCardProps = {
  */
 export function WeaponCard({ weaponId, index, total, onExcludeGem, onOptimize }: WeaponCardProps) {
   const dispatch = useAppDispatch();
+  const { user } = useAuth();
   const slots = useAppSelector((s) => s.build.slotsByWeapon[weaponId]) ?? EMPTY_SLOTS;
   const level = useAppSelector((s) => s.build.levelByWeapon[weaponId] ?? 10);
   const stats = useAppSelector((s) => s.build.editStats);
   const inventoryGems = useAppSelector((s) => s.build.inventory?.gems) ?? EMPTY_GEMS;
-  const customGems = useAppSelector((s) => s.build.customGems);
+  const sessionCustomGems = useAppSelector((s) => s.build.customGems);
   const mode = useAppSelector((s) => s.build.mode);
   const slotsByWeapon = useAppSelector((s) => s.build.slotsByWeapon);
+
+  // Logged-in users draw custom gems from their persisted library; logged-out
+  // users use the ephemeral session list in the build slice.
+  const { data: libraryRows = [] } = useListCustomGemsQuery(undefined, { skip: !user });
+  const [createCustomGem] = useCreateCustomGemMutation();
+  const libraryGems = useMemo<Array<Socket>>(
+    () =>
+      libraryRows.map((row) => ({
+        gem: parseGemEffects(row.effects.join('; '), row.name, row.shape),
+        effects: row.effects,
+      })),
+    [libraryRows],
+  );
+  const customGems = user ? libraryGems : sessionCustomGems;
 
   const [openSlot, setOpenSlot] = useState<number | null>(null);
   const weapon = weaponById(weaponId);
@@ -272,7 +289,13 @@ export function WeaponCard({ weaponId, index, total, onExcludeGem, onOptimize }:
               customGems={customGems}
               unavailableGemIds={unavailableGemIds}
               onPick={(socket) => setSlot(openSlot, socket)}
-              onCreateCustom={(socket) => dispatch(buildActions.addCustomGem(socket))}
+              onCreateCustom={(socket) => {
+                if (user) {
+                  void createCustomGem({ name: socket.gem.name, shape: socket.gem.shape, effects: socket.effects });
+                } else {
+                  dispatch(buildActions.addCustomGem(socket));
+                }
+              }}
               onClear={() => setSlot(openSlot, null)}
               onClose={() => setOpenSlot(null)}
             />

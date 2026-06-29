@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import type { GemShape, InventoryGem } from 'bb-calc-js';
+import { CustomGemLibrary } from '#/components/CustomGemLibrary';
 import { GemList } from '#/components/GemList';
 import { GEM_SHAPES, gemShapeIcon } from '#/lib/gems';
 
@@ -45,6 +46,8 @@ export function GemsPanel({ gems, className = '' }: GemsPanelProps) {
 
   return (
     <div className={className}>
+      <CustomGemLibrary className="mb-8" />
+
       <div className="flex flex-wrap items-center gap-4">
         <input
           type="search"
