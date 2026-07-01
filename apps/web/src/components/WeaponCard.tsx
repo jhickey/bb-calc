@@ -4,11 +4,12 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Ban, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import type { GemShape, InventoryGem } from 'bb-calc-js';
-import { computeAr, parseGemEffects } from 'bb-calc-js';
+import { computeAr } from 'bb-calc-js';
 
 import { GemPickerModal } from '#/components/GemPickerModal';
 import { ArValue } from '#/components/ArValue';
 import { useAuth } from '#/lib/auth';
+import { customGemToSocket } from '#/lib/gemEffects';
 import type { Socket } from '#/lib/gems';
 import { gemShapeIcon, isCursed, isDrawbackEffect } from '#/lib/gems';
 import { PLACEHOLDER_WEAPON_ICON, weaponById, weaponName, weaponThumbnail } from '#/lib/weapons';
@@ -65,14 +66,7 @@ export function WeaponCard({ weaponId, index, total, onExcludeGem, onOptimize }:
   // users use the ephemeral session list in the build slice.
   const { data: libraryRows = [] } = useListCustomGemsQuery(undefined, { skip: !user });
   const [createCustomGem] = useCreateCustomGemMutation();
-  const libraryGems = useMemo<Array<Socket>>(
-    () =>
-      libraryRows.map((row) => ({
-        gem: parseGemEffects(row.effects.join('; '), row.name, row.shape),
-        effects: row.effects,
-      })),
-    [libraryRows],
-  );
+  const libraryGems = useMemo<Array<Socket>>(() => libraryRows.map(customGemToSocket), [libraryRows]);
   const customGems = user ? libraryGems : sessionCustomGems;
 
   const [openSlot, setOpenSlot] = useState<number | null>(null);
@@ -289,11 +283,11 @@ export function WeaponCard({ weaponId, index, total, onExcludeGem, onOptimize }:
               customGems={customGems}
               unavailableGemIds={unavailableGemIds}
               onPick={(socket) => setSlot(openSlot, socket)}
-              onCreateCustom={(socket) => {
+              onCreateCustom={(input) => {
                 if (user) {
-                  void createCustomGem({ name: socket.gem.name, shape: socket.gem.shape, effects: socket.effects });
+                  void createCustomGem(input);
                 } else {
-                  dispatch(buildActions.addCustomGem(socket));
+                  dispatch(buildActions.addCustomGem(customGemToSocket(input)));
                 }
               }}
               onClear={() => setSlot(openSlot, null)}

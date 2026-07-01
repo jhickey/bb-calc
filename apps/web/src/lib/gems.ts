@@ -1,6 +1,8 @@
 import type { Gem } from 'bb-calc-js';
 import { GemShape } from 'bb-calc-js';
 
+import type { CustomGemEffect } from '#/lib/customGems';
+
 /**
  * A gem socketed into a weapon slot: the calc {@link Gem} (fed to `computeAr`)
  * plus its human-readable effect strings, kept so the UI can tell otherwise
@@ -14,6 +16,24 @@ export type Socket = {
    * see which physical gems are already in use elsewhere. Absent for custom gems.
    */
   gemId?: string;
+};
+
+/**
+ * A gem for display in a flat list (Gems tab), unifying save-parsed and
+ * user-created gems. `onEdit`/`onDelete` are present only for custom gems, which
+ * carry structured effects; inventory gems use plain strings and the
+ * storage/equipped flags.
+ */
+export type DisplayGem = {
+  key: string;
+  name: string;
+  shape: GemShape;
+  tier: number;
+  effects: Array<CustomGemEffect | string>;
+  inStorage?: boolean;
+  inUse?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
 };
 
 /** Every gem shape, in display order. */
@@ -74,7 +94,21 @@ export function isDrawbackEffect(effect: string): boolean {
   return isCurseEffect(effect) || effect.startsWith('Increases stamina costs');
 }
 
+/** The display string for either a plain (inventory) or structured (custom) effect. */
+export function effectText(effect: CustomGemEffect | string): string {
+  return typeof effect === 'string' ? effect : effect.text;
+}
+
+/**
+ * Whether an effect is a drawback: a structured effect's explicit `cursed` flag,
+ * or a string (or a structured effect's text) that reads as an in-game drawback.
+ */
+export function effectCursed(effect: CustomGemEffect | string): boolean {
+  if (typeof effect === 'string') return isDrawbackEffect(effect);
+  return effect.cursed || isDrawbackEffect(effect.text);
+}
+
 /** Whether a gem carries a drawback (drives the "Cursed" badge). */
-export function isCursed(gem: { effects: ReadonlyArray<string> }): boolean {
-  return gem.effects.some(isDrawbackEffect);
+export function isCursed(gem: { effects: ReadonlyArray<CustomGemEffect | string> }): boolean {
+  return gem.effects.some(effectCursed);
 }
