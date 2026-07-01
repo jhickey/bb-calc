@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 
-import { LoginModal } from '#/components/LoginModal';
-import { useAuth } from '#/lib/auth';
 import { buildShareUrl } from '#/lib/builds';
 import { useAppDispatch, useAppSelector } from '#/store';
 import { useCreateBuildMutation } from '#/store/api';
@@ -14,12 +12,11 @@ type SaveBuildModalProps = {
 };
 
 /**
- * Save the current build. Logged out, it prompts to log in (the build isn't lost
- * meanwhile); logged in, it takes a name, saves to Supabase (stamping the active
- * save), shows the shareable link, and on close routes to the new build.
+ * Save the current build (only opened when logged in): takes a name, saves to
+ * Supabase (stamping the active save), shows the shareable link, and on close
+ * routes to the new build.
  */
 export function SaveBuildModal({ onClose }: SaveBuildModalProps) {
-  const { user } = useAuth();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const config = useAppSelector(selectBuildConfig);
@@ -31,7 +28,6 @@ export function SaveBuildModal({ onClose }: SaveBuildModalProps) {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [savedBuildId, setSavedBuildId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
 
   async function save() {
     setError(null);
@@ -112,7 +108,7 @@ export function SaveBuildModal({ onClose }: SaveBuildModalProps) {
               </button>
             </div>
           </div>
-        ) : user ? (
+        ) : (
           <div className="mt-4 space-y-3">
             <label className="block">
               <span className="text-xs uppercase tracking-wide text-au-chico">Build name</span>
@@ -132,25 +128,10 @@ export function SaveBuildModal({ onClose }: SaveBuildModalProps) {
               {saving ? 'Saving…' : 'Save build'}
             </button>
           </div>
-        ) : (
-          <div className="mt-4 space-y-3">
-            <p className="text-sm text-pale-mocha">
-              Log in to save builds permanently. Your build stays here in the meantime.
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowLogin(true)}
-              className="w-full cursor-pointer rounded-md bg-tamarillo px-4 py-2 text-sm font-semibold text-pale-mocha transition-colors hover:bg-old-red"
-            >
-              Log in
-            </button>
-          </div>
         )}
 
         {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
       </motion.dialog>
-
-      <AnimatePresence>{showLogin && <LoginModal onClose={() => setShowLogin(false)} />}</AnimatePresence>
     </motion.div>
   );
 }

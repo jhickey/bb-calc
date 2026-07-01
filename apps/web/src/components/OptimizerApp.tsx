@@ -11,6 +11,7 @@ import { BuildsPanel } from '#/components/BuildsPanel';
 import { Button } from '#/components/Button';
 import { CharacterHeader } from '#/components/CharacterHeader';
 import { GemsPanel } from '#/components/GemsPanel';
+import { LoginModal } from '#/components/LoginModal';
 import { SaveBuildModal } from '#/components/SaveBuildModal';
 import { SavesPanel } from '#/components/SavesPanel';
 import { Tabs } from '#/components/Tabs';
@@ -64,6 +65,7 @@ export function OptimizerApp() {
 
   const [activeTab, setActiveTab] = useState<string>(TAB_WEAPONS);
   const [showSaveBuild, setShowSaveBuild] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const [showExcluded, setShowExcluded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -214,7 +216,7 @@ export function OptimizerApp() {
               {weaponIds.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => setShowSaveBuild(true)}
+                  onClick={() => (user ? setShowSaveBuild(true) : setShowLogin(true))}
                   className="mt-2 block cursor-pointer text-sm text-au-chico underline transition-colors hover:text-pale-mocha"
                 >
                   Save build
@@ -273,11 +275,7 @@ export function OptimizerApp() {
             </div>
 
             <div className="lg:col-span-2 lg:pt-6">
-              {weaponIds.length === 0 ? (
-                <p className="text-au-chico">
-                  Select weapons to build. Click a gem slot to socket a gem, or auto-optimize.
-                </p>
-              ) : (
+              {weaponIds.length > 0 && (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={weaponIds} strategy={verticalListSortingStrategy}>
                     <ul className="space-y-4">
@@ -324,6 +322,7 @@ export function OptimizerApp() {
       </motion.div>
 
       <AnimatePresence>{showSaveBuild && <SaveBuildModal onClose={() => setShowSaveBuild(false)} />}</AnimatePresence>
+      <AnimatePresence>{showLogin && <LoginModal onClose={() => setShowLogin(false)} />}</AnimatePresence>
     </div>
   );
 }

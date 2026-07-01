@@ -37,7 +37,7 @@ export function SavesPanel({ saves, onLoad, onDelete, className = '' }: SavesPan
             <button
               type="button"
               onClick={() => onLoad(save.id)}
-              className="flex min-w-0 flex-1 items-baseline gap-x-3 gap-y-1 text-left"
+              className="flex min-w-0 flex-1 cursor-pointer items-baseline gap-x-3 gap-y-1 text-left"
             >
               <span className="truncate font-semibold text-pale-mocha">{save.characterName}</span>
               <span className="shrink-0 text-sm text-au-chico">Level {save.characterLevel}</span>

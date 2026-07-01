@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Ban, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { Ban, ChevronDown, ChevronUp, GripVertical, X } from 'lucide-react';
 import type { GemShape, InventoryGem } from 'bb-calc-js';
 import { computeAr } from 'bb-calc-js';
 
@@ -208,7 +208,7 @@ export function WeaponCard({ weaponId, index, total, onExcludeGem, onOptimize }:
                 <button
                   type="button"
                   onClick={() => setOpenSlot(slotIndex)}
-                  className="flex min-w-0 flex-1 items-start gap-2 rounded border border-black-wool px-2 py-1.5 text-left text-xs transition-colors hover:border-tamarillo"
+                  className="flex min-w-0 flex-1 cursor-pointer items-start gap-2 rounded border border-black-wool px-2 py-1.5 text-left text-xs transition-colors hover:border-tamarillo"
                 >
                   <img src={gemShapeIcon(shape)} alt={shape} className="mt-0.5 h-5 w-5 shrink-0 object-contain" />
                   {socket ? (
@@ -239,16 +239,30 @@ export function WeaponCard({ weaponId, index, total, onExcludeGem, onOptimize }:
                     <span className="flex-1 italic text-au-chico">Empty {shape} slot — click to socket</span>
                   )}
                 </button>
-                {socket?.gemId && (
-                  <button
-                    type="button"
-                    onClick={() => onExcludeGem(socket.gemId!)}
-                    aria-label={`Exclude ${socket.gem.name} from optimization`}
-                    title="Exclude this gem from auto-optimization"
-                    className="flex shrink-0 items-center rounded border border-black-wool px-2 text-au-chico transition-colors hover:border-old-red hover:text-red-400"
-                  >
-                    <Ban className="h-4 w-4" />
-                  </button>
+                {socket && (
+                  <>
+                    {socket.gemId && (
+                      <button
+                        type="button"
+                        onClick={() => onExcludeGem(socket.gemId!)}
+                        aria-label={`Exclude ${socket.gem.name} from optimization`}
+                        title="Leave this gem out of auto-optimization"
+                        className="flex shrink-0 items-center gap-1 rounded border border-black-wool px-2 text-xs text-au-chico transition-colors hover:border-old-red hover:text-red-400"
+                      >
+                        <Ban className="h-3.5 w-3.5" />
+                        Exclude
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setSlot(slotIndex, null)}
+                      aria-label={`Empty ${shape} slot`}
+                      title="Empty this slot"
+                      className="flex shrink-0 items-center rounded border border-black-wool px-2 text-au-chico transition-colors hover:border-old-red hover:text-pale-mocha"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </>
                 )}
               </li>
             );

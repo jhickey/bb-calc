@@ -48,6 +48,7 @@ function BuildRow({
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(build.name);
   const [copied, setCopied] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   async function copyLink() {
     try {
@@ -93,7 +94,7 @@ function BuildRow({
         <button
           type="button"
           onClick={() => onLoad(build.id)}
-          className="min-w-0 flex-1 truncate text-left font-semibold text-pale-mocha"
+          className="min-w-0 flex-1 cursor-pointer truncate text-left font-semibold text-pale-mocha"
         >
           {build.name}
         </button>
@@ -114,15 +115,34 @@ function BuildRow({
         >
           Rename
         </button>
-        <button
-          type="button"
-          onClick={() => onDelete(build.id)}
-          aria-label={`Delete ${build.name}`}
-          title="Delete build"
-          className="cursor-pointer text-xl leading-none text-au-chico transition-colors hover:text-red-400"
-        >
-          ×
-        </button>
+        {confirmingDelete ? (
+          <span className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onDelete(build.id)}
+              className="cursor-pointer font-semibold text-red-400 underline transition-colors hover:text-red-300"
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(false)}
+              className="cursor-pointer text-au-chico underline transition-colors hover:text-pale-mocha"
+            >
+              Cancel
+            </button>
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmingDelete(true)}
+            aria-label={`Delete ${build.name}`}
+            title="Delete build"
+            className="cursor-pointer text-xl leading-none text-au-chico transition-colors hover:text-red-400"
+          >
+            ×
+          </button>
+        )}
       </div>
     </motion.li>
   );

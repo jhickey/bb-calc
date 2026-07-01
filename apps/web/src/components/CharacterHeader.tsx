@@ -97,18 +97,7 @@ export function CharacterHeader({
           </motion.div>
         ) : (
           <div>
-            <p className="text-au-chico">
-              {canUpload
-                ? 'No save loaded — import a save, or set your stats and build below.'
-                : 'No save loaded — set your stats and build below, or log in to upload a save.'}
-            </p>
-            <StatsDisplay
-              className="mt-3"
-              character={null}
-              stats={stats}
-              onEditStat={onEditStat}
-              onRevertStat={onRevertStat}
-            />
+            <StatsDisplay character={null} stats={stats} onEditStat={onEditStat} onRevertStat={onRevertStat} />
           </div>
         )}
       </div>
