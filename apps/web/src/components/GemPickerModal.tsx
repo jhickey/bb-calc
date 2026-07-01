@@ -1,12 +1,19 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import type { GemShape, InventoryGem } from 'bb-calc-js';
-import { gemFromInventory, parseGemEffects } from 'bb-calc-js';
+import { gemFromInventory } from 'bb-calc-js';
 
-import { CustomGemForm } from '#/components/CustomGemForm';
+import { GemForm } from '#/components/GemForm';
 import { StorageIcon } from '#/components/StorageIcon';
+import type { CustomGemInput } from '#/lib/customGems';
 import type { Socket } from '#/lib/gems';
 import { gemShapeIcon, isCursed, isDrawbackEffect } from '#/lib/gems';
+import { customGemToSocket } from '#/lib/gemEffects';
+
+/** A gem offered in the picker's first tab: an owned gem or a reusable custom one. */
+type PickItem =
+  | { kind: 'inventory'; gem: InventoryGem; tier: number }
+  | { kind: 'custom'; socket: Socket; index: number; tier: number };
 
 /** A gem fits a slot when shapes match or the gem is the universal Droplet. */
 function shapeFits(gemShape: GemShape, slotShape: GemShape): boolean {
@@ -23,8 +30,8 @@ type GemPickerModalProps = {
   unavailableGemIds?: ReadonlySet<string>;
   /** Socket the chosen gem. */
   onPick: (socket: Socket) => void;
-  /** Register a newly created custom gem so it's reusable elsewhere. */
-  onCreateCustom: (socket: Socket) => void;
+  /** Persist/register a newly created gem so it's reusable elsewhere. */
+  onCreateCustom: (gem: CustomGemInput) => void;
   /** Empty the slot. */
   onClear: () => void;
   onClose: () => void;
@@ -50,24 +57,28 @@ export function GemPickerModal({
   const [tab, setTab] = useState(TAB_INVENTORY);
   const [search, setSearch] = useState('');
 
-  const fittingCustom = useMemo(
-    () => customGems.filter((socket) => shapeFits(socket.gem.shape, slotShape)),
-    [customGems, slotShape],
-  );
-
-  const visibleInventory = useMemo(() => {
+  // Owned and custom gems that fit the slot, merged and sorted by tier so they
+  // read as one list. Custom gems have no owned instance, so Loadout's
+  // "already used elsewhere" filter never applies to them.
+  const visibleGems = useMemo<Array<PickItem>>(() => {
     const query = search.trim().toLowerCase();
-    return inventoryGems
+    const matches = (name: string, effects: Array<string>) =>
+      !query || name.toLowerCase().includes(query) || effects.some((effect) => effect.toLowerCase().includes(query));
+
+    const inventory: Array<PickItem> = inventoryGems
       .filter((gem) => shapeFits(gem.shape, slotShape))
       .filter((gem) => !unavailableGemIds?.has(gem.id))
-      .filter((gem) => {
-        if (!query) return true;
-        return (
-          gem.name.toLowerCase().includes(query) || gem.effects.some((effect) => effect.toLowerCase().includes(query))
-        );
-      })
-      .sort((a, b) => b.rating - a.rating);
-  }, [inventoryGems, slotShape, search, unavailableGemIds]);
+      .filter((gem) => matches(gem.name, gem.effects))
+      .map((gem) => ({ kind: 'inventory', gem, tier: gem.rating }));
+
+    const custom: Array<PickItem> = customGems
+      .map((socket, index) => ({ socket, index }))
+      .filter(({ socket }) => shapeFits(socket.gem.shape, slotShape))
+      .filter(({ socket }) => matches(socket.gem.name, socket.effects))
+      .map(({ socket, index }) => ({ kind: 'custom', socket, index, tier: socket.gem.tier }));
+
+    return [...inventory, ...custom].sort((a, b) => b.tier - a.tier);
+  }, [inventoryGems, customGems, slotShape, search, unavailableGemIds]);
 
   return (
     <motion.div
@@ -110,8 +121,8 @@ export function GemPickerModal({
 
         <div className="flex gap-1 border-b border-black-wool px-4" role="tablist">
           {[
-            { id: TAB_INVENTORY, label: 'Inventory' },
-            { id: TAB_CUSTOM, label: 'Custom gem' },
+            { id: TAB_INVENTORY, label: 'Gems' },
+            { id: TAB_CUSTOM, label: 'Add Gem' },
           ].map((entry) => (
             <button
               key={entry.id}
@@ -135,8 +146,7 @@ export function GemPickerModal({
             <InventoryTab
               search={search}
               onSearch={setSearch}
-              gems={visibleInventory}
-              customGems={fittingCustom}
+              items={visibleGems}
               onPickInventory={(gem) => {
                 onPick({ gem: gemFromInventory(gem), effects: gem.effects, gemId: gem.id });
                 onClose();
@@ -149,9 +159,9 @@ export function GemPickerModal({
           ) : (
             <CustomGemTab
               slotShape={slotShape}
-              onCreate={(socket) => {
-                onCreateCustom(socket);
-                onPick(socket);
+              onCreate={(input) => {
+                onCreateCustom(input);
+                onPick(customGemToSocket(input));
                 onClose();
               }}
             />
@@ -178,13 +188,12 @@ export function GemPickerModal({
 type InventoryTabProps = {
   search: string;
   onSearch: (value: string) => void;
-  gems: Array<InventoryGem>;
-  customGems: Array<Socket>;
+  items: Array<PickItem>;
   onPickInventory: (gem: InventoryGem) => void;
   onPickCustom: (socket: Socket) => void;
 };
 
-function InventoryTab({ search, onSearch, gems, customGems, onPickInventory, onPickCustom }: InventoryTabProps) {
+function InventoryTab({ search, onSearch, items, onPickInventory, onPickCustom }: InventoryTabProps) {
   return (
     <div>
       <input
@@ -195,37 +204,35 @@ function InventoryTab({ search, onSearch, gems, customGems, onPickInventory, onP
         className="w-full rounded-md border border-black-wool bg-black-wool px-3 py-2 text-sm text-pale-mocha placeholder:text-au-chico"
       />
 
-      {customGems.length > 0 && (
-        <>
-          <p className="mt-4 text-xs uppercase tracking-wide text-au-chico">Custom gems</p>
-          <ul className="mt-2 space-y-2">
-            {customGems.map((socket, i) => (
-              <li key={`custom-${i}`}>
-                <GemButton name={socket.gem.name} effects={socket.effects} onClick={() => onPickCustom(socket)} />
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-
       <p className="mt-4 text-xs uppercase tracking-wide text-au-chico">
-        {gems.length} fitting gem{gems.length === 1 ? '' : 's'}
+        {items.length} fitting gem{items.length === 1 ? '' : 's'}
       </p>
-      {gems.length === 0 ? (
-        <p className="mt-2 text-sm text-au-chico">No owned gems fit this slot.</p>
+      {items.length === 0 ? (
+        <p className="mt-2 text-sm text-au-chico">No gems fit this slot.</p>
       ) : (
         <ul className="mt-2 space-y-2">
-          {gems.map((gem) => (
-            <li key={gem.id}>
-              <GemButton
-                name={gem.name}
-                rating={gem.rating}
-                effects={gem.effects}
-                inStorage={gem.inStorage}
-                onClick={() => onPickInventory(gem)}
-              />
-            </li>
-          ))}
+          {items.map((item) =>
+            item.kind === 'inventory' ? (
+              <li key={item.gem.id}>
+                <GemButton
+                  name={item.gem.name}
+                  rating={item.gem.rating}
+                  effects={item.gem.effects}
+                  inStorage={item.gem.inStorage}
+                  onClick={() => onPickInventory(item.gem)}
+                />
+              </li>
+            ) : (
+              <li key={`custom-${item.index}`}>
+                <GemButton
+                  name={item.socket.gem.name}
+                  rating={item.tier}
+                  effects={item.socket.effects}
+                  onClick={() => onPickCustom(item.socket)}
+                />
+              </li>
+            ),
+          )}
         </ul>
       )}
     </div>
@@ -278,18 +285,9 @@ function GemButton({ name, rating, effects, inStorage = false, onClick }: GemBut
 
 type CustomGemTabProps = {
   slotShape: GemShape;
-  onCreate: (socket: Socket) => void;
+  onCreate: (gem: CustomGemInput) => void;
 };
 
 function CustomGemTab({ slotShape, onCreate }: CustomGemTabProps) {
-  return (
-    <CustomGemForm
-      initialShape={slotShape}
-      submitLabel="Create & socket"
-      onSubmit={({ name, shape, effects }) => {
-        const gem = parseGemEffects(effects.join('; '), name, shape);
-        onCreate({ gem, effects });
-      }}
-    />
-  );
+  return <GemForm initialShape={slotShape} submitLabel="Create & socket" onSubmit={onCreate} />;
 }
