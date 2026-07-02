@@ -9,7 +9,7 @@ import { useAuth } from '#/lib/auth';
  * or the signed-in email plus passkey-registration and logout actions.
  */
 export function AuthControl() {
-  const { user, loading, registerPasskey, signOut } = useAuth();
+  const { user, loading, hasPasskey, registerPasskey, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -40,13 +40,15 @@ export function AuthControl() {
     <div className="flex flex-col items-end gap-1 text-sm">
       <span className="text-au-chico">{user.email}</span>
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={addPasskey}
-          className="cursor-pointer text-au-chico underline transition-colors hover:text-pale-mocha"
-        >
-          Add a passkey
-        </button>
+        {hasPasskey === false && (
+          <button
+            type="button"
+            onClick={addPasskey}
+            className="cursor-pointer text-au-chico underline transition-colors hover:text-pale-mocha"
+          >
+            Add a passkey
+          </button>
+        )}
         <button
           type="button"
           onClick={() => signOut()}
