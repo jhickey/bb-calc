@@ -25,6 +25,19 @@ export const Route = createRootRoute({
       {
         title: 'Bloodborne Optimizer',
       },
+      { name: 'theme-color', content: '#1a0b06' },
+      { property: 'og:title', content: 'Bloodborne Optimizer' },
+      {
+        property: 'og:description',
+        content: 'Attack Rating calculator and gem optimizer for Bloodborne.',
+      },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:title', content: 'Bloodborne Optimizer' },
+      {
+        name: 'twitter:description',
+        content: 'Attack Rating calculator and gem optimizer for Bloodborne.',
+      },
     ],
     links: [
       {

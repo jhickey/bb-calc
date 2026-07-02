@@ -55,6 +55,9 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
         transition={{ duration: 0.18, ease: 'easeOut' }}
       >
         <h2 className="text-lg font-semibold text-pale-mocha">Log in</h2>
+        <p className="mt-1 text-sm text-au-chico">
+          An account lets you upload save files, save and share builds, and keep a library of custom gems.
+        </p>
 
         {status === 'sent' ? (
           <p className="mt-4 text-sm text-pale-mocha">
