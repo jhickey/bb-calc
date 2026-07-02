@@ -11,6 +11,12 @@ type AuthContextValue = {
   user: User | null;
   /** True until the initial session lookup resolves. */
   loading: boolean;
+  /**
+   * Whether the signed-in user has at least one registered passkey. `null` while
+   * unknown (signed out, or the lookup hasn't resolved). Drives whether to offer
+   * "Add a passkey".
+   */
+  hasPasskey: boolean | null;
   /** Send a one-time magic link to `email`. */
   signInWithEmail: (email: string) => Promise<AuthResult>;
   /** Sign in with a previously registered passkey (discoverable credential). */
@@ -30,6 +36,7 @@ function message(error: unknown): string | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasPasskey, setHasPasskey] = useState<boolean | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -40,11 +47,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  const userId = session?.user?.id;
+  useEffect(() => {
+    if (!userId) {
+      setHasPasskey(null);
+      return;
+    }
+    let cancelled = false;
+    // Fail open: if the lookup errors, treat as "no passkey" so the user can still add one.
+    supabase.auth.passkey
+      .list()
+      .then(({ data }) => {
+        if (!cancelled) setHasPasskey((data?.length ?? 0) > 0);
+      })
+      .catch(() => {
+        if (!cancelled) setHasPasskey(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
       user: session?.user ?? null,
       loading,
+      hasPasskey,
       async signInWithEmail(email) {
         const { error } = await supabase.auth.signInWithOtp({
           email,
@@ -58,13 +87,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async registerPasskey() {
         const { error } = await supabase.auth.registerPasskey();
+        if (!error) setHasPasskey(true);
         return { error: message(error) };
       },
       async signOut() {
         await supabase.auth.signOut();
       },
     }),
-    [session, loading],
+    [session, loading, hasPasskey],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
