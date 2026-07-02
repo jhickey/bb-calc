@@ -230,7 +230,7 @@ export function OptimizerApp() {
                     onClick={() => setShowExcluded((prev) => !prev)}
                     className="cursor-pointer text-xs text-au-chico underline transition-colors hover:text-pale-mocha"
                   >
-                    {excludedGemIds.length} excluded
+                    {excludedGemIds.length} gem{excludedGemIds.length === 1 ? '' : 's'} excluded
                   </button>
                   {showExcluded && (
                     <ul className="mt-2 space-y-1">
